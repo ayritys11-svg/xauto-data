@@ -3,6 +3,9 @@ on:
   schedule:
     - cron: "17 2 * * *"   # joka yö klo 4.17 Suomen aikaa
   workflow_dispatch: {}      # käsin: Actions -> Autoilmoitukset -> Run workflow
+  push:                      # ajetaan myös kun hakuja, kuluja tai laskentaa muutetaan
+    branches: [main]
+    paths: ["config/**", "scripts/**", "calc.js", "data/autovero_core.json"]
 permissions:
   contents: write
 jobs:
@@ -23,6 +26,8 @@ jobs:
           git config user.email "xauto-bot@users.noreply.github.com"
           git add data/listings.json
           git diff --cached --quiet || git commit -m "Ilmoitukset päivitetty $(date -u +%F)"
+          git pull --rebase -q origin main || true
           git push
       - name: Tyhjennä jsDelivr-välimuisti
-        run: curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/data/listings.json" || true
+        run: |
+          for f in data/listings.json listings.js listings.css; do curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/$f" > /dev/null || true; done

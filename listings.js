@@ -19,6 +19,7 @@
   var CONF = { korkea: "Tarkka arvio", keskitaso: "Kohtalainen tarkkuus", matala: "Epävarma arvio" };
   function conf(c) { return '<span class="conf ' + c.confidence + '"><i></i>' + CONF[c.confidence] + "</span>"; }
   function saveBadge(c) {
+    if (c.saving > 0 && c.sure === false) return '<span class="sv u">Mahdollisesti ' + eur(c.saving) + " halvempi</span>";
     return c.saving > 0 ? '<span class="sv g">' + eur(c.saving) + " halvempi</span>" : '<span class="sv b">' + eur(-c.saving) + " kalliimpi</span>";
   }
   function origin(c) { return c.state === "ON" || c.state === "QC" || c.state === "BC" || c.state === "AB" ? "KANADA" : "USA" + (c.state ? " · " + c.state : ""); }
@@ -27,23 +28,24 @@
     var cars = DATA.cars.slice();
     var makes = {}, fuels = {};
     cars.forEach(function (c) { makes[c.make] = 1; fuels[c.fuel] = 1; });
-    var v = cars.filter(function (c) { return (!F.make || c.make === F.make) && (!F.fuel || c.fuel === F.fuel) && (!F.good || c.saving > 0); });
+    var v = cars.filter(function (c) { return (!F.make || c.make === F.make) && (!F.fuel || c.fuel === F.fuel) && (!F.good || ok(c)); });
     var S = { save: function (a, b) { return b.saving - a.saving; }, low: function (a, b) { return a.total.mid - b.total.mid; }, high: function (a, b) { return b.total.mid - a.total.mid; }, new: function (a, b) { return b.year - a.year || a.km - b.km; }, km: function (a, b) { return a.km - b.km; } };
     v.sort(S[F.sort] || S.save);
     function opts(o, cur, all) { return '<option value="">' + all + "</option>" + Object.keys(o).sort().map(function (k) { return '<option' + (k === cur ? " selected" : "") + ">" + esc(k) + "</option>"; }).join(""); }
-    var good = cars.filter(function (c) { return c.saving > 0; }).length;
+    var good = cars.filter(ok).length;
     root.innerHTML =
       '<div class="top"><div><h1>Autot USA:sta ja Kanadasta</h1><p>Jokaiselle autolle on laskettu koko hinta Suomessa rekisteröitynä: kuljetus, tulli, ALV, autovero ja rekisteröinti. Vertailuhinta on Verohallinnon arvio vastaavan auton hinnasta Suomessa.</p></div></div>' +
       (DATA.mock ? '<div class="note">Testidata: nämä neljä autoa ovat esimerkkejä hakuohjelman testaamiseen. Oikeat ilmoitukset päivittyvät tähän joka yö, kun API-avain on otettu käyttöön.</div>' : "") +
       '<div class="bar"><select id="xl-make" aria-label="Merkki">' + opts(makes, F.make, "Kaikki merkit") + '</select><select id="xl-fuel" aria-label="Käyttövoima">' + opts(fuels, F.fuel, "Kaikki käyttövoimat") + '</select>' +
       '<select id="xl-sort" aria-label="Järjestys"><option value="save">Suurin säästö</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="km">Vähiten ajettu</option></select>' +
-      '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label></div>" +
+      '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain varmasti Suomen hintaa halvemmat (" + good + ")</label></div>" +
       '<p class="cnt">' + v.length + " autoa · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + " · dollarin kurssi " + String(DATA.fx.rate).replace(".", ",") + "</p>" +
       (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">Valituilla ehdoilla ei löytynyt autoja.</div>');
     root.querySelector("#xl-sort").value = F.sort;
     ["make", "fuel", "sort"].forEach(function (k) { root.querySelector("#xl-" + k).addEventListener("change", function (e) { F[k] = e.target.value; keep(); list(); }); });
     root.querySelector("#xl-good").addEventListener("change", function (e) { F.good = e.target.checked; keep(); list(); });
   }
+  function ok(c) { return c.sure === undefined ? c.saving > 0 : c.sure; }
   function keep() { try { localStorage.setItem("xl-f", JSON.stringify(F)); } catch (e) {} }
   function card(c) {
     return '<a class="car" href="#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [c.fuel, c.engine, fmt(c.km) + " km"].filter(Boolean).map(esc).join(" · ") + "</p>" + photo(c, origin(c)) +

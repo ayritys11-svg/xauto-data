@@ -30,6 +30,7 @@ font-family:var(--font-body);color:var(--fg);font-size:15px;line-height:1.5;widt
 .xl .sv{border-radius:6px;padding:2px 9px;font-weight:600;font-size:13px;white-space:nowrap}
 .xl .sv.g{background:var(--good-bg);color:var(--good)}
 .xl .sv.b{background:var(--bad-bg);color:var(--bad)}
+.xl .sv.u{background:#FFF4D6;color:#5A4300}
 .xl .row{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;border-bottom:1px dotted var(--line);padding-bottom:4px}
 .xl .row span:first-child{color:var(--muted)}
 .xl .row b{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}

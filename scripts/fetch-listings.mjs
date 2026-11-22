@@ -17,6 +17,7 @@ const today = new Date();
 const X = loadEngine(ROOT);
 const M = X.M();
 const CORE = JSON.parse(fs.readFileSync(path.join(ROOT, "data/autovero_core.json"), "utf8"));
+const AN = JSON.parse(fs.readFileSync(path.join(ROOT, "data/analog.json"), "utf8"));
 const C2 = JSON.parse(fs.readFileSync(path.join(ROOT, "data/co2_table.json"), "utf8"));
 
 const up = (s) => String(s || "").trim().toUpperCase().replace(/\s+/g, " ");
@@ -68,30 +69,39 @@ function veroModels(model) {
   if (s !== m) list.push(s);
   return list;
 }
-// Teho (kW) Traficomin rekisteristä: sama merkki, malli, käyttövoima ja iskutilavuus
-function kwGuess(mk, models, t, cc, fu) {
-  const cnt = {};
+// Teho (kW) Traficomin rekisteristä: sama merkki, malli, käyttövoima, iskutilavuus ja vuosimalli
+const NZ = (x) => String(x).replace(/[\s-]/g, "");
+function nameHit(name, models) { return models.some((m) => name === m || name.indexOf(m + " ") === 0 || NZ(name) === NZ(m)); }
+function kwGuess(mk, models, t, cc, fu, year) {
+  const cnt = {}, any = {};
   for (const b of ["w", "n"]) for (const k of Object.keys(C2[b])) {
     const p = k.split("|");
-    if (p[0] !== mk || !models.some((m) => p[1] === m || p[1].indexOf(m + " ") === 0)) continue;
+    if (p[0] !== mk || !nameHit(p[1], models)) continue;
     if (t && p[2] !== t && !(t === "B" && p[2] === "HB")) continue;
     if (cc && +p[4] && Math.abs(+p[4] - cc) > cc * 0.04) continue;
     if (!(+p[3] > 0)) continue;
-    cnt[p[3]] = (cnt[p[3]] || 0) + (C2[b][k][3] || 1);
+    const v = C2[b][k], n = v[3] || 1;
+    any[p[3]] = (any[p[3]] || 0) + n;
+    if (year >= v[4] - 1 && year <= v[5] + 1) cnt[p[3]] = (cnt[p[3]] || 0) + n;
   }
-  const best = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0];
-  if (best) return +best[0];
-  // Varalla: Veron päätösryhmä (merkki|malli|kW/10), jossa eniten päätöksiä
+  const best = Object.entries(Object.keys(cnt).length ? cnt : any).sort((a, b) => b[1] - a[1])[0];
+  if (best) return { kw: +best[0], src: Object.keys(cnt).length ? "traficom" : "traficom-muu-vuosi" };
+  // Varalla: Veron päätösryhmät (merkki|malli|kW/10) ja harvinaisten mallien aineisto
   let bk = -1, bn = 0;
-  for (const src of [CORE.wf, CORE.w, CORE.g]) for (const k of Object.keys(src || {})) {
+  for (const src of [CORE.wf, CORE.w, CORE.w3, CORE.g]) for (const k of Object.keys(src || {})) {
     const p = k.split("|");
-    if (p[0] !== mk || !models.includes(p[1]) || p.length < 3) continue;
+    if (p[0] !== mk || p.length < 3 || !nameHit(p[1], models)) continue;
     if (src === CORE.wf && fu && p[3] !== fu) continue;
     if (src[k][0] > bn) { bn = src[k][0]; bk = +p[2]; }
   }
-  return bk >= 0 ? bk * 10 + 5 : 0;
+  if (bk >= 0) return { kw: bk * 10 + 5, src: "vero-ryhma" };
+  for (const k of Object.keys(AN.d)) {
+    const p = k.split("|"); if (p[0] !== mk || !nameHit(p[1], models)) continue;
+    let bw = 0, bc = 0; for (const w of Object.keys(AN.d[k].kw || {})) if (AN.d[k].kw[w][0] > bc) { bc = AN.d[k].kw[w][0]; bw = +w; }
+    if (bw) return { kw: bw, src: "vero-harvinainen" };
+  }
+  return { kw: 0, src: "" };
 }
-
 
 // EPA-haku: sama merkki, malli, vuosimalli, iskutilavuus, hybridi/ei, veto ja vaihteisto
 const EPA = JSON.parse(fs.readFileSync(path.join(ROOT, "data/epa_co2.json"), "utf8")).d;
@@ -132,7 +142,7 @@ function calc(L, fx) {
   const reg = (year - 1) + "-10-01"; // USA:n mallivuosi alkaa tyypillisesti edellisenä syksynä
   const km = Math.round(miles * 1.609344);
   const W = reg >= "2018-09-01"; // WLTP-taulukko vain 1.9.2018 alkaen rekisteröidyille
-  const kw = kwGuess(mk, models, F.t, F.ev ? 0 : cc, F.fu);
+  const KG = kwGuess(mk, models, F.t, F.ev ? 0 : cc, F.fu, year), kw = KG.kw;
   const warn = [];
 
   // 1) CO2 ja veroprosentti
@@ -163,6 +173,15 @@ function calc(L, fx) {
     }
   }
   if (!best) { DBG && console.error("ei verotusarvoa", vin, models); return null; }
+  // Varmistus: verrataan koko mallin päätöksiin. Iso ero = teho tai ryhmä luultavasti väärin.
+  let clash = false;
+  if (kw) {
+    const alt = M.estimate({ reg, co2: F.ev ? 100 : (co2 || 0), wltp: W, ev: false, make: mk, model: best.md, kw: 0, km, fu: F.fu });
+    if (alt && alt.V && (best.V / alt.V > 1.5 || best.V / alt.V < 0.67)) {
+      clash = true;
+      warn.push("Verotusarvo poikkeaa paljon saman mallin muista päätöksistä (" + Math.round(alt.V / 100) * 100 + " €). Moottoriversio varmistetaan VIN-numerosta tarjousvaiheessa.");
+    }
+  }
   const V = best.V, VLo = best.VLow, VHi = best.VHigh;
 
   // 3) Valmiit autoveropäätökset samasta autosta (vain veroprosentin varmistus)
@@ -193,7 +212,7 @@ function calc(L, fx) {
   const saving = V - totMid;
   const sPct = best.s;
   const outside = (best.warnings || []).some((w) => /vanhempi kuin|suuremmat kuin|ulkopuolelle/.test(w));
-  const conf = F.phev || sPct > 0.15 || !kw || best.w3 || outside ? "matala" : sPct > 0.07 ? "keskitaso" : "korkea";
+  const conf = F.phev || sPct > 0.15 || !kw || best.w3 || outside || clash || KG.src === "traficom-muu-vuosi" ? "matala" : sPct > 0.07 ? "keskitaso" : "korkea";
   if (!kw && !F.ev) warn.push("Moottorin tehoa ei löytynyt Traficomin rekisteristä. Verotusarvo on arvioitu koko mallin päätöksistä, joten vaihteluväli on leveä.");
   if (best.warnings) warn.push(...best.warnings.filter((w) => !/tulkittiin/.test(w)));
 
@@ -216,7 +235,7 @@ function calc(L, fx) {
       a: r0(taxA), same, b: taxB != null ? r0(taxB) : null, avg: r0(tax)
     },
     total: { lo: r100(totLo), hi: r100(totHi), mid: r100(totMid) },
-    fiPrice: r100(V), saving: r100(saving), savingPct: +(saving / V * 100).toFixed(1),
+    fiPrice: r100(V), saving: r100(saving), sure: saving > 0 && conf !== "matala", savingPct: +(saving / V * 100).toFixed(1),
     confidence: conf, warnings: [...new Set(warn)].slice(0, 4),
     listedAt: L.createdAt || "", updatedAt: L.updatedAt || ""
   };
