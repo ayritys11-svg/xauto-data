@@ -1,0 +1,51 @@
+
+<div class="wrap">
+<header>
+<h1>Autoverolaskuri</h1>
+<p class="sub">Syötä auton tiedot. CO2-arvo tarvitaan vain 1.1.2008 jälkeen rekisteröidyille. Laskuri hakee veroprosentin Verohallinnon taulukoista ja arvioi verotusarvon noin 417 000 oikean päätöksen perusteella (2016–2026).</p>
+</header>
+<div id="load" class="note i" role="status">Ladataan Verohallinnon aineistoa…</div>
+<div class="grid">
+<form id="f" class="card" autocomplete="off" novalidate>
+<h2>Auton tiedot</h2>
+<div class="f"><label for="units">Yksiköt</label><select id="units"><option value="eu">Metriset (km, kW, kg, cm³)</option><option value="us">USA (mailit, hp, lb, litrat)</option></select><small>Hinta annetaan aina euroina. USA-yksiköillä 5,0 syötetään litroina (= 5000 cm³).</small></div>
+<div class="row2">
+<div class="f"><label for="make">Merkki</label><input id="make" list="makes" placeholder="esim. TOYOTA"></div>
+<div class="f"><label for="model">Malli</label><input id="model" list="models" placeholder="esim. RAV4 HYBRID"><small>Valitse luettelosta, jotta nimi vastaa Verohallinnon nimeä.</small></div>
+</div>
+<datalist id="makes"></datalist><datalist id="models"></datalist>
+<div class="row2">
+<div class="f"><label for="kw" id="kwl">Teho (kW)</label><input id="kw" type="number" inputmode="numeric" min="1" max="1500"></div>
+<div class="f"><label for="reg">Ensirekisteröintipäivä</label><input id="reg" type="date"><small>Päättää, mitä veroprosenttitaulukkoa käytetään.</small></div>
+</div>
+<div class="row2">
+<div class="f"><label for="km" id="kml">Ajokilometrit</label><input id="km" type="number" inputmode="numeric" min="0" max="1500000"></div>
+<div class="f"><label for="co2">CO2 (g/km)</label><input id="co2" type="number" inputmode="numeric" min="0" max="600"><small>Voi jättää tyhjäksi: haetaan Traficomin rekisteristä merkin, mallin ja tehon mukaan.</small></div>
+</div>
+<div class="f"><label for="vprice">Verohallinnon hintatieto (€), valinnainen</label><input id="vprice" type="number" inputmode="numeric" min="0" max="2000000"><small>Tarkin lähde: hae yleinen myyntihinta <a href="https://avoinomavero.vero.fi/?Language=FIN&amp;Link=CarTaxAdvancedCalculator" target="_blank" rel="noopener">Verohallinnon hintatietopalvelusta</a> (yli 2 v vanhat autot, kuluvan päivän hinta). Kun annat sen, sitä käytetään verotusarvona ja laskurin oma arvio näytetään vertailuna.</small></div>
+<div class="f"><label for="price">Ilmoitushinta Suomessa (€), valinnainen vertailu</label><input id="price" type="number" inputmode="numeric" min="0" max="2000000"><small>Päätulos on arvio Verohallinnon mallin verotusarvosta, koska Vero ei käytä ilmoitushintaa sellaisenaan. Hinta näytetään vertailuna (vero = hinta × veroprosentti, kuten Verohallinnon laskurissa). Ilman merkkiä ja mallia laskuri käyttää vain annettua hintaa.</small></div>
+<div class="row2">
+<div class="f"><label for="ptype">Voimansiirto</label><select id="ptype"><option value="">Ei tiedossa</option><option value="B">Bensiini (myös mild-hybridi)</option><option value="D">Diesel (myös mild-hybridi)</option><option value="HB">Vain hybridi (bensiini)</option><option value="HD">Vain hybridi (diesel)</option><option value="PB">Lataushybridi (bensiini)</option><option value="PD">Lataushybridi (diesel)</option></select><small>Hybrideillä rekisterin kW on polttomoottorin teho, joten valinta tarkentaa CO2-hakua.</small></div>
+<div class="f"><label for="basis">CO2-arvon peruste (käsin syötetylle)</label><select id="basis"><option value="wltp">WLTP</option><option value="nedc">NEDC</option></select></div>
+<div class="f"><label>&nbsp;</label><label class="chk" style="text-transform:none;letter-spacing:0;font-size:15px;color:inherit"><input id="ev" type="checkbox"> Täyssähkö- tai vetyauto</label></div>
+</div>
+<details class="f" id="estbox"><summary style="cursor:pointer;font-weight:600">Moottorin tiedot (iskutilavuus ym.): tarvitaan, jos CO2 ei löydy (esim. USA-auto)</summary>
+<div class="row2" style="margin-top:8px">
+<div class="f"><label for="cc">Iskutilavuus (cm³)</label><input id="cc" type="number" inputmode="numeric" min="500" max="9000"><small>5,0 l = noin 5000.</small></div>
+<div class="f"><label for="cyl">Sylinterit</label><input id="cyl" type="number" inputmode="numeric" min="2" max="12"></div>
+</div>
+<div class="row2">
+<div class="f"><label for="mass" id="massl">Omamassa (kg, valinnainen)</label><input id="mass" type="number" inputmode="numeric" min="500" max="4000"><small>Tarkentaa arviota. 1 lb = 0,454 kg.</small></div>
+<div class="f"><label>&nbsp;</label><label class="chk" style="text-transform:none;letter-spacing:0;font-size:15px;color:inherit"><input id="turbo" type="checkbox"> Turbo tai kompressori</label></div>
+</div>
+<small>Teho (kW) täytetään ylös. Hevosvoimat (hp) × 0,7457 = kW.</small>
+<div class="row2"><div class="f"><label for="mpg">EPA yhdistetty kulutus (mpg)</label><input id="mpg" type="number" inputmode="decimal" min="5" max="150" step="0.1"><small>USA-auton (CARB) ikkunatarrasta tai fueleconomy.gov:stä, "Combined MPG". Kun annettu ja CO2-kenttä on tyhjä, CO2 lasketaan tästä.</small></div></div>
+<div class="row2"><div class="f"><label for="gmass">Kokonaismassa (kg)</label><input id="gmass" type="number" inputmode="numeric" min="500" max="5000"><small>Rekisteriotteen suurin sallittu kokonaismassa (USA: GVWR, 1 lb = 0,454 kg).</small></div>
+<div class="chk"><input id="noco2" type="checkbox"><label for="noco2">CO2-arvoa ei ole auton asiakirjoissa (Vero laskee sen kokonaismassasta)</label></div></div>
+</details>
+<div class="actions"><button class="btn p" type="submit">Laske autovero</button><button class="btn" type="button" id="sample">Esimerkki</button><button class="btn" type="reset" id="clr">Tyhjennä</button></div>
+</form>
+<section class="card" aria-live="polite" id="out"><div class="empty">Täytä tiedot ja paina "Laske autovero".</div></section>
+</div>
+<p class="sub" style="font-size:13px">Arvio ei ole sitova. Verohallinto määrää veron päätöksessään, ja siinä käytetty verotusarvo voi poiketa arviosta. Veroprosentti on taulukosta, ja se on tarkka, kun CO2-arvo ja ensirekisteröintipäivä ovat oikein.</p>
+</div>
