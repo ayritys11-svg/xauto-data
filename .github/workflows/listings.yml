@@ -1,0 +1,28 @@
+name: Autoilmoitukset
+on:
+  schedule:
+    - cron: "17 2 * * *"   # joka yö klo 4.17 Suomen aikaa
+  workflow_dispatch: {}      # käsin: Actions -> Autoilmoitukset -> Run workflow
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Hae ja laske ilmoitukset
+        env:
+          AUTODEV_KEY: ${{ secrets.AUTODEV_KEY }}
+        run: node scripts/fetch-listings.mjs
+      - name: Tallenna
+        run: |
+          git config user.name "xauto-bot"
+          git config user.email "xauto-bot@users.noreply.github.com"
+          git add data/listings.json
+          git diff --cached --quiet || git commit -m "Ilmoitukset päivitetty $(date -u +%F)"
+          git push
+      - name: Tyhjennä jsDelivr-välimuisti
+        run: curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/data/listings.json" || true
