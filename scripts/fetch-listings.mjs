@@ -161,7 +161,7 @@ function calc(L, fx) {
   }
 
   // 2) Verotusarvo (paras malli-nimi = pienin hajonta)
-  let best = null;
+  let best = null; // muuttuva: ristiintarkistus voi vaihtaa arvion
   for (const md of models) {
     const e = M.estimate({ reg, co2: co2 || 0, wltp: W, ev: !!F.ev, make: mk, model: md, kw, km, fu: F.fu });
     if (e && !e.error && e.V && (!best || e.s < best.s)) best = Object.assign(e, { md });
@@ -179,9 +179,11 @@ function calc(L, fx) {
     const alt = M.estimate({ reg, co2: F.ev ? 100 : (co2 || 0), wltp: W, ev: false, make: mk, model: best.md, kw: 0, km, fu: F.fu });
     if (alt && alt.V && (best.V / alt.V > 1.5 || best.V / alt.V < 0.67)) {
       clash = true;
-      warn.push("Verotusarvo poikkeaa paljon saman mallin muista päätöksistä (" + Math.round(alt.V / 100) * 100 + " €). Moottoriversio varmistetaan VIN-numerosta tarjousvaiheessa.");
+      warn.push("Tehon perusteella löytynyt verotusarvo (" + Math.round(best.V / 100) * 100 + " €) poikkesi paljon saman mallin muista päätöksistä, joten käytetään koko mallin päätöksiin perustuvaa arviota. Moottoriversio varmistetaan VIN-numerosta tarjousvaiheessa.");
+      best = Object.assign(alt, { md: best.md });
     }
   }
+
   const V = best.V, VLo = best.VLow, VHi = best.VHigh;
 
   // 3) Valmiit autoveropäätökset samasta autosta (vain veroprosentin varmistus)
@@ -212,7 +214,8 @@ function calc(L, fx) {
   const saving = V - totMid;
   const sPct = best.s;
   const outside = (best.warnings || []).some((w) => /vanhempi kuin|suuremmat kuin|ulkopuolelle/.test(w));
-  const conf = F.phev || sPct > 0.15 || !kw || best.w3 || outside || clash || KG.src === "traficom-muu-vuosi" ? "matala" : sPct > 0.07 ? "keskitaso" : "korkea";
+  const conf = F.phev || sPct > 0.15 || !kw || best.w3 || outside || clash || KG.src === "traficom-muu-vuosi" ? "matala" : sPct > 0.07 || F.ev ? "keskitaso" : "korkea";
+  if (F.ev) warn.push("Sähköauton versio (akku ja teho) vaikuttaa verotusarvoon paljon. Se varmistetaan VIN-numerosta tarjousvaiheessa.");
   if (!kw && !F.ev) warn.push("Moottorin tehoa ei löytynyt Traficomin rekisteristä. Verotusarvo on arvioitu koko mallin päätöksistä, joten vaihteluväli on leveä.");
   if (best.warnings) warn.push(...best.warnings.filter((w) => !/tulkittiin/.test(w)));
 
