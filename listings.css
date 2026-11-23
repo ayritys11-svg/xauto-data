@@ -204,3 +204,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .sortbox{background:var(--surface);border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .xl .sortbox label{font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap}
 .xl .sortbox select{flex:1;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0 10px;width:100%;min-width:0;font-size:15px;color:var(--fg)}
+
+/* iOS zoomaa automaattisesti, jos kentän fontti on alle 16 px: kaikki kentät 16 px */
+.xl input:not([type=checkbox]),.xl select,.xl textarea,.xh input:not([type=checkbox]),.xh select{font-size:16px!important}
