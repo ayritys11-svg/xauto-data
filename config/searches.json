@@ -203,6 +203,27 @@
       "year": "2021-2024",
       "price": "25000-55000",
       "pages": 1
+    },
+    {
+      "make": "Porsche",
+      "model": "Cayenne",
+      "year": "2019-2023",
+      "price": "20000-90000",
+      "pages": 1
+    },
+    {
+      "make": "Land Rover",
+      "model": "Range Rover Sport",
+      "year": "2018-2023",
+      "price": "15000-90000",
+      "pages": 1
+    },
+    {
+      "make": "Polestar",
+      "model": "2",
+      "year": "2021-2024",
+      "price": "12000-45000",
+      "pages": 1
     }
   ]
 }

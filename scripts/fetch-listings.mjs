@@ -354,7 +354,14 @@ for (const L of raw) {
   cars.push(c);
 }
 cars.sort((a, b) => (b.saving ?? -1e9) - (a.saving ?? -1e9));
-const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, skipped, common, searches: counts, cars };
+// Koostumus: halvempia vähintään tavoiteosuus, loput harvinaisimmista
+let total = cars.length;
+if (!DISCOVER && S.halvempienOsuus > 0) {
+  const good = cars.filter((c) => c.saving > 0), rest = cars.filter((c) => !(c.saving > 0)).sort((a, b) => a.fleet - b.fleet || a.total.mid - b.total.mid);
+  const maxRest = Math.floor(good.length * (1 - S.halvempienOsuus) / S.halvempienOsuus);
+  cars.length = 0; cars.push(...good, ...rest.slice(0, maxRest));
+}
+const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, scanned: total, skipped, common, searches: counts, cars };
 if (DISCOVER) {
   const by = {};
   for (const c of cars) { const k = c.make + " " + c.model; (by[k] = by[k] || []).push(c); }

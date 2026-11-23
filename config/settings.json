@@ -36,5 +36,7 @@
   ],
   "_osavaltiot": "Vain näiden osavaltioiden autot haetaan ja näytetään (lyhenteet). Tyhjä lista = kaikki.",
   "yleinenRaja": 3000,
-  "_yleinenRaja": "Malli on Suomessa yleinen, jos sitä on liikenteessä vähintään näin monta (Traficom). Yleiset mallit näytetään vain, jos ne ovat halvempia kuin Suomessa."
+  "_yleinenRaja": "Malli on Suomessa yleinen, jos sitä on liikenteessä vähintään näin monta (Traficom). Yleiset mallit näytetään vain, jos ne ovat halvempia kuin Suomessa.",
+  "halvempienOsuus": 0.5,
+  "_halvempienOsuus": "Tavoiteosuus Suomen hintaa halvemmille autoille. Muita autoja näytetään enintään niin monta, että tämä osuus täyttyy (harvinaisimmat ensin). 0 = ei rajausta."
 }
