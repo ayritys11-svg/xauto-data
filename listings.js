@@ -190,7 +190,7 @@
   }
   window.addEventListener("hashchange", route);
   root.innerHTML = '<div class="empty">Ladataan autoja…</div>';
-  fetch(base + "data/listings.json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+  fetch(base + "data/listings.json?t=" + Math.floor(Date.now() / 60000), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(function (j) { DATA = j; route(); })
     .catch(function () { root.innerHTML = '<div class="empty">Ilmoitusten lataus epäonnistui. Lataa sivu uudelleen.</div>'; });
 })();
