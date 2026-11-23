@@ -124,3 +124,6 @@ font-family:var(--font-body);color:var(--fg);font-size:15px;line-height:1.5;widt
 .xl .facts .copy.ok{background:var(--good)}
 .xl .facts .copy svg{width:16px;height:16px}
 .xl .facts .copy span{color:#fff!important;font-size:13px!important;text-transform:none!important;letter-spacing:0!important;font-weight:600!important}
+.xl .facts .frow{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:480px){.xl .facts .frow{grid-template-columns:minmax(0,1fr)}}
+.xl .facts{grid-auto-flow:row dense!important}

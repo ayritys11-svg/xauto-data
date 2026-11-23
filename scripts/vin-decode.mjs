@@ -57,7 +57,7 @@ export function specFi(d, c) {
   if (d.ElectrificationLevel) add("Sähköistys", T(d.ElectrificationLevel, [[/BEV/i, "Täyssähkö"], [/PHEV/i, "Lataushybridi"], [/Strong HEV|HEV/i, "Hybridi"], [/Mild/i, "Kevythybridi"]]));
   if (d.BatteryKWh) add("Akku", String(+(+d.BatteryKWh).toFixed(1)).replace(".", ",") + " kWh");
   if (d.DriveType) add("Veto", T(d.DriveType, DRIVE));
-  if (d.TransmissionStyle || d.TransmissionSpeeds) add("Vaihteisto", (/Manual/i.test(d.TransmissionStyle || "") ? "Manuaali" : "Automaatti") + (d.TransmissionSpeeds ? ", " + d.TransmissionSpeeds + " vaihdetta" : ""));
+  if (d.TransmissionStyle || d.TransmissionSpeeds) add("Vaihteisto", (/Manual/i.test(d.TransmissionStyle || "") ? "Manuaali" : "Automaatti") + (d.TransmissionSpeeds ? (+d.TransmissionSpeeds === 1 ? ", yksi vaihde" : ", " + d.TransmissionSpeeds + " vaihdetta") : ""));
   if (d.FuelTypePrimary) add("Polttoaine", T(d.FuelTypePrimary, FUEL) + (d.FuelTypeSecondary ? " + " + T(d.FuelTypeSecondary, FUEL).toLowerCase() : ""));
   // Sähköauto: virallinen sähkönkulutus ja toimintamatka. Kaupunki- ja maantiearvo vain jos ne ovat virallisissa tiedoissa.
   if (c && c.econs) {
