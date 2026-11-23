@@ -127,3 +127,6 @@ font-family:var(--font-body);color:var(--fg);font-size:15px;line-height:1.5;widt
 .xl .facts .frow{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media(max-width:480px){.xl .facts .frow{grid-template-columns:minmax(0,1fr)}}
 .xl .facts{grid-auto-flow:row dense!important}
+.xl .car .row{flex-wrap:nowrap!important;align-items:center!important}
+.xl .car .row span{white-space:normal!important}
+.xl .car .row b{margin-left:auto!important;white-space:nowrap!important}
