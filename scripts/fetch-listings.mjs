@@ -44,6 +44,28 @@ function fleetCount(mk, models) {
 // Tarkempi liikennemäärä: sama malli, korimalli, käyttövoima ja moottoriversio (kW), lähivuosimallit
 const FD = JSON.parse(fs.readFileSync(path.join(ROOT, "data/fleet_detail.json"), "utf8")).d;
 const BODY_CODES = { "Sedan": ["AA"], "Viistoperä": ["AB"], "Farmari": ["AC"], "Coupé": ["AD"], "Avoauto": ["AE"], "Maastoauto (SUV)": ["AC", "AF"], "Tila-auto": ["AF"], "Avolava": ["BA", "BB"], "Pakettiauto": ["BB", "BC"] };
+// Korimallit (sukupolvet) USA:n vuosimalleina [alku, loppu]. Liikennemäärä lasketaan vain samasta korimallista.
+const GEN = {
+  "PORSCHE|CAYENNE": [[2011, 2018], [2019, 2099]], "LAND ROVER|RANGE ROVER SPORT": [[2014, 2022], [2023, 2099]],
+  "CHEVROLET|CORVETTE": [[2005, 2013], [2014, 2019], [2020, 2099]], "POLESTAR|2": [[2020, 2099]], "AUDI|Q7": [[2007, 2015], [2017, 2099]],
+  "CHEVROLET|CAMARO": [[2010, 2015], [2016, 2024]], "FORD|MUSTANG": [[2005, 2014], [2015, 2023], [2024, 2099]],
+  "LAND ROVER|RANGE ROVER": [[2013, 2021], [2022, 2099]], "LAND ROVER|RANGE ROVER VELAR": [[2018, 2099]], "BMW|X7": [[2019, 2099]],
+  "MERCEDES-BENZ|GLS": [[2017, 2019], [2020, 2099]], "AUDI|Q8": [[2019, 2099]], "VOLVO|XC90": [[2003, 2014], [2016, 2099]],
+  "GENESIS|GV80": [[2021, 2099]], "LINCOLN|AVIATOR": [[2020, 2099]], "RAM|1500": [[2009, 2018], [2019, 2099]],
+  "FORD|F-150": [[2009, 2014], [2015, 2020], [2021, 2099]], "CHEVROLET|SILVERADO 1500": [[2014, 2018], [2019, 2099]],
+  "GMC|SIERRA 1500": [[2014, 2018], [2019, 2099]], "TOYOTA|TUNDRA": [[2007, 2021], [2022, 2099]], "TOYOTA|TACOMA": [[2005, 2015], [2016, 2023], [2024, 2099]],
+  "JEEP|GLADIATOR": [[2020, 2099]], "FORD|MAVERICK": [[2022, 2099]], "CADILLAC|ESCALADE": [[2015, 2020], [2021, 2099]],
+  "CHEVROLET|TAHOE": [[2015, 2020], [2021, 2099]], "CHEVROLET|SUBURBAN": [[2015, 2020], [2021, 2099]], "GMC|YUKON": [[2015, 2020], [2021, 2099]],
+  "LINCOLN|NAVIGATOR": [[2007, 2017], [2018, 2099]], "FORD|EXPEDITION": [[2007, 2017], [2018, 2024], [2025, 2099]],
+  "TOYOTA|SEQUOIA": [[2008, 2022], [2023, 2099]], "TOYOTA|4RUNNER": [[2010, 2024], [2025, 2099]], "LEXUS|GX 460": [[2010, 2023]],
+  "DODGE|DURANGO": [[2011, 2099]], "FORD|BRONCO": [[2021, 2099]], "CADILLAC|CT5": [[2020, 2099]],
+  "DODGE|CHARGER": [[2011, 2023], [2024, 2099]], "DODGE|CHALLENGER": [[2008, 2023]], "JEEP|WRANGLER": [[2007, 2017], [2018, 2099]],
+  "TOYOTA|HIGHLANDER HYBRID": [[2014, 2019], [2020, 2099]], "TOYOTA|SIENNA": [[2011, 2020], [2021, 2099]]
+};
+function genOf(c) {
+  const g = GEN[String(c.make).toUpperCase() + "|" + String(c.model).toUpperCase()], y = +c.year;
+  return g ? g.find((r) => y >= r[0] && y <= r[1]) || null : null;
+}
 function fleetDetail(c) {
   const z = (x) => String(x).toUpperCase().replace(/[\s\-\.\/]/g, "");
   const mk = String(c.make || "").toUpperCase(), year = +c.year || 0;
@@ -58,7 +80,10 @@ function fleetDetail(c) {
   if (fu !== "04") { const hy = /hybrid/i.test(el); rows = rows.filter((r) => (r[4] > 0) === hy); }
   const bc = BODY_CODES[c.body];
   if (bc) rows = rows.filter((r) => !r[2] || bc.includes(r[2]));
-  if (year) rows = rows.filter((r) => r[0] && Math.abs(r[0] - year) <= 2);
+  // sama korimalli (sukupolvi): käyttöönottovuosi korimallin vuosimallien sisällä (±1 v. vuosimallin ja käyttöönoton eron vuoksi;
+  // rajavuosien autot erotellaan moottoritehon perusteella). Tuntemattomalla mallilla ei vuosirajausta.
+  const g = genOf(c);
+  if (g) rows = rows.filter((r) => r[0] && r[0] >= g[0] - 1 && r[0] <= g[1] + 1);
   const kw = c.autovero && c.autovero.kw;
   if (kw && fu !== "04") {
     const ks = rows.filter((r) => r[1] > 0);
@@ -482,7 +507,7 @@ if (!MOCK && !DISCOVER) {
 }
 // Liikennemäärä tarkemmin: sama malli, korimalli, moottoriversio ja lähivuosimallit (koko mallin luku talteen)
 if (!MOCK && !DISCOVER) {
-  for (const c of cars) { c.fleetModel = c.fleetModel != null ? c.fleetModel : c.fleet; c.fleet = fleetDetail(c); }
+  for (const c of cars) { c.fleetModel = c.fleetModel != null ? c.fleetModel : c.fleet; c.fleet = fleetDetail(c); c.gen = genOf(c); }
 }
 const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, keptFromPrevious: kept, failedSearches: [...FAILED], scanned: total, limit: LIMIT, skipped, common, searches: counts, cars };
 if (DISCOVER) {
