@@ -222,3 +222,31 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 
 /* Puhelimessa kortit ovat yhdessä sarakkeessa: ei tasauskorkeutta otsikolle ja tiedoille, ettei yksirivisen otsikon alle jää tyhjää */
 @media (max-width:640px){.xl .car h3,.xl .car .spec{min-height:0!important}}
+
+/* Puhelimessa kaksi ilmoitusta vierekkäin: tiiviimpi kortti */
+@media (max-width:640px){
+  .xl .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px 10px!important}
+  .xl .car{padding:9px!important;gap:6px!important;border-radius:12px!important}
+  .xl .car h3{font-size:14.5px!important;line-height:1.22!important;min-height:2.44em!important}
+  .xl .car .spec{font-size:11.5px!important;line-height:1.35!important;min-height:2.7em!important}
+  .xl .car .ph{border-radius:8px!important}
+  .xl .car .price{gap:6px!important;align-items:flex-start!important;min-height:0!important}
+  .xl .car .price b{font-size:14.5px!important;white-space:normal!important;line-height:1.2}
+  .xl .car .fav{width:30px;height:30px}
+  .xl .car .fav svg{width:17px;height:17px}
+  .xl .car .badges{display:flex;flex-wrap:wrap;gap:4px}
+  .xl .car .sv{font-size:11px;padding:2px 6px;white-space:normal}
+  .xl .car .row{flex-direction:column!important;align-items:flex-start!important;gap:1px!important;font-size:11.5px!important;padding-bottom:3px}
+  .xl .car .row b{margin-left:0!important;white-space:normal!important;text-align:left!important;font-size:12px}
+  .xl .car .conf{font-size:10.5px;line-height:1.3;align-items:flex-start}
+  .xl .car .conf i{flex:none;margin-top:3px}
+}
+/* Tähti kuvan kulmassa vain kahden sarakkeen puhelinnäkymässä; muuten hinnan vieressä */
+.xl .phw{position:relative}
+.xl .fav-ph{display:none!important}
+@media (max-width:640px){
+  .xl .fav-ph{display:inline-flex!important;position:absolute;top:6px;right:6px;width:32px!important;height:32px!important;background:rgba(255,255,255,.92)!important;border-color:transparent!important;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+  .xl .fav-ph[aria-pressed="true"]{background:#FFF8E6!important}
+  .xl .car .price .fav{display:none}
+  .xl .car .price b{white-space:nowrap!important;font-size:14px!important}
+}
