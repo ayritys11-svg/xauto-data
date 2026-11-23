@@ -93,7 +93,7 @@
   function detail(c) {
     var R = c.rows, A = c.autovero;
     var s1 =
-      line("Auton hinta", fmt(c.priceUsd) + " $, kurssi 1 € = " + String(c.fx).replace(".", ",") + " $", eur(R.car)) +
+      line("Auton hinta", "", eur(R.car)) +
       line("Kuljetus " + (origin(c).indexOf("KANADA") === 0 ? "Kanadasta" : "USA:sta") + " Suomeen", "Rahti ja vakuutus Suomen satamaan" + (c.city || c.state ? ", lähtö " + esc([c.city, c.state].filter(Boolean).join(", ")) : ""), rng(R.ship, R.shipHi), "arvio") +
       line("Tulli 0 – 10 %", R.usOrigin ? "USA:ssa valmistettu (VIN alkaa " + esc(c.vin.charAt(0)) + "): 0 % alkuperätodistuksella (EU 2026/1455), muuten 10 %" : "Valmistettu muualla kuin USA:ssa (VIN alkaa " + esc(c.vin.charAt(0)) + "): 10 %", rng(R.duty[0], R.duty[1])) +
       line("Huolinta ja satamamaksut", "Tullaus ja käsittely", eur(R.huolinta), "arvio") +
