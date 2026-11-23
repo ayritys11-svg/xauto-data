@@ -240,7 +240,12 @@ function calc(L, fx) {
 
   // 1) CO2 ja veroprosentti
   let cons = null, co2 = null, co2lo = null, co2hi = null, co2src = "", p = 0, pSrc = "", pA = [0, 0];
-  if (F.ev) { p = 0; pSrc = "täyssähköauto 0 %"; co2 = 0; }
+  if (F.ev) {
+    // Täyssähköauto: ei autoveroa, jos otettu käyttöön 1.10.2021 tai myöhemmin. Sitä ennen 0 g/km -auton vero oli 2,7 %.
+    const r0 = M.rate(reg, 0, W, false);
+    p = r0 && r0.p != null ? r0.p : 0; pSrc = p === 0 ? "täyssähköauto, ei autoveroa (käyttöönotto 1.10.2021 jälkeen)" : r0.src; co2 = 0;
+    if (p > 0) warn.push("Auto on todennäköisesti otettu käyttöön ennen 1.10.2021, jolloin täyssähköautonkin autovero on " + String(p).replace(".", ",") + " %. Jos käyttöönotto on 1.10.2021 tai myöhemmin, autoveroa ei makseta.");
+  }
   else {
     const e = epaMatch(mk, v, F, cc, year);
     if (e) { co2 = e.v; co2lo = e.lo; co2hi = e.hi; co2src = e.src; cons = e.cons;
@@ -283,7 +288,7 @@ function calc(L, fx) {
     const near = [...cand].filter((w) => Math.abs(w - kw) / kw <= 0.12).sort((a, b) => Math.abs(a - kw) - Math.abs(b - kw));
     for (const w of near) {
       const e = M.estimate({ reg, co2: F.ev ? 100 : (co2 || 0), wltp: W, ev: false, make: mk, model: best.md, kw: w, km, fu: F.fu });
-      if (e && !e.error && e.V && (e.n || 0) >= 10) { best = Object.assign(e, { md: best.md }); warn.push("Tästä tehoversiosta (" + kw + " kW) on vähän verotuspäätöksiä, joten verotusarvo on laskettu lähimmästä yleisestä versiosta (" + w + " kW)."); break; }
+      if (e && !e.error && e.V && (e.n || 0) >= 10) { best = Object.assign(e, { md: best.md }); warn.push(F.ev && p === 0 ? "Vertailuhinta Suomessa on laskettu lähimmästä yleisestä versiosta (" + w + " kW), koska tästä tehoversiosta (" + kw + " kW) on vähän tietoa." : "Tästä tehoversiosta (" + kw + " kW) on vähän verotuspäätöksiä, joten verotusarvo on laskettu lähimmästä yleisestä versiosta (" + w + " kW)."); break; }
     }
   }
   if (!best) {
@@ -339,7 +344,7 @@ function calc(L, fx) {
   const sPct = best.s;
   const outside = (best.warnings || []).some((w) => /vanhempi kuin|suuremmat kuin|ulkopuolelle/.test(w));
   const conf = noCompare || F.phev || sPct > 0.15 || !kw || best.w3 || outside || clash || KG.src === "traficom-muu-vuosi" || KG.src === "vero-vuosimalli-kaikki" ? "matala" : sPct > 0.07 || F.ev ? "keskitaso" : "korkea";
-  if (F.ev) warn.push("Sähköauton versio (akku ja teho) vaikuttaa verotusarvoon paljon. Se varmistetaan VIN-numerosta tarjousvaiheessa.");
+  if (F.ev && p === 0) warn.push("Täyssähköautosta ei makseta autoveroa. Verotusarvoa käytetään tässä vain vastaavan auton hinnan arvioimiseen Suomessa.");
   if (!kw && !F.ev) warn.push("Moottorin tehoa ei löytynyt Traficomin rekisteristä. Verotusarvo on arvioitu koko mallin päätöksistä, joten vaihteluväli on leveä.");
   if (best.warnings) warn.push(...best.warnings.filter((w) => !/tulkittiin/.test(w)));
 
