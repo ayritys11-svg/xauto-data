@@ -16,3 +16,7 @@
 .xh .tiles{display:none!important}
 .xh .type svg{width:96px!important;height:36px!important;color:#15181C}
 .xh .type[aria-pressed="true"] svg{color:var(--accent)}
+/* napautus reagoi heti (ei tuplanapautus-zoomin odotusta) */
+.xh button,.xh a,.xh select,.xh input,.xl button,.xl a,.xl select,.xl input,.vdd-o,.vrf,.vrs button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.xh .type{transition:none!important}
+.xh .type:active{background:color-mix(in srgb,var(--accent) 12%,transparent)}
