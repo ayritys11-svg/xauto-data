@@ -59,6 +59,14 @@ export function specFi(d, c) {
   if (d.DriveType) add("Veto", T(d.DriveType, DRIVE));
   if (d.TransmissionStyle || d.TransmissionSpeeds) add("Vaihteisto", (/Manual/i.test(d.TransmissionStyle || "") ? "Manuaali" : "Automaatti") + (d.TransmissionSpeeds ? ", " + d.TransmissionSpeeds + " vaihdetta" : ""));
   if (d.FuelTypePrimary) add("Polttoaine", T(d.FuelTypePrimary, FUEL) + (d.FuelTypeSecondary ? " + " + T(d.FuelTypeSecondary, FUEL).toLowerCase() : ""));
+  // Sähköauto: virallinen sähkönkulutus ja toimintamatka. Kaupunki- ja maantiearvo vain jos ne ovat virallisissa tiedoissa.
+  if (c && c.econs) {
+    const fx = (x) => String(x).replace(".", ","), rg = (p, u) => p ? (p[0] === p[1] ? fx(p[0]) : fx(p[0]) + " – " + fx(p[1])) + u : null;
+    add("Sähkönkulutus kaupungissa (EPA)", rg(c.econs.city, " kWh/100 km"));
+    add("Sähkönkulutus maantiellä (EPA)", rg(c.econs.hwy, " kWh/100 km"));
+    add("Keskikulutus (EPA)", rg(c.econs.comb, " kWh/100 km"));
+    add("Toimintamatka (EPA)", rg(c.econs.range, " km"));
+  }
   // CO2 ja kulutus: jos EPA:lla on useita versioita eri arvoilla, näytetään vaihteluväli eikä keskiarvoa
   if (c && c.co2 > 0) {
     const lo = c.co2lo || c.co2, hi = c.co2hi || c.co2, f = /Diesel/.test(c.fuel || "") ? 26.5 : 23.2, l = (x) => (x / f).toFixed(1).replace(".", ",");

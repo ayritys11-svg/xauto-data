@@ -200,6 +200,28 @@ function epaMatch(mk, v, F, cc, year) {
   return { cons, v: mean, lo: vs[0], hi: vs[vs.length - 1], n: vs.length, src: "EPA " + year + ": " + [...new Set(R.map((r) => r.nm))].join(", ") + (vs.length > 1 ? " (" + vs.length + " versiota, " + vs[0] + " – " + vs[vs.length - 1] + " g/km)" : "") };
 }
 
+// Sähköautojen virallinen kulutus ja toimintamatka (EPA)
+const EPAEV = JSON.parse(fs.readFileSync(path.join(ROOT, "data/epa_ev.json"), "utf8")).d;
+function evCons(mk, v, year) {
+  const D = EPAEV[mk]; if (!D) return null;
+  const NZ2 = (x) => String(x || "").toUpperCase().replace(/[\s\-\(\)]/g, "");
+  const md = NZ2(v.model), words = (up(v.trim) + " " + up(v.drivetrain)).split(/[\s\/,]+/).filter((w) => w.length > 2);
+  const awd = /AWD|4WD|DUAL|ALL/.test(up(v.drivetrain) + " " + up(v.trim));
+  let R = [];
+  for (const k of Object.keys(D)) {
+    if (NZ2(k).indexOf(md) !== 0) continue;
+    for (const r of D[k]) {
+      if (r[0] !== year) continue;
+      if (/All-Wheel|4-Wheel/.test(r[1]) !== awd) continue;
+      R.push({ k, r, sc: words.filter((w) => k.indexOf(w) >= 0).length });
+    }
+  }
+  if (!R.length) return null;
+  const best = Math.max(...R.map((x) => x.sc)); R = R.filter((x) => x.sc === best);
+  const span = (i) => { const x = R.map((o) => o.r[i]).filter((y) => y > 0); return x.length ? [Math.min(...x), Math.max(...x)] : null; };
+  return { city: span(2), hwy: span(3), comb: span(4), range: span(5) };
+}
+
 function calc(L, fx) {
   const v = L.vehicle || {}, rl = L.retailListing || {};
   const vin = v.vin || L.vin;
@@ -323,7 +345,7 @@ function calc(L, fx) {
     },
     autovero: {
       V: r10(V), VLo: r10(VLo), VHi: r10(VHi), s: +sPct.toFixed(3), n: best.n, level: best.level,
-      cons, kw, kwSrc: KG.src, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
+      cons, econs: F.ev ? evCons(mk, v, year) : null, kw, kwSrc: KG.src, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
       a: r0(taxA), same, b: taxB != null ? r0(taxB) : null, avg: r0(tax)
     },
     total: { lo: r100(totLo), hi: r100(totHi), mid: r100(totMid) },
@@ -400,7 +422,7 @@ if (!MOCK && !DISCOVER) {
   const vc = VC;
   for (const c of cars) {
     const d = vc[c.vin] || {};
-    c.spec = specFi(d, { co2: c.autovero && c.autovero.co2, co2lo: c.autovero && c.autovero.co2lo, co2hi: c.autovero && c.autovero.co2hi, cons: c.autovero && c.autovero.cons, fuel: c.fuel });
+    c.spec = specFi(d, { co2: c.autovero && c.autovero.co2, co2lo: c.autovero && c.autovero.co2lo, co2hi: c.autovero && c.autovero.co2hi, cons: c.autovero && c.autovero.cons, econs: c.autovero && c.autovero.econs, fuel: c.fuel });
     if (d.EngineHP && !c.hp) c.hp = Math.round(+d.EngineHP);
     if (d.BodyClass) c.body = (c.spec.find((x) => x[0] === "Korimalli") || [])[1];
   }
