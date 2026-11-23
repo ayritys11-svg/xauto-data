@@ -37,7 +37,7 @@
     bt.addEventListener("click",function(){ if(!window.VeloRange){return} window.VeloRange({title:lab,unit:u,min:R[k1],max:R[k2],onOk:function(a,b){ R[k1]=a; R[k2]=b; upd(); count(); }}); });
     upd(); return {w:bt,upd:upd};
   }
-  var PR=rbtn("pmin","pmax","Hinta Suomessa","€"); sel[2].parentNode.replaceChild(PR.w,sel[2]);
+  var PR=rbtn("pmin","pmax","Yht. hinta","€"); sel[2].parentNode.replaceChild(PR.w,sel[2]);
 
   /* lisähakuehdot */
   var X={
