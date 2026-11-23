@@ -400,7 +400,6 @@ function calc(L, fx) {
   const sPct = best.s;
   const outside = (best.warnings || []).some((w) => /vanhempi kuin|suuremmat kuin|ulkopuolelle/.test(w));
   const conf = noCompare || F.phev || sPct > 0.15 || !kw || best.w3 || outside || clash || KG.src === "traficom-muu-vuosi" || KG.src === "vero-vuosimalli-kaikki" ? "matala" : sPct > 0.07 || F.ev ? "keskitaso" : "korkea";
-  if (F.ev && p === 0) warn.push("Täyssähköautosta ei makseta autoveroa. Auton arvoa Suomessa käytetään tässä vain vastaavan auton hinnan arvioimiseen.");
   if (!kw && !F.ev) warn.push("Moottorin tehoa ei löytynyt Traficomin rekisteristä. Auton arvo Suomessa on arvioitu koko mallin päätöksistä, joten vaihteluväli on leveä.");
   if (best.warnings) warn.push(...best.warnings.filter((w) => !/tulkittiin/.test(w)));
 
