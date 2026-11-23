@@ -81,6 +81,7 @@
     var O = {}; ["make", "model", "trim", "body", "fuel", "gear", "drive", "loc", "color", "doors", "steer"].forEach(function (k) { O[k] = {}; });
     var val = { make: function (c) { return c.make; }, model: modelName, trim: function (c) { return c.trim; }, body: function (c) { return c.body; }, fuel: function (c) { return c.fuel; }, gear: function (c) { return gear(c.transmission); }, drive: function (c) { return driveFi(c.drivetrain); }, loc: locFi, color: function (c) { return colorFi(c.color); }, doors: doorsOf, steer: steerOf };
     Object.keys(O).forEach(function (k) { cars.forEach(function (c) { var x = val[k](c); if (x) { if (pass(c, k)) O[k][x] = 1; } }); });
+    ["Musta", "Valkoinen", "Harmaa", "Hopea", "Sininen", "Punainen", "Vihreä", "Ruskea", "Beige", "Keltainen", "Oranssi"].forEach(function (k) { O.color[k] = 1; }); /* värit aina valittavissa */
     O.steer["Vasemmalta ohjattava"] = 1; O.steer["Oikealta ohjattava"] = 1; // molemmat aina valittavissa (Japanin autot oikealta ohjattavia)
     var v = cars.filter(function (c) { return pass(c); });
     v.sort(S[F.sort] || S.save);
