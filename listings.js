@@ -47,6 +47,7 @@
   }
   // Suomen hintataso vaihteluvälinä (verotusarvon 80 %:n väli, pyöristys 100 €)
   function fiR(c) { var A = c.autovero || {}, lo = A.VLo, hi = A.VHi; if (!lo || !hi) return eur(c.fiPrice); return rng(Math.round(lo / 100) * 100, Math.round(hi / 100) * 100); }
+  function gear(t) { return !t ? "" : /MANUAL|MT\b|STICK/i.test(t) ? "Manuaali" : "Automaatti"; }
   function ok(c) { return c.sure === undefined ? c.saving > 0 : c.sure; }
   function keep() { try { localStorage.setItem("xl-f", JSON.stringify(F)); } catch (e) {} }
   function card(c) {
@@ -79,7 +80,7 @@
           line("b) Valmiit autoveropäätökset", "Samasta autosta ei ole riittävästi päätöksiä vertailuun. Arvio perustuu CO₂-laskentaan.", "–")) +
         '<div class="ln sum"><div class="t">Autoveroarvio</div><div class="d">' + (A.same ? "a- ja b-tavan keskiarvo, " : "") + "vaihteluväli " + rng(R.tax[0], R.tax[1]) + '</div><div class="v">' + eur(A.avg) + "</div></div>";
     }
-    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", c.transmission], ["Veto", c.drivetrain], ["VIN", c.vin]]
+    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", gear(c.transmission)], ["Veto", c.drivetrain], ["VIN", c.vin]]
       .filter(function (f) { return f[1]; }).map(function (f) { return "<div><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
