@@ -106,13 +106,14 @@
       cb("trim", "Mallitarkennus", O.trim) + cb("body", "Korimalli", O.body) + cb("gear", "Vaihteisto", O.gear) + cb("drive", "Veto", O.drive) + cb("loc", "Sijainti", O.loc) + cb("color", "Väri", O.color) + rb("kmin", "kmax", "Mittarilukema", "km") +
       rb("pmin", "pmax", "Hinta", "€") + rb("ymin", "ymax", "Vuosimalli", "") + rb("dmin", "dmax", "Moottorin tilavuus", "l") +
       "</div>" +
-      '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" +
-      '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + rareN + ")</label>" +
-      '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Näytä vähemmän suodattimia" : "Näytä lisää suodattimia") + (nExtra ? " (" + nExtra + " valittu)" : "") + "</button>" +
       '<div class="tech">' +
       rb("hpmin", "hpmax", "Teho", "hv") + nb("co2max", "CO₂-päästöt max g/km", CO) + nb("smin", "Henkilömäärä vähintään", SE) +
       cb("doors", "Ovien lukumäärä", O.doors) + cb("steer", "Ohjauslaite", O.steer) + nb("cmax", "Kulutus max l/100 km", CN) + nb("emax", "Sähkö max kWh/100 km", EN) + nb("rmin", "Toimintamatka min km", RA) +
-      "</div></div>" +
+      "</div>" +
+      '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" +
+      '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + rareN + ")</label>" +
+      '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Näytä vähemmän suodattimia" : "Näytä lisää suodattimia") + (nExtra ? " (" + nExtra + " valittu)" : "") + "</button>" +
+      "</div>" +
       '<div class="sortbox"><label for="xl-sort">Järjestys</label><select id="xl-sort" aria-label="Järjestys"><option value="save">Pienin heitto ensin</option><option value="saveonly">Suurin säästö</option><option value="rare">Harvinaisin Suomessa</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="old">Vanhin ensin</option><option value="km">Vähiten ajettu</option></select>' + "</div>" +
       '<p class="cnt">' + (v.length < cars.length ? "Näytetään " + v.length + " / " + cars.length + ' autoa · <button type="button" id="xl-clear" class="clr">Tyhjennä suodattimet</button>' : v.length + " autoa") + " · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + "</p>" +
       (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">Valituilla ehdoilla ei löytynyt autoja.</div>');
