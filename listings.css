@@ -101,3 +101,4 @@ font-family:var(--font-body);color:var(--fg);font-size:15px;line-height:1.5;widt
 .xl .car .sv{display:inline-block}
 .xl .car .badges{display:flex;flex-wrap:wrap;gap:6px;min-height:26px}
 .xl,.xl .bar,.xl .cnt,.xl .top{text-align:left!important}
+.xl .clr{border:0;background:none;color:var(--accent);font-weight:600;cursor:pointer;padding:0;text-decoration:underline;font-size:13px}

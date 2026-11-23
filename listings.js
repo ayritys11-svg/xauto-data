@@ -3,7 +3,8 @@
   var root = document.querySelector(".xl"); if (!root) return;
   var base = root.dataset.base || "", tarjous = root.dataset.offer || "/pyyda-tarjous/";
   var DATA = null, F = { make: "", fuel: "", sort: "save", good: false };
-  try { var sv = JSON.parse(localStorage.getItem("xl-f") || "null"); if (sv) F = Object.assign(F, sv); } catch (e) {}
+  // Muistetaan vain järjestys, ei suodattimia (muuten kävijä näkee vain osan autoista eikä tiedä miksi)
+  try { localStorage.removeItem("xl-f"); var so = localStorage.getItem("xl-sort"); if (so) F.sort = so; } catch (e) {}
 
   function fmt(n) { return new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 0 }).format(Math.round(n)); }
   function eur(n) { return fmt(n) + " €"; }
@@ -47,11 +48,12 @@
       '<select id="xl-sort" aria-label="Järjestys"><option value="save">Suurin säästö</option><option value="rare">Harvinaisin Suomessa</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="km">Vähiten ajettu</option></select>' +
       '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" +
       '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + cars.filter(isRare).length + ")</label></div>" +
-      '<p class="cnt">' + v.length + " autoa · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + " · dollarin kurssi " + String(DATA.fx.rate).replace(".", ",") + "</p>" +
+      '<p class="cnt">' + (v.length < cars.length ? "Näytetään " + v.length + " / " + cars.length + ' autoa · <button type="button" id="xl-clear" class="clr">Tyhjennä suodattimet</button>' : v.length + " autoa") + " · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + " · dollarin kurssi " + String(DATA.fx.rate).replace(".", ",") + "</p>" +
       (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">Valituilla ehdoilla ei löytynyt autoja.</div>');
     root.querySelector("#xl-sort").value = F.sort;
     ["make", "fuel", "sort"].forEach(function (k) { root.querySelector("#xl-" + k).addEventListener("change", function (e) { F[k] = e.target.value; keep(); list(); }); });
     root.querySelector("#xl-good").addEventListener("change", function (e) { F.good = e.target.checked; keep(); list(); });
+    var clr = root.querySelector("#xl-clear"); if (clr) clr.addEventListener("click", function () { F.make = ""; F.fuel = ""; F.good = false; F.rare = false; list(); });
     root.querySelector("#xl-rare").addEventListener("change", function (e) { F.rare = e.target.checked; keep(); list(); });
   }
   // Suomen hintataso vaihteluvälinä (verotusarvon 80 %:n väli, pyöristys 100 €)
@@ -61,7 +63,7 @@
   function isRare(c) { return c.fleet != null && c.fleet < RARE; }
   function fleetTxt(c) { return c.fleet === 0 ? "ei yhtään" : fmt(c.fleet) + " kpl"; }
   function ok(c) { return c.saving != null && (c.sure === undefined ? c.saving > 0 : c.sure); }
-  function keep() { try { localStorage.setItem("xl-f", JSON.stringify(F)); } catch (e) {} }
+  function keep() { try { localStorage.setItem("xl-sort", F.sort); } catch (e) {} }
   function card(c) {
     return '<a class="car" href="#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [c.fuel, c.engine, fmt(c.km) + " km"].filter(Boolean).map(esc).join(" · ") + "</p>" + photo(c, null) +
       '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b></div><div class=\"badges\">" + saveBadge(c) + "</div>" +
