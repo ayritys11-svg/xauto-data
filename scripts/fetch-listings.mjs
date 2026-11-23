@@ -187,14 +187,17 @@ function epaMatch(mk, v, F, cc, year) {
     if ((r[5] === "4WD") !== awd && (r[5] === "4WD" || r[5] === "FWD" || r[5] === "RWD")) continue;
     if (/^M/.test(r[4]) !== man) continue;
     const extra = nm.split(/[\s\/-]+/).filter((w) => w && !words.has(w) && !["AWD","FWD","RWD","4WD","2WD"].includes(w) && !md.includes(w));
-    R.push({ v: r[2], ex: extra.length, nm: r[3] });
+    R.push({ v: r[2], ex: extra.length, nm: r[3], mpg: [r[8] || 0, r[9] || 0, r[10] || 0] });
   }
   if (!R.length) return null;
   const minEx = Math.min(...R.map((r) => r.ex));
   R = R.filter((r) => r.ex === minEx);
   const vs = R.map((r) => r.v).sort((a, b) => a - b);
   const mean = Math.round(vs.reduce((a, b) => a + b, 0) / vs.length);
-  return { v: mean, lo: vs[0], hi: vs[vs.length - 1], n: vs.length, src: "EPA " + year + ": " + [...new Set(R.map((r) => r.nm))].join(", ") + (vs.length > 1 ? " (" + vs.length + " versiota, " + vs[0] + " – " + vs[vs.length - 1] + " g/km)" : "") };
+  // Kulutus l/100 km (EPA:n tarra-arvot: kaupunki, maantie, yhdistetty), vaihteluväli versioiden välillä
+  const L100 = (mpg) => mpg > 0 ? +(235.215 / mpg).toFixed(1) : null;
+  const cons = [0, 1, 2].map((i) => { const x = R.map((r) => L100(r.mpg[i])).filter((y) => y); return x.length ? [Math.min(...x), Math.max(...x)] : null; });
+  return { cons, v: mean, lo: vs[0], hi: vs[vs.length - 1], n: vs.length, src: "EPA " + year + ": " + [...new Set(R.map((r) => r.nm))].join(", ") + (vs.length > 1 ? " (" + vs.length + " versiota, " + vs[0] + " – " + vs[vs.length - 1] + " g/km)" : "") };
 }
 
 function calc(L, fx) {
@@ -214,11 +217,11 @@ function calc(L, fx) {
   const warn = [];
 
   // 1) CO2 ja veroprosentti
-  let co2 = null, co2lo = null, co2hi = null, co2src = "", p = 0, pSrc = "", pA = [0, 0];
+  let cons = null, co2 = null, co2lo = null, co2hi = null, co2src = "", p = 0, pSrc = "", pA = [0, 0];
   if (F.ev) { p = 0; pSrc = "täyssähköauto 0 %"; co2 = 0; }
   else {
     const e = epaMatch(mk, v, F, cc, year);
-    if (e) { co2 = e.v; co2lo = e.lo; co2hi = e.hi; co2src = e.src;
+    if (e) { co2 = e.v; co2lo = e.lo; co2hi = e.hi; co2src = e.src; cons = e.cons;
       if (e.hi - e.lo > 10) warn.push("EPA-datassa on tälle autolle useita versioita (" + e.lo + " – " + e.hi + " g/km). Tarkka arvo varmistetaan VIN-numerosta tarjousvaiheessa."); }
     if (co2 == null) { DBG && console.error("ei CO2", vin, mk, v.model); return null; }
     const r = M.rate(reg, co2, W, false);
@@ -320,7 +323,7 @@ function calc(L, fx) {
     },
     autovero: {
       V: r10(V), VLo: r10(VLo), VHi: r10(VHi), s: +sPct.toFixed(3), n: best.n, level: best.level,
-      kw, kwSrc: KG.src, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
+      cons, kw, kwSrc: KG.src, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
       a: r0(taxA), same, b: taxB != null ? r0(taxB) : null, avg: r0(tax)
     },
     total: { lo: r100(totLo), hi: r100(totHi), mid: r100(totMid) },
@@ -397,7 +400,7 @@ if (!MOCK && !DISCOVER) {
   const vc = VC;
   for (const c of cars) {
     const d = vc[c.vin] || {};
-    c.spec = specFi(d, { co2: c.autovero && c.autovero.co2, co2lo: c.autovero && c.autovero.co2lo, co2hi: c.autovero && c.autovero.co2hi, fuel: c.fuel });
+    c.spec = specFi(d, { co2: c.autovero && c.autovero.co2, co2lo: c.autovero && c.autovero.co2lo, co2hi: c.autovero && c.autovero.co2hi, cons: c.autovero && c.autovero.cons, fuel: c.fuel });
     if (d.EngineHP && !c.hp) c.hp = Math.round(+d.EngineHP);
     if (d.BodyClass) c.body = (c.spec.find((x) => x[0] === "Korimalli") || [])[1];
   }

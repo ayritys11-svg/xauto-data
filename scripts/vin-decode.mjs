@@ -62,7 +62,10 @@ export function specFi(d, c) {
   // CO2 ja kulutus: jos EPA:lla on useita versioita eri arvoilla, näytetään vaihteluväli eikä keskiarvoa
   if (c && c.co2 > 0) {
     const lo = c.co2lo || c.co2, hi = c.co2hi || c.co2, f = /Diesel/.test(c.fuel || "") ? 26.5 : 23.2, l = (x) => (x / f).toFixed(1).replace(".", ",");
-    if (!/Sähkö/.test(c.fuel || "")) add("Kulutus (EPA, yhdistetty)", (lo === hi ? l(lo) : l(lo) + " – " + l(hi)) + " l/100 km");
+    const fx = (x) => String(x).replace(".", ","), rg = (p) => p ? (p[0] === p[1] ? fx(p[0]) : fx(p[0]) + " – " + fx(p[1])) + " l/100 km" : null;
+    if (c.cons && (c.cons[0] || c.cons[1] || c.cons[2])) {
+      add("Kulutus kaupungissa (EPA)", rg(c.cons[0])); add("Kulutus maantiellä (EPA)", rg(c.cons[1])); add("Keskikulutus (EPA)", rg(c.cons[2]));
+    } else if (!/Sähkö/.test(c.fuel || "")) add("Keskikulutus (EPA, CO₂:sta laskettu)", (lo === hi ? l(lo) : l(lo) + " – " + l(hi)) + " l/100 km");
     add("CO₂ (EPA)", (lo === hi ? lo : lo + " – " + hi) + " g/km");
   }
   // Kokonaismassaa ei näytetä: VIN kertoo vain painoluokan (esim. 2 700 – 3 200 kg), ei tarkkaa massaa
