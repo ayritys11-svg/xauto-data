@@ -79,7 +79,7 @@
           line("b) Valmiit autoveropäätökset", "Samasta autosta ei ole riittävästi päätöksiä vertailuun. Arvio perustuu CO₂-laskentaan.", "–")) +
         '<div class="ln sum"><div class="t">Autoveroarvio</div><div class="d">' + (A.same ? "a- ja b-tavan keskiarvo, " : "") + "vaihteluväli " + rng(R.tax[0], R.tax[1]) + '</div><div class="v">' + eur(A.avg) + "</div></div>";
     }
-    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km (" + fmt(c.miles) + " mi)"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", c.transmission], ["Veto", c.drivetrain], ["VIN", c.vin]]
+    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", c.transmission], ["Veto", c.drivetrain], ["VIN", c.vin]]
       .filter(function (f) { return f[1]; }).map(function (f) { return "<div><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
