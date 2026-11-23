@@ -158,9 +158,9 @@
     var s1 =
       line("Auton hinta", "", eur(R.car)) +
       line("Kuljetus " + (origin(c).indexOf("KANADA") === 0 ? "Kanadasta" : "USA:sta") + " Suomeen", "Rahti ja vakuutus Suomen satamaan" + (c.city || c.state ? ", lähtö " + esc([c.city, c.state].filter(Boolean).join(", ")) : ""), rng(R.ship, R.shipHi), "arvio") +
-      line("Tulli 10 %", "Auton hinnasta ja kuljetuksesta", eur(R.duty[0])) +
+      (R.duty[0] > 0 ? line("Tulli 10 %", "Auton hinnasta ja kuljetuksesta", eur(R.duty[0])) : "") +
       line("Huolinta ja satamamaksut", "Tullaus ja käsittely", eur(R.huolinta), "arvio") +
-      line("Arvonlisävero 25,5 %", "Auton, kuljetuksen, tullin ja huolinnan päälle", rng(R.vat[0], R.vat[1])) +
+      line("Arvonlisävero 25,5 %", (R.duty[0] > 0 ? "Auton, kuljetuksen, tullin ja huolinnan päälle" : "Auton, kuljetuksen ja huolinnan päälle"), rng(R.vat[0], R.vat[1])) +
       line("Katsastus ja rekisteröinti", "Rekisteröintikatsastus, yksittäishyväksyntä, kilvet", eur(R.reg), "arvio") +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       line("Autovero", exact(c) ? "Erittely alla" : "Arvio, erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]));

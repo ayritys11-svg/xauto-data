@@ -273,7 +273,7 @@ function calc(L, fx) {
   // Tuontihintaan perustuva verotusarvo: (tuonti + rekisteröinti + 10 % kate) / (1 - veroprosentti)
   const stEarly = String(rl.state || "").toUpperCase();
   const carE = priceUsd / fx.rate, shipE = S.lansiosavaltiot.includes(stEarly) ? S.kuljetus.lansi : S.kuljetus.ita;
-  const dutyE = (carE + shipE) * S.tulli; // tulli 10 % kaikille autoille
+  const dutyE = /^[145]/.test(vin) ? 0 : (carE + shipE) * S.tulli; // USA:ssa valmistettu 0 % (EU 2026/1455), muut 10 %
   const landedE = (carE + shipE + dutyE + S.huolinta) * (1 + S.alv) + S.katsastusJaRekisterointi;
   const Vfb = landedE * 1.10 / (1 - Math.min(p, 50) / 100);
   let noCompare = false;
@@ -333,8 +333,8 @@ function calc(L, fx) {
   const ship = S.lansiosavaltiot.includes(st) ? S.kuljetus.lansi : S.kuljetus.ita;
   const car = priceUsd / fx.rate;
   const usOrigin = /^[145]/.test(vin);
-  // Tulli 10 % kaikille autoille (auton hinta + kuljetus), yksi kiinteä summa eikä vaihteluväli
-  const dutyLo = (car + ship) * S.tulli, dutyHi = dutyLo;
+  // Tulli: USA:ssa valmistettu (VIN 1/4/5) 0 % (EU 2026/1455), muut 10 % auton hinnasta + kuljetuksesta
+  const dutyLo = usOrigin ? 0 : (car + ship) * S.tulli, dutyHi = dutyLo;
   const vatLo = (car + ship + dutyLo + S.huolinta) * S.alv, vatHi = (car + ship * S.kuljetusYlarajaKerroin + dutyHi + S.huolinta) * S.alv;
   const fixed = S.huolinta + S.katsastusJaRekisterointi + S.palvelumaksu;
   const totLo = car + ship + dutyLo + vatLo + fixed + taxLo;
