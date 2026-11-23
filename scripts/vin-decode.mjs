@@ -59,9 +59,13 @@ export function specFi(d, c) {
   if (d.DriveType) add("Veto", T(d.DriveType, DRIVE));
   if (d.TransmissionStyle || d.TransmissionSpeeds) add("Vaihteisto", (/Manual/i.test(d.TransmissionStyle || "") ? "Manuaali" : "Automaatti") + (d.TransmissionSpeeds ? ", " + d.TransmissionSpeeds + " vaihdetta" : ""));
   if (d.FuelTypePrimary) add("Polttoaine", T(d.FuelTypePrimary, FUEL) + (d.FuelTypeSecondary ? " + " + T(d.FuelTypeSecondary, FUEL).toLowerCase() : ""));
-  if (c && c.co2 > 0 && !/Sähkö/.test(c.fuel || "")) add("Kulutus (EPA, yhdistetty)", (c.co2 / (/Diesel/.test(c.fuel || "") ? 26.5 : 23.2)).toFixed(1).replace(".", ",") + " l/100 km");
-  if (c && c.co2 > 0) add("CO₂ (EPA)", c.co2 + " g/km");
-  if (d.GVWR) { const m = d.GVWR.match(/([\d,]+)\s*-\s*([\d,]+)\s*lb/i) || d.GVWR.match(/([\d,]+)\s*lb/i); if (m) { const lb = m[2] ? (+m[1].replace(/,/g, "") + +m[2].replace(/,/g, "")) / 2 : +m[1].replace(/,/g, ""); add("Kokonaismassa (arvio)", String(Math.round(lb * 0.4536 / 50) * 50).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " kg"); } }
+  // CO2 ja kulutus: jos EPA:lla on useita versioita eri arvoilla, näytetään vaihteluväli eikä keskiarvoa
+  if (c && c.co2 > 0) {
+    const lo = c.co2lo || c.co2, hi = c.co2hi || c.co2, f = /Diesel/.test(c.fuel || "") ? 26.5 : 23.2, l = (x) => (x / f).toFixed(1).replace(".", ",");
+    if (!/Sähkö/.test(c.fuel || "")) add("Kulutus (EPA, yhdistetty)", (lo === hi ? l(lo) : l(lo) + " – " + l(hi)) + " l/100 km");
+    add("CO₂ (EPA)", (lo === hi ? lo : lo + " – " + hi) + " g/km");
+  }
+  // Kokonaismassaa ei näytetä: VIN kertoo vain painoluokan (esim. 2 700 – 3 200 kg), ei tarkkaa massaa
   if (d.WheelBaseShort) add("Akseliväli", Math.round(+d.WheelBaseShort * 2.54) + " cm");
   if (d.PlantCountry) add("Valmistusmaa", (COUNTRY[d.PlantCountry.toUpperCase()] || d.PlantCountry) + (d.PlantCity ? " (" + d.PlantCity.charAt(0) + d.PlantCity.slice(1).toLowerCase() + ")" : ""));
   return s;

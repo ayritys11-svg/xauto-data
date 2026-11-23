@@ -397,7 +397,7 @@ if (!MOCK && !DISCOVER) {
   const vc = VC;
   for (const c of cars) {
     const d = vc[c.vin] || {};
-    c.spec = specFi(d, { co2: c.autovero && c.autovero.co2, fuel: c.fuel });
+    c.spec = specFi(d, { co2: c.autovero && c.autovero.co2, co2lo: c.autovero && c.autovero.co2lo, co2hi: c.autovero && c.autovero.co2hi, fuel: c.fuel });
     if (d.EngineHP && !c.hp) c.hp = Math.round(+d.EngineHP);
     if (d.BodyClass) c.body = (c.spec.find((x) => x[0] === "Korimalli") || [])[1];
   }
