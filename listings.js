@@ -18,7 +18,10 @@
   }
   window.__xlCar = CAR;
   var CONF = { korkea: "Tarkka arvio", keskitaso: "Kohtalainen tarkkuus", matala: "Epävarma arvio" };
-  function conf(c) { return '<span class="conf ' + c.confidence + '"><i></i>' + CONF[c.confidence] + "</span>"; }
+  function conf(c) {
+    var t = c.total || {}, mid = (t.lo + t.hi) / 2, pct = mid ? Math.round((t.hi - t.lo) / 2 / mid * 100) : null;
+    return '<span class="conf ' + c.confidence + '" title="Loppuhinnan vaihteluväli keskiarvosta"><i></i>' + CONF[c.confidence] + (pct != null ? " · heitto ±" + pct + " %" : "") + "</span>";
+  }
   function saveBadge(c) {
     if (isRare(c)) return '<span class="sv r">' + (c.fleet === 0 ? "Ei yhtään Suomessa" : "Vain " + fmt(c.fleet) + " kpl Suomessa") + "</span>" + (c.sure ? ' <span class="sv g">' + eur(c.saving) + " halvempi</span>" : "");
     if (c.saving == null) return '<span class="sv n">Ei vertailukohtaa Suomessa</span>';
