@@ -39,6 +39,6 @@
   "_yleinenRaja": "Malli on Suomessa yleinen, jos sitä on liikenteessä vähintään näin monta (Traficom). Yleiset mallit näytetään vain, jos ne ovat halvempia kuin Suomessa.",
   "halvempienOsuus": 0,
   "_halvempienOsuus": "Tavoiteosuus Suomen hintaa halvemmille autoille. Muita autoja näytetään enintään niin monta, että tämä osuus täyttyy (harvinaisimmat ensin). 0 = ei rajausta.",
-  "hakuKoko": 100,
-  "_hakuKoko": "Montako autoa yksi haku palauttaa (auto.dev). Jos API ei salli näin montaa, ohjelma käyttää 20."
+  "hakuKoko": 20,
+  "_hakuKoko": "Montako autoa yksi haku palauttaa. auto.devin ilmaisversio palauttaa enintään 20."
 }
