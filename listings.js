@@ -227,7 +227,7 @@
     }
     function zoomAt(ns, cx, cy) {
       var r = stage.getBoundingClientRect(), ox = cx - (r.left + r.width / 2), oy = cy - (r.top + r.height / 2);
-      var im = cur(), nat = im.naturalWidth && im.offsetWidth ? im.naturalWidth / im.offsetWidth * (window.devicePixelRatio || 1) : 5, mxz = Math.max(2.5, Math.min(5, nat * 1.5)); ns = Math.max(1, Math.min(mxz, ns)); tx = ox - (ox - tx) * (ns / sc); ty = oy - (oy - ty) * (ns / sc); sc = ns;
+      ns = Math.max(1, Math.min(4, ns)); tx = ox - (ox - tx) * (ns / sc); ty = oy - (oy - ty) * (ns / sc); sc = ns;
     }
     function close() { document.removeEventListener("keydown", onKey); window.removeEventListener("resize", onResize); document.documentElement.style.overflow = prevOverflow; lb.remove(); }
     function onKey(e) { if (e.key === "Escape") close(); else if (e.key === "ArrowLeft") go(-1); else if (e.key === "ArrowRight") go(1); }
