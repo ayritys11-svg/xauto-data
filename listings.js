@@ -119,7 +119,7 @@
       "</div>" +
       '<div class="sortbox"><label for="xl-sort">Järjestys</label><select id="xl-sort" aria-label="Järjestys">' + SORTOPTS + '</select>' + "</div>" +
       '<p class="cnt">' + (v.length < cars.length ? "Näytetään " + v.length + " / " + cars.length + ' autoa · <button type="button" id="xl-clear" class="clr">Tyhjennä suodattimet</button>' : v.length + " autoa") + " · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + "</p>" +
-      (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">Valituilla ehdoilla ei löytynyt autoja.</div>');
+      (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">' + (F.fav ? (FAV.length ? "Suosikeistasi yksikään ei vastaa valittuja ehtoja." : "Sinulla ei ole vielä suosikkeja. Tallenna auto suosikiksi painamalla autokortin tähteä.") : "Valituilla ehdoilla ei löytynyt autoja.") + "</div>");
     root.querySelector("#xl-sort").value = F.sort;
     root.querySelector("#xl-sort").addEventListener("change", function (e) { F.sort = e.target.value; keep(); list(); });
     Array.prototype.forEach.call(root.querySelectorAll("input[data-f]"), function (el) {
@@ -386,6 +386,7 @@
       var u = new URLSearchParams(location.search);
       TXT.concat(NUM).forEach(function (k) { var x = u.get(k); if (x) F[k] = x; });
       if (u.get("open") === "1") OPEN = true;
+      if (u.get("fav") === "1") F.fav = true; /* valikon Suosikit-linkki: /autot/?fav=1 */
       var anyExtra = EXTRA.concat(TECH).some(function (k) { return F[k]; });
       if (anyExtra) OPEN = true;
     } catch (e) {}
