@@ -22,7 +22,7 @@
     if (c.saving > 0 && c.sure === false) return '<span class="sv u">Mahdollisesti ' + eur(c.saving) + " halvempi</span>";
     return c.saving > 0 ? '<span class="sv g">' + eur(c.saving) + " halvempi</span>" : '<span class="sv b">' + eur(-c.saving) + " kalliimpi</span>";
   }
-  function origin(c) { return c.country === "CA" || /^(ON|QC|BC|AB)$/.test(c.state || "") ? "KANADA" : "USA"; }
+  function origin(c) { return (c.country === "CA" || /^(ON|QC|BC|AB)$/.test(c.state || "") ? "KANADA" : "USA") + (c.state ? " · " + c.state : ""); }
 
   function list() {
     var cars = DATA.cars.slice();
@@ -63,7 +63,7 @@
     var R = c.rows, A = c.autovero;
     var s1 =
       line("Auton hinta", fmt(c.priceUsd) + " $, kurssi 1 € = " + String(c.fx).replace(".", ",") + " $", eur(R.car)) +
-      line("Kuljetus " + (origin(c).indexOf("KANADA") === 0 ? "Kanadasta" : "USA:sta") + " Suomeen", "Rahti ja vakuutus Suomen satamaan", rng(R.ship, R.shipHi), "arvio") +
+      line("Kuljetus " + (origin(c).indexOf("KANADA") === 0 ? "Kanadasta" : "USA:sta") + " Suomeen", "Rahti ja vakuutus Suomen satamaan" + (c.city || c.state ? ", lähtö " + esc([c.city, c.state].filter(Boolean).join(", ")) : ""), rng(R.ship, R.shipHi), "arvio") +
       line("Tulli 0–10 %", R.usOrigin ? "USA:ssa valmistettu (VIN alkaa " + esc(c.vin.charAt(0)) + "): 0 % alkuperätodistuksella (EU 2026/1455), muuten 10 %" : "Valmistettu muualla kuin USA:ssa (VIN alkaa " + esc(c.vin.charAt(0)) + "): 10 %", rng(R.duty[0], R.duty[1])) +
       line("Huolinta ja satamamaksut", "Tullaus ja käsittely", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "Auton, kuljetuksen, tullin ja huolinnan päälle", rng(R.vat[0], R.vat[1])) +
@@ -80,7 +80,7 @@
           line("b) Valmiit autoveropäätökset", "Samasta autosta ei ole riittävästi päätöksiä vertailuun. Arvio perustuu CO₂-laskentaan.", "–")) +
         '<div class="ln sum"><div class="t">Autoveroarvio</div><div class="d">' + (A.same ? "a- ja b-tavan keskiarvo, " : "") + "vaihteluväli " + rng(R.tax[0], R.tax[1]) + '</div><div class="v">' + eur(A.avg) + "</div></div>";
     }
-    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", gear(c.transmission)], ["Veto", c.drivetrain], ["VIN", c.vin]]
+    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", gear(c.transmission)], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["Veto", c.drivetrain], ["VIN", c.vin]]
       .filter(function (f) { return f[1]; }).map(function (f) { return "<div><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
