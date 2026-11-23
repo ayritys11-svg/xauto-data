@@ -83,8 +83,8 @@
     var S = { save: function (a, b) { return (HT(a) - HT(b)) || SV(b) - SV(a); }, saveonly: function (a, b) { return SV(b) - SV(a); }, rare: function (a, b) { return (a.fleet || 0) - (b.fleet || 0) || SV(b) - SV(a); }, low: function (a, b) { return a.total.mid - b.total.mid; }, high: function (a, b) { return b.total.mid - a.total.mid; }, new: function (a, b) { return b.year - a.year || a.km - b.km; }, old: function (a, b) { return a.year - b.year || a.km - b.km; }, km: function (a, b) { return a.km - b.km; } };
     v.sort(S[F.sort] || S.save);
     function dl(id, o, keep) { var ks = keep ? o : Object.keys(o).sort(function (a, b) { return a.localeCompare(b, "fi"); }); return '<datalist id="' + id + '">' + ks.map(function (k) { return '<option value="' + esc(k) + '">'; }).join("") + "</datalist>"; }
-    function cb(k, ph, o) { return '<div class="cb"><input id="xl-' + k + '" data-f="' + k + '" list="xl-' + k + 's" autocomplete="off" placeholder="' + ph + '" aria-label="' + ph + '" value="' + esc(F[k] || "") + '">' + (F[k] ? '<button type="button" class="x" data-k="' + k + '" aria-label="Tyhjennä">×</button>' : "") + dl("xl-" + k + "s", o) + "</div>"; }
-    function nb(k, ph, steps) { return '<div class="cb n"><input id="xl-' + k + '" data-f="' + k + '" list="xl-' + k + 's" inputmode="decimal" autocomplete="off" placeholder="' + ph + '" aria-label="' + ph + '" value="' + esc(F[k] || "") + '">' + dl("xl-" + k + "s", steps, true) + "</div>"; }
+    function cb(k, ph, o) { return '<div class="cb"><input id="xl-' + k + '" data-f="' + k + '" data-list="xl-' + k + 's" autocomplete="off" placeholder="' + ph + '" aria-label="' + ph + '" value="' + esc(F[k] || "") + '">' + (F[k] ? '<button type="button" class="x" data-k="' + k + '" aria-label="Tyhjennä">×</button>' : "") + dl("xl-" + k + "s", o) + "</div>"; }
+    function nb(k, ph, steps) { return '<div class="cb n"><input id="xl-' + k + '" data-f="' + k + '" data-list="xl-' + k + 's" inputmode="decimal" autocomplete="off" placeholder="' + ph + '" aria-label="' + ph + '" value="' + esc(F[k] || "") + '">' + dl("xl-" + k + "s", steps, true) + "</div>"; }
     function rg(a, b) { return '<div class="rg">' + a + b + "</div>"; }
     var st = function (a, b, d, f) { var o = []; for (var x = a; x <= b + 1e-9; x += d) o.push(f ? f(x) : String(x)); return o; };
     var yrs = cars.map(function (c) { return c.year; }), y0 = Math.min.apply(null, yrs), y1 = Math.max.apply(null, yrs);
@@ -375,4 +375,64 @@
   fetch(base + "data/listings.json?t=" + Math.floor(Date.now() / 60000), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(function (j) { DATA = j; route(); })
     .catch(function () { root.innerHTML = '<div class="empty">Ilmoitusten lataus epäonnistui. Lataa sivu uudelleen.</div>'; });
+})();
+
+/* Velo-valintalista: oma pudotusvalikko kirjoitettaville kentille (input[data-list] + datalist).
+   iPhonen Safari ei näytä datalistia valikkona, joten valinnat näytetään itse. Toimii sekä Autot-sivulla että etusivun haussa. */
+(function () {
+  if (window.VeloCombo) return;
+  window.VeloCombo = true;
+  var panel = null, cur = null, act = -1, skipId = null, skipT = 0;
+  function opts(inp) {
+    var d = document.getElementById(inp.getAttribute("data-list"));
+    if (!d) return [];
+    var all = Array.prototype.map.call(d.options, function (o) { return o.value; });
+    var q = inp.value.trim().toLowerCase();
+    if (!q || all.some(function (v) { return v.toLowerCase() === q; })) return all;
+    var f = all.filter(function (v) { return v.toLowerCase().indexOf(q) >= 0; });
+    return f.length ? f : all;
+  }
+  function close() { if (panel) { panel.remove(); panel = null; } cur = null; act = -1; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function render() {
+    if (!cur) return;
+    var list = opts(cur);
+    if (!list.length) { close(); return; }
+    if (!panel) { panel = document.createElement("div"); panel.className = "vdd"; panel.setAttribute("role", "listbox"); }
+    var host = cur.parentNode;
+    if (panel.parentNode !== host) host.appendChild(panel);
+    panel.innerHTML = list.map(function (v, i) { return '<button type="button" role="option" class="vdd-o' + (i === act ? " on" : "") + (v === cur.value ? " sel" : "") + '" data-v="' + esc(v) + '">' + esc(v) + "</button>"; }).join("");
+  }
+  function open(inp) {
+    if (Date.now() - skipT < 450) return; /* juuri valittu: estä haamuklikkaus ja uudelleenpiirron fokus */
+    if (cur !== inp) { close(); cur = inp; }
+    act = -1; render();
+  }
+  function pick(v) {
+    var inp = cur; if (!inp) return;
+    skipId = inp.id; skipT = Date.now();
+    inp.value = v; close();
+    inp.dispatchEvent(new Event("input", { bubbles: true }));
+    inp.dispatchEvent(new Event("change", { bubbles: true }));
+    var n = inp.id ? document.getElementById(inp.id) : inp;
+    if (n) n.blur();
+  }
+  document.addEventListener("focusin", function (e) { var t = e.target; if (t.matches) { if (t.matches("input[data-list]")) open(t); } });
+  document.addEventListener("click", function (e) { var t = e.target; if (t.matches) { if (t.matches("input[data-list]")) { if (!panel) open(t); } } });
+  document.addEventListener("input", function (e) { if (e.target === cur) { act = -1; render(); } });
+  document.addEventListener("pointerdown", function (e) {
+    var o = e.target.closest ? e.target.closest(".vdd-o") : null;
+    if (o) { e.preventDefault(); pick(o.getAttribute("data-v")); return; }
+    if (panel) { if (!panel.contains(e.target)) { if (e.target !== cur) close(); } }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (!cur) return;
+    if (e.target !== cur) return;
+    var n = panel ? panel.children.length : 0;
+    if (e.key === "Escape") { close(); return; }
+    if (e.key === "ArrowDown") { e.preventDefault(); if (!panel) render(); act = Math.min(n - 1, act + 1); render(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); act = Math.max(0, act - 1); render(); }
+    else if (e.key === "Enter") { if (act >= 0) { if (panel) { e.preventDefault(); e.stopPropagation(); pick(panel.children[act].getAttribute("data-v")); } } }
+  }, true);
+  document.addEventListener("focusout", function (e) { if (e.target === cur) { setTimeout(function () { if (cur) { if (document.activeElement !== cur) close(); } }, 180); } });
 })();
