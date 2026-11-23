@@ -167,7 +167,7 @@
       line("Arvonlisävero 25,5 %", (R.duty[0] > 0 ? "Auton, kuljetuksen, tullin ja huolinnan päälle" : "Auton, kuljetuksen ja huolinnan päälle"), rng(R.vat[0], R.vat[1])) +
       line("Katsastus ja rekisteröinti", "Rekisteröintikatsastus, yksittäishyväksyntä, kilvet", eur(R.reg), "arvio") +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
-      line("Autovero", exact(c) ? "Erittely alla" : "Arvio, erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]));
+      (EVC ? "" : line("Autovero", exact(c) ? "Erittely alla" : "Arvio, erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1])));
     var s2;
     if (A.p === 0) {
       s2 = line("Veroprosentti", esc(A.pSrc), "0 %") + '<div class="ln sum"><div class="t">Autovero</div><div class="v">0 €</div></div>';
