@@ -102,3 +102,9 @@ font-family:var(--font-body);color:var(--fg);font-size:15px;line-height:1.5;widt
 .xl .car .badges{display:flex;flex-wrap:wrap;gap:6px;min-height:26px}
 .xl,.xl .bar,.xl .cnt,.xl .top{text-align:left!important}
 .xl .clr{border:0;background:none;color:var(--accent);font-weight:600;cursor:pointer;padding:0;text-decoration:underline;font-size:13px}
+.xl .bar .cb{position:relative;min-width:0}
+.xl .bar .cb input{height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0 62px 0 12px;width:100%;min-width:0;font-size:15px}
+.xl .bar .cb input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.xl .bar .cb .x{position:absolute;right:30px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:0;border-radius:50%;background:var(--surface-2);cursor:pointer;font-size:18px;line-height:1;color:var(--muted)}
+.xl .bar .cb .x:hover{color:var(--accent)}
+.xl .bar .cb input::-webkit-calendar-picker-indicator{opacity:.6;cursor:pointer}
