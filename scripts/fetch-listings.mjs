@@ -278,7 +278,8 @@ function calc(L, fx) {
   const Vfb = landedE * 1.10 / (1 - Math.min(p, 50) / 100);
   let noCompare = false;
   // Jos tehoryhmässä on vähän päätöksiä, käytetään lähintä saman mallin tehoryhmää (±12 %), jossa niitä on riittävästi
-  if (best && (best.n || 0) < 10 && kw) {
+  // Myös kun arvio on jouduttu laskemaan koko mallin kaikista tehoversioista (iso heitto)
+  if (best && ((best.n || 0) < 10 || /eri tehot/.test(best.level || "")) && kw) {
     const cand = new Set();
     for (const src of [CORE.wf, CORE.w, CORE.g]) for (const k of Object.keys(src || {})) {
       const p = k.split("|"); if (p[0] !== mk || p.length < 3 || !nameHit(p[1], [best.md, ...models])) continue;
