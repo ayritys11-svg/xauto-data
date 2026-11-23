@@ -220,7 +220,23 @@ function calc(L, fx) {
       if (e && !e.error && e.V && (!best || e.s < (best.s || 9))) best = Object.assign(e, { md });
     }
   }
-  if (!best) { DBG && console.error("ei verotusarvoa", vin, models); return null; }
+  // Tuontihintaan perustuva verotusarvo: (tuonti + rekisteröinti + 10 % kate) / (1 - veroprosentti)
+  const stEarly = String(rl.state || "").toUpperCase();
+  const carE = priceUsd / fx.rate, shipE = S.lansiosavaltiot.includes(stEarly) ? S.kuljetus.lansi : S.kuljetus.ita;
+  const dutyE = /^[145]/.test(vin) ? (carE + shipE) * S.tulli / 2 : (carE + shipE) * S.tulli;
+  const landedE = (carE + shipE + dutyE + S.huolinta) * (1 + S.alv) + S.katsastusJaRekisterointi;
+  const Vfb = landedE * 1.10 / (1 - Math.min(p, 50) / 100);
+  let noCompare = false;
+  if (!best) {
+    best = { V: Vfb, VLow: Vfb * 0.8, VHigh: Vfb * 1.3, s: 0.25, n: 0, md: models[0], level: "Ei Verohallinnon päätöksiä tästä mallista: arvio tuontihinnasta", warnings: [] };
+    noCompare = true;
+    warn.push("Verohallinnolla ei ole päätöksiä tästä mallista, joten verotusarvo on arvioitu tuontihinnasta. Suosittelemme pyytämään Verohallinnolta ennakkoratkaisun ennen ostoa.");
+  } else if ((best.n || 0) < 10) {
+    // Vähän päätöksiä: yhdistetään päätöksiin ja tuontihintaan perustuva arvio
+    const Vm = Math.sqrt(best.V * Vfb);
+    best = Object.assign({}, best, { V: Vm, VLow: Math.min(best.VLow, Vfb * 0.8), VHigh: Math.max(best.VHigh, Vfb * 1.3), s: Math.max(best.s || 0, 0.25), level: "Vähän päätöksiä (" + (best.n || 0) + "): yhdistetty arvio päätöksistä ja tuontihinnasta" });
+    noCompare = true;
+  }
   // Varmistus: verrataan koko mallin päätöksiin. Iso ero = teho tai ryhmä luultavasti väärin.
   let clash = false;
   if (kw) {
@@ -259,10 +275,10 @@ function calc(L, fx) {
   const totMid = car + ship + (dutyLo + dutyHi) / 2 + (vatLo + vatHi) / 2 + fixed + tax;
 
   // 5) Suomen hintataso = verotusarvo (Veron arvio vastaavan auton yleisestä myyntihinnasta Suomessa)
-  const saving = V - totMid;
+  const saving = noCompare ? null : V - totMid;
   const sPct = best.s;
   const outside = (best.warnings || []).some((w) => /vanhempi kuin|suuremmat kuin|ulkopuolelle/.test(w));
-  const conf = F.phev || sPct > 0.15 || !kw || best.w3 || outside || clash || KG.src === "traficom-muu-vuosi" || KG.src === "vero-vuosimalli-kaikki" ? "matala" : sPct > 0.07 || F.ev ? "keskitaso" : "korkea";
+  const conf = noCompare || F.phev || sPct > 0.15 || !kw || best.w3 || outside || clash || KG.src === "traficom-muu-vuosi" || KG.src === "vero-vuosimalli-kaikki" ? "matala" : sPct > 0.07 || F.ev ? "keskitaso" : "korkea";
   if (F.ev) warn.push("Sähköauton versio (akku ja teho) vaikuttaa verotusarvoon paljon. Se varmistetaan VIN-numerosta tarjousvaiheessa.");
   if (!kw && !F.ev) warn.push("Moottorin tehoa ei löytynyt Traficomin rekisteristä. Verotusarvo on arvioitu koko mallin päätöksistä, joten vaihteluväli on leveä.");
   if (best.warnings) warn.push(...best.warnings.filter((w) => !/tulkittiin/.test(w)));
@@ -286,7 +302,7 @@ function calc(L, fx) {
       a: r0(taxA), same, b: taxB != null ? r0(taxB) : null, avg: r0(tax)
     },
     total: { lo: r100(totLo), hi: r100(totHi), mid: r100(totMid) },
-    fleet: fleetCount(mk, models), fiPrice: r100(V), saving: r100(saving), sure: saving > 0 && conf !== "matala", savingPct: +(saving / V * 100).toFixed(1),
+    fleet: fleetCount(mk, models), fiPrice: noCompare ? null : r100(V), saving: saving == null ? null : r100(saving), sure: saving != null && saving > 0 && conf !== "matala", savingPct: saving == null ? null : +(saving / V * 100).toFixed(1), noCompare,
     confidence: conf, warnings: [...new Set(warn)].slice(0, 4),
     listedAt: L.createdAt || "", updatedAt: L.updatedAt || ""
   };
@@ -323,10 +339,10 @@ for (const L of raw) {
   if (!c) { skipped++; continue; }
   if (S.naytaVainKannattavat && c.saving <= 0) continue;
   c.rare = c.fleet < (S.yleinenRaja || 3000);
-  if (!c.rare && c.saving <= 0) { common++; continue; } // yleinen malli, ei halvempi -> ei näytetä
+  if (!c.rare && !(c.saving > 0)) { common++; continue; } // yleinen malli, ei halvempi -> ei näytetä
   cars.push(c);
 }
-cars.sort((a, b) => b.saving - a.saving);
+cars.sort((a, b) => (b.saving ?? -1e9) - (a.saving ?? -1e9));
 const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, skipped, common, searches: counts, cars };
 fs.writeFileSync(path.join(ROOT, "data/listings.json"), JSON.stringify(out));
 console.log("Valmis:", cars.length, "autoa,", skipped, "ohitettu,", common, "yleistä ei-kannattavaa pois");
