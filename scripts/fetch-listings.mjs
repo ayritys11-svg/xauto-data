@@ -209,7 +209,8 @@ function calc(L, fx) {
   const km = Math.round(miles * 1.609344);
   const W = reg >= "2018-09-01"; // WLTP-taulukko vain 1.9.2018 alkaen rekisteröidyille
   const evk = F.ev ? evKw(mk, models, v) : 0;
-  const KG = evk ? { kw: evk, src: "ev-versio" } : kwGuess(mk, models, F.t, F.ev ? 0 : cc, F.fu, year), kw = KG.kw;
+  const vd = VC[vin] || {}, vinKw = vd.EngineKW ? Math.round(+vd.EngineKW) : vd.EngineHP ? Math.round(+vd.EngineHP * 0.7457) : 0;
+  const KG = vinKw > 20 ? { kw: vinKw, src: "vin" } : evk ? { kw: evk, src: "ev-versio" } : kwGuess(mk, models, F.t, F.ev ? 0 : cc, F.fu, year), kw = KG.kw;
   const warn = [];
 
   // 1) CO2 ja veroprosentti
@@ -319,7 +320,7 @@ function calc(L, fx) {
     },
     autovero: {
       V: r10(V), VLo: r10(VLo), VHi: r10(VHi), s: +sPct.toFixed(3), n: best.n, level: best.level,
-      kw, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
+      kw, kwSrc: KG.src, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
       a: r0(taxA), same, b: taxB != null ? r0(taxB) : null, avg: r0(tax)
     },
     total: { lo: r100(totLo), hi: r100(totHi), mid: r100(totMid) },
@@ -356,10 +357,17 @@ if (!MOCK && !DISCOVER && FAILED.size) {
   try {
     const prev = JSON.parse(fs.readFileSync(path.join(ROOT, "data/listings.json"), "utf8")).cars || [];
     const want = new Set([...FAILED].map((k) => k.toUpperCase()));
-    for (const c of prev) if (want.has((c.make + "|" + c.model).toUpperCase()) && !seen.has(c.vin)) { seen.add(c.vin); cars.push(c); kept++; }
+    const have = new Set(raw.map((L) => (L.vehicle && L.vehicle.vin) || L.vin));
+    for (const c of prev) if (want.has((c.make + "|" + c.model).toUpperCase()) && !have.has(c.vin)) {
+      have.add(c.vin); kept++;
+      raw.push({ vin: c.vin, createdAt: c.listedAt, vehicle: { vin: c.vin, year: c.year, make: c.make, model: c.model, trim: c.trim, engine: c.engine, fuel: c.fuel === "Sähkö" ? "Electric" : c.fuel === "Hybridi" ? "Hybrid" : c.fuel === "Lataushybridi" ? "Plug-In Hybrid" : c.fuel === "Diesel" ? "Diesel" : "Gasoline", drivetrain: c.drivetrain, transmission: c.transmission, exteriorColor: c.color, interiorColor: c.interior },
+        retailListing: { price: c.priceUsd, miles: c.miles, state: c.state, city: c.city, primaryImage: c.img, photoCount: c.photos } });
+    }
   } catch (e) {}
 }
 let skipped = 0, common = 0;
+// VIN-dekoodaus ennen laskentaa: valmistajan ilmoittama teho on tarkempi kuin rekisteristä arvattu
+const VC = (!MOCK && !DISCOVER) ? await decodeVins(ROOT, raw.map((L) => (L.vehicle && L.vehicle.vin) || L.vin)) : {};
 for (const L of raw) {
   const vin = (L.vehicle && L.vehicle.vin) || L.vin;
   if (!vin || seen.has(vin)) continue;
@@ -386,7 +394,7 @@ if (!DISCOVER && S.halvempienOsuus > 0) {
 }
 // Tekniset lisätiedot VIN-numerosta (ilmainen NHTSA-dekooderi, ei kuluta auto.devin kiintiötä)
 if (!MOCK && !DISCOVER) {
-  const vc = await decodeVins(ROOT, cars.map((c) => c.vin));
+  const vc = VC;
   for (const c of cars) {
     const d = vc[c.vin] || {};
     c.spec = specFi(d, { co2: c.autovero && c.autovero.co2, fuel: c.fuel });
