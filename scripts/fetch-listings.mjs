@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEngine } from "./engine.mjs";
+import { decodeVins, specFi } from "./vin-decode.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const S = JSON.parse(fs.readFileSync(path.join(ROOT, "config/settings.json"), "utf8"));
@@ -307,6 +308,7 @@ function calc(L, fx) {
     title: [year, v.make, v.model, v.trim].filter(Boolean).join(" "),
     miles, km, engine: v.engine || "", fuel: F.fi, drivetrain: v.drivetrain || "", transmission: v.transmission || "",
     img: rl.primaryImage || "", photos: rl.photoCount || 0,
+    color: v.exteriorColor || v.color || "", interior: v.interiorColor || "", cpo: !!(rl.cpo || rl.certified), oneOwner: !!(L.history && L.history.oneOwner),
     country: /^(ON|QC|BC|AB|MB|SK|NS|NB|NL|PE)$/.test(st) ? "CA" : "US", city: rl.city || "", state: st, // myyjän nimeä ja linkkiä ei julkaista
     priceUsd, fx: fx.rate, fxDate: fx.date,
     rows: {
@@ -381,6 +383,16 @@ if (!DISCOVER && S.halvempienOsuus > 0) {
   const order = Object.values(groups).sort((a, b) => a[0].fleet - b[0].fleet), pick = [];
   for (let i = 0; pick.length < maxRest && order.some((g) => g.length > i); i++) for (const g of order) if (g[i] && pick.length < maxRest) pick.push(g[i]);
   cars.length = 0; cars.push(...good, ...pick);
+}
+// Tekniset lisätiedot VIN-numerosta (ilmainen NHTSA-dekooderi, ei kuluta auto.devin kiintiötä)
+if (!MOCK && !DISCOVER) {
+  const vc = await decodeVins(ROOT, cars.map((c) => c.vin));
+  for (const c of cars) {
+    const d = vc[c.vin] || {};
+    c.spec = specFi(d, { co2: c.autovero && c.autovero.co2, fuel: c.fuel });
+    if (d.EngineHP && !c.hp) c.hp = Math.round(+d.EngineHP);
+    if (d.BodyClass) c.body = (c.spec.find((x) => x[0] === "Korimalli") || [])[1];
+  }
 }
 const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, keptFromPrevious: kept, failedSearches: [...FAILED], scanned: total, limit: LIMIT, skipped, common, searches: counts, cars };
 if (DISCOVER) {
