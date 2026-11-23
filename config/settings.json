@@ -34,5 +34,7 @@
     "NY",
     "NJ"
   ],
-  "_osavaltiot": "Vain näiden osavaltioiden autot haetaan ja näytetään (lyhenteet). Tyhjä lista = kaikki."
+  "_osavaltiot": "Vain näiden osavaltioiden autot haetaan ja näytetään (lyhenteet). Tyhjä lista = kaikki.",
+  "yleinenRaja": 3000,
+  "_yleinenRaja": "Malli on Suomessa yleinen, jos sitä on liikenteessä vähintään näin monta (Traficom). Yleiset mallit näytetään vain, jos ne ovat halvempia kuin Suomessa."
 }

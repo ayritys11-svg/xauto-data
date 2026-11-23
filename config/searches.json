@@ -1,109 +1,207 @@
 {
-  "_ohje": "Jokainen rivi on yksi haku auto.devistä jokaiseen asetuksissa valittuun osavaltioon. pages = montako 20 auton sivua haetaan. Ilmaisversiossa 1000 hakua/kk: 15 hakua × 2 osavaltiota × 1 sivu = 30 hakua yössä.",
+  "_ohje": "Jokainen rivi on yksi haku jokaiseen asetuksissa valittuun osavaltioon. 29 hakua x 2 osavaltiota = 58 hakua per ajo. Ajo joka toinen yö, jotta ilmaisversion 1000 hakua/kk riittää. Suomessa yleiset mallit (esim. Corolla, RAV4, Tesla) on jätetty pois, koska ne eivät ole halvempia kuin Suomessa.",
   "searches": [
     {
-      "make": "Toyota",
-      "model": "RAV4 Hybrid",
-      "year": "2019-2024",
-      "price": "15000-40000",
-      "pages": 1
-    },
-    {
-      "make": "Toyota",
-      "model": "Camry Hybrid",
-      "year": "2019-2024",
-      "price": "12000-35000",
-      "pages": 1
-    },
-    {
-      "make": "Toyota",
-      "model": "Corolla Hybrid",
-      "year": "2020-2024",
-      "price": "10000-28000",
-      "pages": 1
-    },
-    {
-      "make": "Toyota",
-      "model": "Highlander Hybrid",
-      "year": "2019-2024",
-      "price": "20000-45000",
-      "pages": 1
-    },
-    {
-      "make": "Lexus",
-      "model": "RX 450h",
-      "year": "2017-2022",
-      "price": "18000-45000",
-      "pages": 1
-    },
-    {
-      "make": "Lexus",
-      "model": "NX 300h",
-      "year": "2017-2021",
-      "price": "15000-35000",
-      "pages": 1
-    },
-    {
-      "make": "Ford",
-      "model": "Mustang",
-      "year": "2016-2023",
-      "price": "15000-45000",
+      "make": "Ram",
+      "model": "1500",
+      "year": "2018-2024",
+      "price": "15000-70000",
       "pages": 1
     },
     {
       "make": "Ford",
       "model": "F-150",
+      "year": "2018-2024",
+      "price": "15000-70000",
+      "pages": 1
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Silverado 1500",
+      "year": "2018-2024",
+      "price": "15000-65000",
+      "pages": 1
+    },
+    {
+      "make": "GMC",
+      "model": "Sierra 1500",
+      "year": "2018-2024",
+      "price": "15000-70000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Tundra",
+      "year": "2018-2024",
+      "price": "20000-65000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Tacoma",
+      "year": "2018-2024",
+      "price": "18000-50000",
+      "pages": 1
+    },
+    {
+      "make": "Jeep",
+      "model": "Gladiator",
+      "year": "2020-2024",
+      "price": "20000-50000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "Maverick",
+      "year": "2022-2024",
+      "price": "15000-40000",
+      "pages": 1
+    },
+    {
+      "make": "Cadillac",
+      "model": "Escalade",
+      "year": "2018-2024",
+      "price": "30000-95000",
+      "pages": 1
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Tahoe",
+      "year": "2018-2024",
+      "price": "25000-75000",
+      "pages": 1
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Suburban",
+      "year": "2018-2024",
+      "price": "25000-75000",
+      "pages": 1
+    },
+    {
+      "make": "GMC",
+      "model": "Yukon",
+      "year": "2018-2024",
+      "price": "25000-80000",
+      "pages": 1
+    },
+    {
+      "make": "Lincoln",
+      "model": "Navigator",
+      "year": "2018-2024",
+      "price": "30000-90000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "Expedition",
+      "year": "2018-2024",
+      "price": "20000-70000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Sequoia",
+      "year": "2018-2024",
+      "price": "25000-80000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "4Runner",
+      "year": "2018-2024",
+      "price": "20000-55000",
+      "pages": 1
+    },
+    {
+      "make": "Lexus",
+      "model": "GX 460",
+      "year": "2016-2023",
+      "price": "20000-65000",
+      "pages": 1
+    },
+    {
+      "make": "Lexus",
+      "model": "LX 570",
+      "year": "2016-2021",
+      "price": "35000-90000",
+      "pages": 1
+    },
+    {
+      "make": "Dodge",
+      "model": "Durango",
+      "year": "2018-2024",
+      "price": "18000-60000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "Bronco",
+      "year": "2021-2024",
+      "price": "25000-60000",
+      "pages": 1
+    },
+    {
+      "make": "Cadillac",
+      "model": "CT5",
+      "year": "2020-2024",
+      "price": "20000-60000",
+      "pages": 1
+    },
+    {
+      "make": "Dodge",
+      "model": "Charger",
       "year": "2018-2023",
-      "price": "18000-45000",
+      "price": "15000-60000",
       "pages": 1
     },
     {
       "make": "Dodge",
       "model": "Challenger",
       "year": "2016-2023",
-      "price": "15000-45000",
+      "price": "15000-60000",
       "pages": 1
     },
     {
       "make": "Chevrolet",
       "model": "Corvette",
-      "year": "2016-2023",
-      "price": "30000-75000",
+      "year": "2016-2024",
+      "price": "30000-90000",
+      "pages": 1
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Camaro",
+      "year": "2017-2024",
+      "price": "15000-50000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "Mustang",
+      "year": "2016-2024",
+      "price": "15000-55000",
       "pages": 1
     },
     {
       "make": "Jeep",
       "model": "Wrangler",
-      "year": "2018-2023",
-      "price": "18000-40000",
+      "year": "2018-2024",
+      "price": "18000-50000",
       "pages": 1
     },
     {
-      "make": "Tesla",
-      "model": "Model Y",
+      "make": "Toyota",
+      "model": "Highlander Hybrid",
+      "year": "2019-2024",
+      "price": "20000-50000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Sienna",
       "year": "2021-2024",
-      "price": "15000-35000",
-      "pages": 1
-    },
-    {
-      "make": "Tesla",
-      "model": "Model 3",
-      "year": "2020-2024",
-      "price": "12000-30000",
-      "pages": 1
-    },
-    {
-      "make": "Hyundai",
-      "model": "Ioniq 5",
-      "year": "2022-2024",
-      "price": "15000-32000",
-      "pages": 1
-    },
-    {
-      "make": "Kia",
-      "model": "EV6",
-      "year": "2022-2024",
-      "price": "15000-32000",
+      "price": "25000-55000",
       "pages": 1
     }
   ]

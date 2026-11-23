@@ -12,6 +12,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   var CAR = '<svg viewBox="0 0 120 50" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 36v-7l10-3 14-14h44l16 14 18 2 6 8"/><path d="M6 36h108"/><circle cx="32" cy="38" r="7" fill="#EEF0F3"/><circle cx="90" cy="38" r="7" fill="#EEF0F3"/></svg>';
   function photo(c, tag) {
+    if (isRare(c)) tag = (tag ? tag + " · " : "") + "HARVINAINEN";
     var img = c.img ? '<img src="' + esc(c.img) + '" alt="' + esc(c.title) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createRange().createContextualFragment(window.__xlCar))">' : CAR;
     return '<div class="ph">' + img + (tag ? '<span class="tag">' + esc(tag) + "</span>" : "") + "</div>";
   }
@@ -28,32 +29,38 @@
     var cars = DATA.cars.slice();
     var makes = {}, fuels = {};
     cars.forEach(function (c) { makes[c.make] = 1; fuels[c.fuel] = 1; });
-    var v = cars.filter(function (c) { return (!F.make || c.make === F.make) && (!F.fuel || c.fuel === F.fuel) && (!F.good || ok(c)); });
-    var S = { save: function (a, b) { return b.saving - a.saving; }, low: function (a, b) { return a.total.mid - b.total.mid; }, high: function (a, b) { return b.total.mid - a.total.mid; }, new: function (a, b) { return b.year - a.year || a.km - b.km; }, km: function (a, b) { return a.km - b.km; } };
+    var v = cars.filter(function (c) { return (!F.make || c.make === F.make) && (!F.fuel || c.fuel === F.fuel) && (!F.good || ok(c)) && (!F.rare || isRare(c)); });
+    var S = { save: function (a, b) { return b.saving - a.saving; }, rare: function (a, b) { return (a.fleet || 0) - (b.fleet || 0) || b.saving - a.saving; }, low: function (a, b) { return a.total.mid - b.total.mid; }, high: function (a, b) { return b.total.mid - a.total.mid; }, new: function (a, b) { return b.year - a.year || a.km - b.km; }, km: function (a, b) { return a.km - b.km; } };
     v.sort(S[F.sort] || S.save);
     function opts(o, cur, all) { return '<option value="">' + all + "</option>" + Object.keys(o).sort().map(function (k) { return '<option' + (k === cur ? " selected" : "") + ">" + esc(k) + "</option>"; }).join(""); }
     var good = cars.filter(ok).length;
     root.innerHTML =
-      '<div class="top"><div><h1>Autot USA:sta ja Kanadasta</h1><p>Jokaiselle autolle on laskettu koko hinta Suomessa rekisteröitynä: kuljetus, tulli, ALV, autovero ja rekisteröinti. Vertailuhinta on Verohallinnon arvio vastaavan auton hinnasta Suomessa.</p></div></div>' +
+      '<div class="top"><div><h1>Amerikanautot New Yorkista ja New Jerseystä</h1><p>Lava-autoja, isoja maastureita ja urheiluautoja, joita Suomessa on vain kourallinen. Jokaiselle autolle on laskettu koko hinta Suomessa rekisteröitynä: kuljetus, tulli, ALV, autovero ja rekisteröinti. Vertailuhinta on Verohallinnon arvio vastaavan auton hinnasta Suomessa, ja liikennemäärä on Traficomin rekisteristä.</p></div></div>' +
       (DATA.mock ? '<div class="note">Testidata: nämä neljä autoa ovat esimerkkejä hakuohjelman testaamiseen. Oikeat ilmoitukset päivittyvät tähän joka yö, kun API-avain on otettu käyttöön.</div>' : "") +
       '<div class="bar"><select id="xl-make" aria-label="Merkki">' + opts(makes, F.make, "Kaikki merkit") + '</select><select id="xl-fuel" aria-label="Käyttövoima">' + opts(fuels, F.fuel, "Kaikki käyttövoimat") + '</select>' +
-      '<select id="xl-sort" aria-label="Järjestys"><option value="save">Suurin säästö</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="km">Vähiten ajettu</option></select>' +
-      '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain varmasti Suomen hintaa halvemmat (" + good + ")</label></div>" +
+      '<select id="xl-sort" aria-label="Järjestys"><option value="save">Suurin säästö</option><option value="rare">Harvinaisin Suomessa</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="km">Vähiten ajettu</option></select>' +
+      '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain varmasti Suomen hintaa halvemmat (" + good + ")</label>" +
+      '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + cars.filter(isRare).length + ")</label></div>" +
       '<p class="cnt">' + v.length + " autoa · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + " · dollarin kurssi " + String(DATA.fx.rate).replace(".", ",") + "</p>" +
       (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">Valituilla ehdoilla ei löytynyt autoja.</div>');
     root.querySelector("#xl-sort").value = F.sort;
     ["make", "fuel", "sort"].forEach(function (k) { root.querySelector("#xl-" + k).addEventListener("change", function (e) { F[k] = e.target.value; keep(); list(); }); });
     root.querySelector("#xl-good").addEventListener("change", function (e) { F.good = e.target.checked; keep(); list(); });
+    root.querySelector("#xl-rare").addEventListener("change", function (e) { F.rare = e.target.checked; keep(); list(); });
   }
   // Suomen hintataso vaihteluvälinä (verotusarvon 80 %:n väli, pyöristys 100 €)
   function fiR(c) { var A = c.autovero || {}, lo = A.VLo, hi = A.VHi; if (!lo || !hi) return eur(c.fiPrice); return rng(Math.round(lo / 100) * 100, Math.round(hi / 100) * 100); }
   function gear(t) { return !t ? "" : /MANUAL|MT\b|STICK/i.test(t) ? "Manuaali" : "Automaatti"; }
+  var RARE = 300;
+  function isRare(c) { return c.fleet != null && c.fleet < RARE; }
+  function fleetTxt(c) { return c.fleet === 0 ? "ei yhtään" : fmt(c.fleet) + " kpl"; }
   function ok(c) { return c.sure === undefined ? c.saving > 0 : c.sure; }
   function keep() { try { localStorage.setItem("xl-f", JSON.stringify(F)); } catch (e) {} }
   function card(c) {
     return '<a class="car" href="#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [c.fuel, c.engine, fmt(c.km) + " km"].filter(Boolean).map(esc).join(" · ") + "</p>" + photo(c, origin(c)) +
       '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b>" + saveBadge(c) + "</div>" +
       '<div class="row"><span>Hinta USA:ssa</span><b>' + fmt(c.priceUsd) + " $</b></div>" +
+      (c.fleet != null ? '<div class="row"><span>Suomessa liikenteessä</span><b>' + fleetTxt(c) + "</b></div>" : "") +
       '<div class="row"><span>Autovero (arvio)</span><b>' + (c.autovero.avg === 0 ? "0 €" : eur(c.autovero.avg)) + "</b></div>" +
       '<div class="row"><span>Vastaava auto Suomessa</span><b>' + fiR(c) + "</b></div>" + conf(c) + "</a>";
   }
@@ -80,7 +87,7 @@
           line("b) Valmiit autoveropäätökset", "Samasta autosta ei ole riittävästi päätöksiä vertailuun. Arvio perustuu CO₂-laskentaan.", "–")) +
         '<div class="ln sum"><div class="t">Autoveroarvio</div><div class="d">' + (A.same ? "a- ja b-tavan keskiarvo, " : "") + "vaihteluväli " + rng(R.tax[0], R.tax[1]) + '</div><div class="v">' + eur(A.avg) + "</div></div>";
     }
-    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", gear(c.transmission)], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["Veto", c.drivetrain], ["VIN", c.vin]]
+    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", gear(c.transmission)], ["Suomessa liikenteessä (Traficom 9/2026)", c.fleet != null ? fleetTxt(c) : ""], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["Veto", c.drivetrain], ["VIN", c.vin]]
       .filter(function (f) { return f[1]; }).map(function (f) { return "<div><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +

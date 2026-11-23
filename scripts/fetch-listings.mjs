@@ -17,6 +17,20 @@ const today = new Date();
 const X = loadEngine(ROOT);
 const M = X.M();
 const CORE = JSON.parse(fs.readFileSync(path.join(ROOT, "data/autovero_core.json"), "utf8"));
+const FLEET = JSON.parse(fs.readFileSync(path.join(ROOT, "data/fleet.json"), "utf8")).d;
+// Montako samaa mallia Suomessa on liikenteessä (Traficom)
+function fleetCount(mk, models) {
+  const z = (x) => String(x).toUpperCase().replace(/[\s\-\.\/]/g, "");
+  let best = 0;
+  for (const md of models) {
+    let n = 0;
+    const add = (m, name) => { const t = FLEET[m] || {}, k0 = z(name); for (const k of Object.keys(t)) if (k0 && k.indexOf(k0) === 0) n += t[k]; };
+    add(mk, md);
+    if (mk === "RAM") add("DODGE", "RAM " + md);
+    best = Math.max(best, n);
+  }
+  return best;
+}
 const AN = JSON.parse(fs.readFileSync(path.join(ROOT, "data/analog.json"), "utf8"));
 const C2 = JSON.parse(fs.readFileSync(path.join(ROOT, "data/co2_table.json"), "utf8"));
 
@@ -272,7 +286,7 @@ function calc(L, fx) {
       a: r0(taxA), same, b: taxB != null ? r0(taxB) : null, avg: r0(tax)
     },
     total: { lo: r100(totLo), hi: r100(totHi), mid: r100(totMid) },
-    fiPrice: r100(V), saving: r100(saving), sure: saving > 0 && conf !== "matala", savingPct: +(saving / V * 100).toFixed(1),
+    fleet: fleetCount(mk, models), fiPrice: r100(V), saving: r100(saving), sure: saving > 0 && conf !== "matala", savingPct: +(saving / V * 100).toFixed(1),
     confidence: conf, warnings: [...new Set(warn)].slice(0, 4),
     listedAt: L.createdAt || "", updatedAt: L.updatedAt || ""
   };
@@ -295,10 +309,11 @@ if (MOCK) raw = MOCK_DATA;
 else {
   if (!KEY) { console.error("AUTODEV_KEY puuttuu"); process.exit(1); }
   const STATES = (S.osavaltiot && S.osavaltiot.length) ? S.osavaltiot : [null];
-  for (const q of Q) for (const st of STATES) { const r = await search(q, st); console.log(q.make, q.model, st || "kaikki", r.length); raw.push(...r); }
+  for (const q of Q) for (const st of STATES) { const r = await search(q, st); console.log(q.make, q.model, st || "kaikki", r.length); counts[q.make + " " + q.model + " " + (st || "")] = r.length; raw.push(...r); }
 }
 const seen = new Set(), cars = [];
-let skipped = 0;
+let skipped = 0, common = 0;
+const counts = {};
 for (const L of raw) {
   const vin = (L.vehicle && L.vehicle.vin) || L.vin;
   if (!vin || seen.has(vin)) continue;
@@ -307,9 +322,11 @@ for (const L of raw) {
   try { c = calc(L, fx); } catch (e) { console.error(vin, e.message); }
   if (!c) { skipped++; continue; }
   if (S.naytaVainKannattavat && c.saving <= 0) continue;
+  c.rare = c.fleet < (S.yleinenRaja || 3000);
+  if (!c.rare && c.saving <= 0) { common++; continue; } // yleinen malli, ei halvempi -> ei näytetä
   cars.push(c);
 }
 cars.sort((a, b) => b.saving - a.saving);
-const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, skipped, cars };
+const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, skipped, common, searches: counts, cars };
 fs.writeFileSync(path.join(ROOT, "data/listings.json"), JSON.stringify(out));
-console.log("Valmis:", cars.length, "autoa,", skipped, "ohitettu");
+console.log("Valmis:", cars.length, "autoa,", skipped, "ohitettu,", common, "yleistä ei-kannattavaa pois");
