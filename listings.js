@@ -20,6 +20,7 @@
   var CONF = { korkea: "Tarkka arvio", keskitaso: "Kohtalainen tarkkuus", matala: "Epävarma arvio" };
   function conf(c) { return '<span class="conf ' + c.confidence + '"><i></i>' + CONF[c.confidence] + "</span>"; }
   function saveBadge(c) {
+    if (isRare(c)) return '<span class="sv r">' + (c.fleet === 0 ? "Ei yhtään Suomessa" : "Vain " + fmt(c.fleet) + " kpl Suomessa") + "</span>" + (c.sure ? ' <span class="sv g">' + eur(c.saving) + " halvempi</span>" : "");
     if (c.saving == null) return '<span class="sv n">Ei vertailukohtaa Suomessa</span>';
     if (c.saving > 0 && c.sure === false) return '<span class="sv u">Mahdollisesti ' + eur(c.saving) + " halvempi</span>";
     return c.saving > 0 ? '<span class="sv g">' + eur(c.saving) + " halvempi</span>" : '<span class="sv b">' + eur(-c.saving) + " kalliimpi</span>";
@@ -62,9 +63,9 @@
     return '<a class="car" href="#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [c.fuel, c.engine, fmt(c.km) + " km"].filter(Boolean).map(esc).join(" · ") + "</p>" + photo(c, origin(c)) +
       '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b>" + saveBadge(c) + "</div>" +
       '<div class="row"><span>Hinta USA:ssa</span><b>' + fmt(c.priceUsd) + " $</b></div>" +
-      (c.fleet != null ? '<div class="row"><span>Suomessa liikenteessä</span><b>' + fleetTxt(c) + "</b></div>" : "") +
+      (c.fleet != null && !isRare(c) ? '<div class="row"><span>Suomessa liikenteessä</span><b>' + fleetTxt(c) + "</b></div>" : "") +
       '<div class="row"><span>Autovero (arvio)</span><b>' + (c.autovero.avg === 0 ? "0 €" : eur(c.autovero.avg)) + "</b></div>" +
-      '<div class="row"><span>Vastaava auto Suomessa</span><b>' + fiR(c) + "</b></div>" + conf(c) + "</a>";
+      (isRare(c) ? "" : '<div class="row"><span>Vastaava auto Suomessa</span><b>' + fiR(c) + "</b></div>") + conf(c) + "</a>";
   }
 
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
@@ -100,7 +101,7 @@
       '<section class="sec"><h2><b>1</b>Mistä hinta koostuu</h2>' + s1 + "</section>" +
       '<section class="sec"><h2><b>2</b>Mistä autoveroarvio koostuu</h2><p class="lead">Autovero = verotusarvo × veroprosentti. Verotusarvo on arvioitu Verohallinnon omista päätöksistä, veroprosentti CO₂-taulukosta ja valmiista päätöksistä.</p>' + s2 +
       (c.warnings.length ? '<ul class="warn">' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>" : "") + "</section>" +
-      '<section class="sec"><h2><b>3</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b>' + rng(c.total.lo, c.total.hi) + "</b></div><div><small>Vastaava auto Suomessa (Veron verotusarvo)</small><b>" + fiR(c) + "</b></div>" + (c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Ero keskiarvolla</small><b style=\"color:" + (c.saving > 0 ? "var(--good)" : "var(--bad)") + '">' + (c.saving > 0 ? "−" : "+") + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
+      '<section class="sec"><h2><b>3</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b>' + rng(c.total.lo, c.total.hi) + "</b></div><div><small>" + (isRare(c) ? "Verotusarvo (arvio)" : "Vastaava auto Suomessa (Veron verotusarvo)") + "</small><b>" + (isRare(c) ? rng(Math.round(c.autovero.VLo / 100) * 100, Math.round(c.autovero.VHi / 100) * 100) : fiR(c)) + "</b></div>" + (isRare(c) ? '<div class="rare"><small>Suomessa liikenteessä (Traficom 9/2026)</small><b>' + (c.fleet === 0 ? "Ei yhtään" : fmt(c.fleet) + " kpl") + "</b>" : c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Ero keskiarvolla</small><b style=\"color:" + (c.saving > 0 ? "var(--good)" : "var(--bad)") + '">' + (c.saving > 0 ? "−" : "+") + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
       '<p class="lead" style="margin-top:12px">Alaraja: tulli 0 % (jos mahdollista) ja autovero alarajalla. Yläraja: tulli 10 %, autovero ylärajalla ja kuljetus 15 % arvioitua kalliimpi. Verohallinto päättää lopullisen autoveron. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p></section>' +
       '<section class="sec"><h2>Tiedot</h2><div class="facts">' + facts + "</div></section>";
     bindGallery(c);
