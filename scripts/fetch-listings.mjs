@@ -59,6 +59,7 @@ async function usdEur() {
 }
 
 let LIMIT = S.hakuKoko || 20;
+const FAILED = new Set();
 async function search(q, state) {
   const out = [];
   for (let page = 1; page <= (q.pages || 1); page++) {
@@ -69,6 +70,7 @@ async function search(q, state) {
     const url = "https://api.auto.dev/listings?" + p.toString();
     const res = await fetch(url, { headers: { Authorization: "Bearer " + KEY } });
     if (!res.ok) {
+      FAILED.add(q.make + "|" + q.model);
       const body = (await res.text()).slice(0, 300);
       console.error("HTTP", res.status, url, body);
       if (LIMIT > 20 && res.status >= 400 && res.status < 500 && res.status !== 401 && res.status !== 429) { LIMIT = 20; page--; continue; }
@@ -346,6 +348,15 @@ else {
   for (const q of Q) for (const st of STATES) { const r = await search(q, st); console.log(q.make, q.model, st || "kaikki", r.length); counts[q.make + " " + q.model + " " + (st || "")] = r.length; raw.push(...r); }
 }
 const seen = new Set(), cars = [];
+// Epäonnistuneiden hakujen autot edellisestä ajosta, ettei sivu tyhjene kiintiön loppuessa
+let kept = 0;
+if (!MOCK && !DISCOVER && FAILED.size) {
+  try {
+    const prev = JSON.parse(fs.readFileSync(path.join(ROOT, "data/listings.json"), "utf8")).cars || [];
+    const want = new Set([...FAILED].map((k) => k.toUpperCase()));
+    for (const c of prev) if (want.has((c.make + "|" + c.model).toUpperCase()) && !seen.has(c.vin)) { seen.add(c.vin); cars.push(c); kept++; }
+  } catch (e) {}
+}
 let skipped = 0, common = 0;
 for (const L of raw) {
   const vin = (L.vehicle && L.vehicle.vin) || L.vin;
@@ -356,7 +367,7 @@ for (const L of raw) {
   if (!c) { skipped++; continue; }
   if (S.naytaVainKannattavat && c.saving <= 0) continue;
   c.rare = c.fleet < (S.yleinenRaja || 3000);
-  if (!DISCOVER && !c.rare && !(c.saving > 0)) { common++; continue; } // yleinen malli, ei halvempi -> ei näytetä
+  if (!DISCOVER && !S.naytaKaikki && !c.rare && !(c.saving > 0)) { common++; continue; } // yleinen malli, ei halvempi -> ei näytetä
   cars.push(c);
 }
 cars.sort((a, b) => (b.saving ?? -1e9) - (a.saving ?? -1e9));
@@ -371,7 +382,7 @@ if (!DISCOVER && S.halvempienOsuus > 0) {
   for (let i = 0; pick.length < maxRest && order.some((g) => g.length > i); i++) for (const g of order) if (g[i] && pick.length < maxRest) pick.push(g[i]);
   cars.length = 0; cars.push(...good, ...pick);
 }
-const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, scanned: total, limit: LIMIT, skipped, common, searches: counts, cars };
+const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, keptFromPrevious: kept, failedSearches: [...FAILED], scanned: total, limit: LIMIT, skipped, common, searches: counts, cars };
 if (DISCOVER) {
   const by = {};
   for (const c of cars) { const k = c.make + " " + c.model; (by[k] = by[k] || []).push(c); }

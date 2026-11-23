@@ -29,7 +29,7 @@
   "tulli": 0.1,
   "minVuosi": 2016,
   "maxMailit": 90000,
-  "naytaVainKannattavat": true,
+  "naytaVainKannattavat": false,
   "osavaltiot": [
     "NY",
     "NJ"
@@ -40,5 +40,7 @@
   "halvempienOsuus": 0,
   "_halvempienOsuus": "Tavoiteosuus Suomen hintaa halvemmille autoille. Muita autoja näytetään enintään niin monta, että tämä osuus täyttyy (harvinaisimmat ensin). 0 = ei rajausta.",
   "hakuKoko": 20,
-  "_hakuKoko": "Montako autoa yksi haku palauttaa. auto.devin ilmaisversio palauttaa enintään 20."
+  "_hakuKoko": "Montako autoa yksi haku palauttaa. auto.devin ilmaisversio palauttaa enintään 20.",
+  "naytaKaikki": true,
+  "_naytaKaikki": "true = kaikki haetut autot näytetään (halvemmat ensin). false = Suomessa yleiset mallit näytetään vain, jos ne ovat halvempia."
 }

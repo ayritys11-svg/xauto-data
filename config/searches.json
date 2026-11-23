@@ -1,5 +1,5 @@
 {
-  "_ohje": "Vain mallit, joista kartoituksessa löytyi Suomen hintaa halvempia autoja. pages = montako sivua haetaan per osavaltio. Yksi ajo = sivujen summa x 2 osavaltiota hakua.",
+  "_ohje": "pages = montako 20 auton sivua haetaan per osavaltio. Yksi ajo = sivujen summa x 2 osavaltiota hakua. Ilmaisversio: 1000 hakua/kk.",
   "searches": [
     {
       "make": "Porsche",
@@ -30,6 +30,13 @@
       "pages": 2
     },
     {
+      "make": "Audi",
+      "model": "Q7",
+      "year": "2018-2023",
+      "price": "12000-60000",
+      "pages": 2
+    },
+    {
       "make": "Chevrolet",
       "model": "Camaro",
       "year": "2016-2024",
@@ -44,17 +51,234 @@
       "pages": 2
     },
     {
-      "make": "Audi",
-      "model": "Q7",
+      "make": "Land Rover",
+      "model": "Range Rover",
       "year": "2018-2023",
-      "price": "12000-60000",
-      "pages": 2
+      "price": "25000-120000",
+      "pages": 1
+    },
+    {
+      "make": "Land Rover",
+      "model": "Range Rover Velar",
+      "year": "2018-2023",
+      "price": "15000-70000",
+      "pages": 1
+    },
+    {
+      "make": "BMW",
+      "model": "X7",
+      "year": "2019-2023",
+      "price": "25000-90000",
+      "pages": 1
+    },
+    {
+      "make": "Mercedes-Benz",
+      "model": "GLS",
+      "year": "2020-2023",
+      "price": "25000-95000",
+      "pages": 1
+    },
+    {
+      "make": "Audi",
+      "model": "Q8",
+      "year": "2019-2023",
+      "price": "20000-80000",
+      "pages": 1
+    },
+    {
+      "make": "Volvo",
+      "model": "XC90",
+      "year": "2018-2023",
+      "price": "15000-60000",
+      "pages": 1
+    },
+    {
+      "make": "Genesis",
+      "model": "GV80",
+      "year": "2021-2024",
+      "price": "25000-70000",
+      "pages": 1
+    },
+    {
+      "make": "Lincoln",
+      "model": "Aviator",
+      "year": "2020-2024",
+      "price": "20000-65000",
+      "pages": 1
+    },
+    {
+      "make": "Ram",
+      "model": "1500",
+      "year": "2018-2024",
+      "price": "15000-70000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "F-150",
+      "year": "2018-2024",
+      "price": "15000-70000",
+      "pages": 1
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Silverado 1500",
+      "year": "2018-2024",
+      "price": "15000-65000",
+      "pages": 1
+    },
+    {
+      "make": "GMC",
+      "model": "Sierra 1500",
+      "year": "2018-2024",
+      "price": "15000-70000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Tundra",
+      "year": "2018-2024",
+      "price": "20000-65000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Tacoma",
+      "year": "2018-2024",
+      "price": "18000-50000",
+      "pages": 1
+    },
+    {
+      "make": "Jeep",
+      "model": "Gladiator",
+      "year": "2020-2024",
+      "price": "20000-50000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "Maverick",
+      "year": "2022-2024",
+      "price": "15000-40000",
+      "pages": 1
+    },
+    {
+      "make": "Cadillac",
+      "model": "Escalade",
+      "year": "2018-2024",
+      "price": "30000-95000",
+      "pages": 1
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Tahoe",
+      "year": "2018-2024",
+      "price": "25000-75000",
+      "pages": 1
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Suburban",
+      "year": "2018-2024",
+      "price": "25000-75000",
+      "pages": 1
+    },
+    {
+      "make": "GMC",
+      "model": "Yukon",
+      "year": "2018-2024",
+      "price": "25000-80000",
+      "pages": 1
+    },
+    {
+      "make": "Lincoln",
+      "model": "Navigator",
+      "year": "2018-2024",
+      "price": "30000-90000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "Expedition",
+      "year": "2018-2024",
+      "price": "20000-70000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Sequoia",
+      "year": "2018-2024",
+      "price": "25000-80000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "4Runner",
+      "year": "2018-2024",
+      "price": "20000-55000",
+      "pages": 1
+    },
+    {
+      "make": "Lexus",
+      "model": "GX 460",
+      "year": "2016-2023",
+      "price": "20000-65000",
+      "pages": 1
+    },
+    {
+      "make": "Dodge",
+      "model": "Durango",
+      "year": "2018-2024",
+      "price": "18000-60000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "Bronco",
+      "year": "2021-2024",
+      "price": "25000-60000",
+      "pages": 1
+    },
+    {
+      "make": "Cadillac",
+      "model": "CT5",
+      "year": "2020-2024",
+      "price": "20000-60000",
+      "pages": 1
     },
     {
       "make": "Dodge",
       "model": "Charger",
       "year": "2018-2023",
       "price": "12000-60000",
+      "pages": 1
+    },
+    {
+      "make": "Dodge",
+      "model": "Challenger",
+      "year": "2016-2023",
+      "price": "15000-60000",
+      "pages": 1
+    },
+    {
+      "make": "Jeep",
+      "model": "Wrangler",
+      "year": "2018-2024",
+      "price": "18000-50000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Highlander Hybrid",
+      "year": "2019-2024",
+      "price": "20000-50000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Sienna",
+      "year": "2021-2024",
+      "price": "25000-55000",
       "pages": 1
     }
   ]
