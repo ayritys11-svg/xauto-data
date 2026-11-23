@@ -20,3 +20,12 @@
 .xh button,.xh a,.xh select,.xh input,.xl button,.xl a,.xl select,.xl input,.vdd-o,.vrf,.vrs button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .xh .type{transition:none!important}
 .xh .type:active{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+/* hero: teksti vasemmalle, maat tasaisesti keskelle laatikkoa */
+.xh .hero .in>div:first-child{align-self:flex-start!important;text-align:left!important}
+.xh .hero h1,.xh .hero .lead{margin-left:0!important;margin-right:auto}
+.xh .hero .row{flex-direction:column;align-items:stretch}
+.xh .origins{display:flex!important;width:100%;justify-content:space-evenly;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:10px 14px!important;font-size:clamp(11px,3.3vw,15px)!important;letter-spacing:.08em!important;text-align:center;border-radius:28px!important}
+.xh .origins span{color:#fff!important;opacity:1!important;white-space:nowrap}
+.xh .origins span+span::before{content:none!important}
+.xh .hero .count{align-self:flex-start}
+@media(min-width:760px){.xh .hero .row{flex-direction:row;align-items:center}.xh .origins{flex:1 1 auto;width:auto}}
