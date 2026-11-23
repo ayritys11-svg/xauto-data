@@ -1,4 +1,4 @@
-/* X-auto: autoilmoitukset (lista + yksittäinen ilmoitus). Data: data/listings.json */
+/* Velo: autoilmoitukset (lista + yksittäinen ilmoitus). Data: data/listings.json */
 (function () {
   var root = document.querySelector(".xl"); if (!root) return;
   var MODE = root.dataset.mode || "", LISTURL = root.dataset.list || "", LIMIT = +root.dataset.limit || 12;
@@ -154,7 +154,7 @@
       line("Huolinta ja satamamaksut", "Tullaus ja käsittely", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "Auton, kuljetuksen, tullin ja huolinnan päälle", rng(R.vat[0], R.vat[1])) +
       line("Katsastus ja rekisteröinti", "Rekisteröintikatsastus, yksittäishyväksyntä, kilvet", eur(R.reg), "arvio") +
-      line("X-auton palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
+      line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       line("Autovero", exact(c) ? "Erittely alla" : "Arvio, erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]));
     var s2;
     if (A.p === 0) {
