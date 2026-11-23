@@ -38,38 +38,78 @@
   }
   function origin(c) { return (c.country === "CA" || /^(ON|QC|BC|AB)$/.test(c.state || "") ? "KANADA" : "USA") + (c.state ? " · " + c.state : ""); }
 
+  var TXT = ["q", "make", "model", "trim", "body", "fuel", "gear", "drive", "loc", "color"], NUM = ["pmin", "pmax", "ymin", "ymax", "kmax", "dmin", "dmax"], EXTRA = ["trim", "body", "gear", "drive", "loc", "color", "pmin", "pmax", "ymin", "ymax", "kmax", "dmin", "dmax"], OPEN = false;
+  function modelName(c) { return /^\d/.test(c.model || "") ? c.make + " " + c.model : c.model || ""; }
+  function driveFi(d) { return ({ AWD: "Neliveto", "4WD": "Neliveto", FWD: "Etuveto", RWD: "Takaveto" })[d] || ""; }
+  function locFi(c) { return ({ NY: "New York", NJ: "New Jersey" })[c.state] || c.state || ""; }
+  function colorFi(s) {
+    s = String(s || "").toLowerCase(); if (!s || /unspec|unknown|other/.test(s)) return "";
+    var T = [["black", "Musta"], ["white", "Valkoinen"], ["pearl", "Valkoinen"], ["gray", "Harmaa"], ["grey", "Harmaa"], ["silver", "Hopea"], ["blue", "Sininen"], ["navy", "Sininen"], ["red", "Punainen"], ["green", "Vihreä"], ["brown", "Ruskea"], ["beige", "Beige"], ["yellow", "Keltainen"], ["orange", "Oranssi"], ["purple", "Violetti"], ["gold", "Kulta"]];
+    for (var i = 0; i < T.length; i++) if (s.indexOf(T[i][0]) >= 0) return T[i][1];
+    return "Muu";
+  }
+  function displ(c) {
+    var m = /(\d+(?:[.,]\d+)?)\s*L\b/i.exec(c.engine || "");
+    if (!m) { var s = (c.spec || []).filter(function (x) { return x[0] === "Moottori"; })[0]; m = s ? /(\d+(?:,\d+)?)\s*l\b/.exec(s[1]) : null; }
+    return m ? parseFloat(m[1].replace(",", ".")) : null;
+  }
+  function num(s) { s = String(s == null ? "" : s).replace(/\s/g, "").replace(",", "."); var n = parseFloat(s.replace(/[^\d.]/g, "")); return isNaN(n) ? null : n; }
+  function hay(c) { return [c.title, c.make, c.model, c.trim, c.body, c.fuel, c.engine, c.color, colorFi(c.color), c.city, locFi(c), driveFi(c.drivetrain), gear(c.transmission)].concat((c.spec || []).map(function (x) { return x[1]; })).join(" ").toLowerCase(); }
+  function words(c, q) { q = String(q || "").trim().toLowerCase(); if (!q) return true; var h = hay(c); return q.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; }); }
+  function inR(v, lo, hi) { lo = num(lo); hi = num(hi); if (lo == null) { if (hi == null) return true; } if (v == null) return false; if (lo != null) { if (v < lo) return false; } if (hi != null) { if (v > hi) return false; } return true; }
+  function pass(c, skip) {
+    var t = function (k, val) { return k === skip || match(val, F[k]); };
+    return words(c, F.q) && t("make", c.make) && t("model", modelName(c)) && t("trim", c.trim) && t("body", c.body) && t("fuel", c.fuel) && t("gear", gear(c.transmission)) && t("drive", driveFi(c.drivetrain)) && t("loc", locFi(c)) && t("color", colorFi(c.color)) &&
+      inR(c.total && c.total.mid, F.pmin, F.pmax) && inR(c.year, F.ymin, F.ymax) && inR(c.km, null, F.kmax) && inR(displ(c), F.dmin, F.dmax) &&
+      (!F.good || ok(c)) && (!F.rare || isRare(c));
+  }
   function list() {
     var cars = DATA.cars.slice();
-    var makes = {}, fuels = {};
-    cars.forEach(function (c) { makes[c.make] = 1; fuels[c.fuel] = 1; });
-    var v = cars.filter(function (c) { return match(c.make, F.make) && match(c.fuel, F.fuel) && (!F.good || ok(c)) && (!F.rare || isRare(c)); });
+    // vaihtoehdot rajautuvat muiden valintojen mukaan (esim. merkki → mallit)
+    var O = {}; ["make", "model", "trim", "body", "fuel", "gear", "drive", "loc", "color"].forEach(function (k) { O[k] = {}; });
+    var val = { make: function (c) { return c.make; }, model: modelName, trim: function (c) { return c.trim; }, body: function (c) { return c.body; }, fuel: function (c) { return c.fuel; }, gear: function (c) { return gear(c.transmission); }, drive: function (c) { return driveFi(c.drivetrain); }, loc: locFi, color: function (c) { return colorFi(c.color); } };
+    Object.keys(O).forEach(function (k) { cars.forEach(function (c) { var x = val[k](c); if (x) { if (pass(c, k)) O[k][x] = 1; } }); });
+    var v = cars.filter(function (c) { return pass(c); });
     var SV = function (c) { return c.saving == null ? -1e9 : c.saving; };
-    var CR = { korkea: 0, keskitaso: 1, matala: 2 };
     var HT = function (c) { return Math.round(taxAcc(c).pct * 10); };
-    var S = { save: function (a, b) { return (HT(a) - HT(b)) || SV(b) - SV(a); }, saveonly: function (a, b) { return SV(b) - SV(a); }, rare: function (a, b) { return (a.fleet || 0) - (b.fleet || 0) || SV(b) - SV(a); }, low: function (a, b) { return a.total.mid - b.total.mid; }, high: function (a, b) { return b.total.mid - a.total.mid; }, new: function (a, b) { return b.year - a.year || a.km - b.km; }, km: function (a, b) { return a.km - b.km; } };
+    var S = { save: function (a, b) { return (HT(a) - HT(b)) || SV(b) - SV(a); }, saveonly: function (a, b) { return SV(b) - SV(a); }, rare: function (a, b) { return (a.fleet || 0) - (b.fleet || 0) || SV(b) - SV(a); }, low: function (a, b) { return a.total.mid - b.total.mid; }, high: function (a, b) { return b.total.mid - a.total.mid; }, new: function (a, b) { return b.year - a.year || a.km - b.km; }, old: function (a, b) { return a.year - b.year || a.km - b.km; }, km: function (a, b) { return a.km - b.km; } };
     v.sort(S[F.sort] || S.save);
-    function dl(id, o) { return '<datalist id="' + id + '">' + Object.keys(o).sort().map(function (k) { return '<option value="' + esc(k) + '">'; }).join("") + "</datalist>"; }
-    function opts(o, cur, all) { return '<option value="">' + all + "</option>" + Object.keys(o).sort().map(function (k) { return '<option' + (k === cur ? " selected" : "") + ">" + esc(k) + "</option>"; }).join(""); }
+    function dl(id, o, keep) { var ks = keep ? o : Object.keys(o).sort(function (a, b) { return a.localeCompare(b, "fi"); }); return '<datalist id="' + id + '">' + ks.map(function (k) { return '<option value="' + esc(k) + '">'; }).join("") + "</datalist>"; }
+    function cb(k, ph, o) { return '<div class="cb"><input id="xl-' + k + '" data-f="' + k + '" list="xl-' + k + 's" autocomplete="off" placeholder="' + ph + '" aria-label="' + ph + '" value="' + esc(F[k] || "") + '">' + (F[k] ? '<button type="button" class="x" data-k="' + k + '" aria-label="Tyhjennä">×</button>' : "") + dl("xl-" + k + "s", o) + "</div>"; }
+    function nb(k, ph, steps) { return '<div class="cb n"><input id="xl-' + k + '" data-f="' + k + '" list="xl-' + k + 's" inputmode="decimal" autocomplete="off" placeholder="' + ph + '" aria-label="' + ph + '" value="' + esc(F[k] || "") + '">' + dl("xl-" + k + "s", steps, true) + "</div>"; }
+    function rg(a, b) { return '<div class="rg">' + a + b + "</div>"; }
+    var st = function (a, b, d, f) { var o = []; for (var x = a; x <= b + 1e-9; x += d) o.push(f ? f(x) : String(x)); return o; };
+    var yrs = cars.map(function (c) { return c.year; }), y0 = Math.min.apply(null, yrs), y1 = Math.max.apply(null, yrs);
+    var PR = st(20000, 200000, 10000, fmt), KM = [10000, 20000, 30000, 50000, 75000, 100000, 150000].map(fmt), DS = st(1, 7, 0.5, function (x) { return x.toFixed(1).replace(".", ","); }), YR = st(y0, y1, 1);
+    var nExtra = EXTRA.filter(function (k) { return F[k]; }).length;
     var good = cars.filter(ok).length;
     root.innerHTML =
       '<div class="top"><div><h1>Autot USA:sta Suomeen</h1><p>Jokaiselle autolle on laskettu koko hinta Suomessa rekisteröitynä: kuljetus, tulli, ALV, autovero ja rekisteröinti. Suomen hintaa halvemmat autot näytetään ensin. Vertailuhinta on Verohallinnon arvio vastaavan auton hinnasta Suomessa, ja liikennemäärä on Traficomin rekisteristä. Autot ovat New Yorkin ja New Jerseyn autoliikkeistä.</p></div></div>' +
-      (DATA.mock ? '<div class="note">Testidata: nämä neljä autoa ovat esimerkkejä hakuohjelman testaamiseen. Oikeat ilmoitukset päivittyvät tähän joka yö, kun API-avain on otettu käyttöön.</div>' : "") +
-      '<div class="bar"><div class="cb"><input id="xl-make" list="xl-makes" autocomplete="off" placeholder="Kaikki merkit" aria-label="Merkki" value="' + esc(F.make) + '">' + (F.make ? '<button type="button" class="x" data-k="make" aria-label="Tyhjennä merkki">×</button>' : "") + dl("xl-makes", makes) + "</div>" +
-      '<div class="cb"><input id="xl-fuel" list="xl-fuels" autocomplete="off" placeholder="Kaikki käyttövoimat" aria-label="Käyttövoima" value="' + esc(F.fuel) + '">' + (F.fuel ? '<button type="button" class="x" data-k="fuel" aria-label="Tyhjennä käyttövoima">×</button>' : "") + dl("xl-fuels", fuels) + "</div>" +
-      '<select id="xl-sort" aria-label="Järjestys"><option value="save">Pienin heitto ensin</option><option value="saveonly">Suurin säästö</option><option value="rare">Harvinaisin Suomessa</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="km">Vähiten ajettu</option></select>' +
+      (DATA.mock ? '<div class="note">Testidata: nämä neljä autoa ovat esimerkkejä hakuohjelman testaamiseen.</div>' : "") +
+      '<div class="bar' + (OPEN ? " open" : "") + '">' +
+      cb("q", "Hakusana", {}) + cb("make", "Kaikki merkit", O.make) + cb("model", "Kaikki mallit", O.model) + cb("fuel", "Kaikki käyttövoimat", O.fuel) +
+      '<select id="xl-sort" aria-label="Järjestys"><option value="save">Pienin heitto ensin</option><option value="saveonly">Suurin säästö</option><option value="rare">Harvinaisin Suomessa</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="old">Vanhin ensin</option><option value="km">Vähiten ajettu</option></select>' +
+      '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Vähemmän suodattimia" : "Lisää suodattimia") + (nExtra ? " (" + nExtra + ")" : "") + "</button>" +
+      '<div class="ext">' +
+      cb("trim", "Mallitarkennus", O.trim) + cb("body", "Korimalli", O.body) + cb("gear", "Vaihteisto", O.gear) + cb("drive", "Veto", O.drive) + cb("loc", "Sijainti", O.loc) + cb("color", "Väri", O.color) + nb("kmax", "Mittarilukema max km", KM) +
+      rg(nb("pmin", "Hinta min €", PR), nb("pmax", "Hinta max €", PR)) +
+      rg(nb("ymin", "Vuosimalli min", YR), nb("ymax", "Vuosimalli max", YR)) +
+      rg(nb("dmin", "Moottori min l", DS), nb("dmax", "Moottori max l", DS)) +
+      "</div>" +
       (good < cars.length ? '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" : "") +
       '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + cars.filter(isRare).length + ")</label></div>" +
       '<p class="cnt">' + (v.length < cars.length ? "Näytetään " + v.length + " / " + cars.length + ' autoa · <button type="button" id="xl-clear" class="clr">Tyhjennä suodattimet</button>' : v.length + " autoa") + " · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + "</p>" +
       (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">Valituilla ehdoilla ei löytynyt autoja.</div>');
     root.querySelector("#xl-sort").value = F.sort;
     root.querySelector("#xl-sort").addEventListener("change", function (e) { F.sort = e.target.value; keep(); list(); });
-    ["make", "fuel"].forEach(function (k) {
-      var el = root.querySelector("#xl-" + k);
+    Array.prototype.forEach.call(root.querySelectorAll("input[data-f]"), function (el) {
+      var k = el.dataset.f;
       el.addEventListener("input", function () { F[k] = el.value; var pos = el.selectionStart; list(); var n = root.querySelector("#xl-" + k); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} });
     });
     Array.prototype.forEach.call(root.querySelectorAll(".cb .x"), function (b) { b.addEventListener("click", function () { F[b.dataset.k] = ""; list(); }); });
+    root.querySelector("#xl-more").addEventListener("click", function () { OPEN = !OPEN; list(); });
     var xg = root.querySelector("#xl-good"); if (xg) xg.addEventListener("change", function (e) { F.good = e.target.checked; keep(); list(); });
-    var clr = root.querySelector("#xl-clear"); if (clr) clr.addEventListener("click", function () { F.make = ""; F.fuel = ""; F.good = false; F.rare = false; list(); });
+    var clr = root.querySelector("#xl-clear"); if (clr) clr.addEventListener("click", function () { TXT.concat(NUM).forEach(function (k) { F[k] = ""; }); F.good = false; F.rare = false; list(); });
     root.querySelector("#xl-rare").addEventListener("change", function (e) { F.rare = e.target.checked; keep(); list(); });
   }
   // Suomen hintataso vaihteluvälinä (verotusarvon 80 %:n väli, pyöristys 100 €)

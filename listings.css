@@ -150,3 +150,14 @@ font-family:var(--font-body);color:var(--fg);font-size:15px;line-height:1.5;widt
 .xl .more{display:flex;justify-content:center;margin-top:24px}
 .xl .more a{display:block;width:min(100%,520px);text-align:center;background:var(--accent);color:#fff!important;border-radius:10px;padding:14px 20px;font-weight:600;text-decoration:none!important}
 .xl .more a:hover{background:var(--accent-2)}
+/* lisäsuodattimet */
+.xl .bar .ext{display:contents}
+.xl .bar .moref{display:none;height:44px;border:1px dashed var(--line);border-radius:10px;background:none;color:var(--accent);font-weight:600;cursor:pointer;font-size:15px}
+.xl .bar .rg{grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.xl .bar .cb.n input{padding-right:30px}
+.xl .bar .cb input::placeholder{color:var(--muted);opacity:1}
+@media (max-width:760px){.xl .bar .moref{display:block}.xl .bar .ext{display:none}.xl .bar.open .ext{display:contents}}
+.xl .bar{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:900px){.xl .bar{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:440px){.xl .bar{grid-template-columns:minmax(0,1fr)}.xl .bar .rg{grid-column:auto}}
+@media (max-width:440px){.xl .bar .cb.n input{padding:0 22px 0 10px;font-size:14px}.xl .bar .cb.n input::-webkit-calendar-picker-indicator{margin-left:-4px}}
