@@ -1,7 +1,7 @@
 name: Autoilmoitukset
 on:
   schedule:
-    - cron: "17 2 */2 * *" # joka toinen yö klo 4.17 Suomen aikaa (API-kiintiö)
+    - cron: "17 2 1-28/3 * *" # joka kolmas yö klo 4.17 (10 ajoa/kk x 94 hakua = 940 < 1000 ilmaisversion kiintiö)
   workflow_dispatch: {}      # käsin: Actions -> Autoilmoitukset -> Run workflow
   push:                      # ajetaan myös kun hakuja, kuluja tai laskentaa muutetaan
     branches: [main]
