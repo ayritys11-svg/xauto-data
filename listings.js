@@ -38,7 +38,12 @@
   }
   function origin(c) { return (c.country === "CA" || /^(ON|QC|BC|AB)$/.test(c.state || "") ? "KANADA" : "USA") + (c.state ? " · " + c.state : ""); }
 
-  var TXT = ["q", "make", "model", "trim", "body", "fuel", "gear", "drive", "loc", "color"], NUM = ["pmin", "pmax", "ymin", "ymax", "kmax", "dmin", "dmax"], EXTRA = ["trim", "body", "gear", "drive", "loc", "color", "pmin", "pmax", "ymin", "ymax", "kmax", "dmin", "dmax"], OPEN = false;
+  var TXT = ["q", "make", "model", "trim", "body", "fuel", "gear", "drive", "loc", "color", "doors"], NUM = ["pmin", "pmax", "ymin", "ymax", "kmax", "dmin", "dmax", "hpmin", "hpmax", "co2max", "smin", "cmax", "emax", "rmin"], EXTRA = ["trim", "body", "gear", "drive", "loc", "color", "pmin", "pmax", "ymin", "ymax", "kmax", "dmin", "dmax"], TECH = ["hpmin", "hpmax", "co2max", "smin", "doors", "cmax", "emax", "rmin"], OPEN = false;
+  // tekninen arvo ilmoituksen teknisistä tiedoista; vaihteluvälistä keskiarvo
+  function sv(c, key) { var s = (c.spec || []).filter(function (x) { return x[0] === key; })[0]; if (!s) return null; var m = String(s[1]).match(/\d+(?:,\d+)?/g); if (!m) return null; var a = m.slice(0, 2).map(function (x) { return parseFloat(x.replace(",", ".")); }); return /–/.test(s[1]) ? (a[0] + a[1]) / 2 : a[0]; }
+  function fuelCons(c) { return c.fuel === "Sähkö" ? null : sv(c, "Keskikulutus (EPA)"); }
+  function evCons(c) { return c.fuel === "Sähkö" ? sv(c, "Keskikulutus (EPA)") : null; }
+  function doorsOf(c) { var d = sv(c, "Ovet"); return d ? String(d) : ""; }
   function modelName(c) { return /^\d/.test(c.model || "") ? c.make + " " + c.model : c.model || ""; }
   function driveFi(d) { return ({ AWD: "Neliveto", "4WD": "Neliveto", FWD: "Etuveto", RWD: "Takaveto" })[d] || ""; }
   function locFi(c) { return ({ NY: "New York", NJ: "New Jersey" })[c.state] || c.state || ""; }
@@ -59,15 +64,16 @@
   function inR(v, lo, hi) { lo = num(lo); hi = num(hi); if (lo == null) { if (hi == null) return true; } if (v == null) return false; if (lo != null) { if (v < lo) return false; } if (hi != null) { if (v > hi) return false; } return true; }
   function pass(c, skip) {
     var t = function (k, val) { return k === skip || match(val, F[k]); };
-    return words(c, F.q) && t("make", c.make) && t("model", modelName(c)) && t("trim", c.trim) && t("body", c.body) && t("fuel", c.fuel) && t("gear", gear(c.transmission)) && t("drive", driveFi(c.drivetrain)) && t("loc", locFi(c)) && t("color", colorFi(c.color)) &&
+    return words(c, F.q) && t("make", c.make) && t("model", modelName(c)) && t("trim", c.trim) && t("body", c.body) && t("fuel", c.fuel) && t("gear", gear(c.transmission)) && t("drive", driveFi(c.drivetrain)) && t("loc", locFi(c)) && t("color", colorFi(c.color)) && t("doors", doorsOf(c)) &&
       inR(c.total && c.total.mid, F.pmin, F.pmax) && inR(c.year, F.ymin, F.ymax) && inR(c.km, null, F.kmax) && inR(displ(c), F.dmin, F.dmax) &&
+      inR(c.hp || null, F.hpmin, F.hpmax) && inR(sv(c, "CO₂ (EPA)"), null, F.co2max) && inR(sv(c, "Istumapaikat"), F.smin, null) && inR(fuelCons(c), null, F.cmax) && inR(evCons(c), null, F.emax) && inR(sv(c, "Toimintamatka (EPA)"), F.rmin, null) &&
       (!F.good || ok(c)) && (!F.rare || isRare(c));
   }
   function list() {
     var cars = DATA.cars.slice();
     // vaihtoehdot rajautuvat muiden valintojen mukaan (esim. merkki → mallit)
-    var O = {}; ["make", "model", "trim", "body", "fuel", "gear", "drive", "loc", "color"].forEach(function (k) { O[k] = {}; });
-    var val = { make: function (c) { return c.make; }, model: modelName, trim: function (c) { return c.trim; }, body: function (c) { return c.body; }, fuel: function (c) { return c.fuel; }, gear: function (c) { return gear(c.transmission); }, drive: function (c) { return driveFi(c.drivetrain); }, loc: locFi, color: function (c) { return colorFi(c.color); } };
+    var O = {}; ["make", "model", "trim", "body", "fuel", "gear", "drive", "loc", "color", "doors"].forEach(function (k) { O[k] = {}; });
+    var val = { make: function (c) { return c.make; }, model: modelName, trim: function (c) { return c.trim; }, body: function (c) { return c.body; }, fuel: function (c) { return c.fuel; }, gear: function (c) { return gear(c.transmission); }, drive: function (c) { return driveFi(c.drivetrain); }, loc: locFi, color: function (c) { return colorFi(c.color); }, doors: doorsOf };
     Object.keys(O).forEach(function (k) { cars.forEach(function (c) { var x = val[k](c); if (x) { if (pass(c, k)) O[k][x] = 1; } }); });
     var v = cars.filter(function (c) { return pass(c); });
     var SV = function (c) { return c.saving == null ? -1e9 : c.saving; };
@@ -81,7 +87,8 @@
     var st = function (a, b, d, f) { var o = []; for (var x = a; x <= b + 1e-9; x += d) o.push(f ? f(x) : String(x)); return o; };
     var yrs = cars.map(function (c) { return c.year; }), y0 = Math.min.apply(null, yrs), y1 = Math.max.apply(null, yrs);
     var PR = st(20000, 200000, 10000, fmt), KM = [10000, 20000, 30000, 50000, 75000, 100000, 150000].map(fmt), DS = st(1, 7, 0.5, function (x) { return x.toFixed(1).replace(".", ","); }), YR = st(y0, y1, 1);
-    var nExtra = EXTRA.filter(function (k) { return F[k]; }).length;
+    var nExtra = EXTRA.concat(TECH).filter(function (k) { return F[k]; }).length;
+    var HP = st(100, 700, 50), CO = st(100, 400, 50), SE = ["2", "4", "5", "7"], CN = st(6, 16, 1), EN = st(16, 26, 2), RA = st(300, 600, 50);
     var good = cars.filter(ok).length;
     root.innerHTML =
       '<div class="top"><div><h1>Autot USA:sta Suomeen</h1><p>Jokaiselle autolle on laskettu koko hinta Suomessa rekisteröitynä: kuljetus, tulli, ALV, autovero ja rekisteröinti. Suomen hintaa halvemmat autot näytetään ensin. Vertailuhinta on Verohallinnon arvio vastaavan auton hinnasta Suomessa, ja liikennemäärä on Traficomin rekisteristä. Autot ovat New Yorkin ja New Jerseyn autoliikkeistä.</p></div></div>' +
@@ -89,7 +96,6 @@
       '<div class="bar' + (OPEN ? " open" : "") + '">' +
       cb("q", "Hakusana", {}) + cb("make", "Kaikki merkit", O.make) + cb("model", "Kaikki mallit", O.model) + cb("fuel", "Kaikki käyttövoimat", O.fuel) +
       '<select id="xl-sort" aria-label="Järjestys"><option value="save">Pienin heitto ensin</option><option value="saveonly">Suurin säästö</option><option value="rare">Harvinaisin Suomessa</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="old">Vanhin ensin</option><option value="km">Vähiten ajettu</option></select>' +
-      '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Vähemmän suodattimia" : "Lisää suodattimia") + (nExtra ? " (" + nExtra + ")" : "") + "</button>" +
       '<div class="ext">' +
       cb("trim", "Mallitarkennus", O.trim) + cb("body", "Korimalli", O.body) + cb("gear", "Vaihteisto", O.gear) + cb("drive", "Veto", O.drive) + cb("loc", "Sijainti", O.loc) + cb("color", "Väri", O.color) + nb("kmax", "Mittarilukema max km", KM) +
       rg(nb("pmin", "Hinta min €", PR), nb("pmax", "Hinta max €", PR)) +
@@ -97,7 +103,12 @@
       rg(nb("dmin", "Moottori min l", DS), nb("dmax", "Moottori max l", DS)) +
       "</div>" +
       (good < cars.length ? '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" : "") +
-      '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + cars.filter(isRare).length + ")</label></div>" +
+      '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + cars.filter(isRare).length + ")</label>" +
+      '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Näytä vähemmän suodattimia" : "Näytä lisää suodattimia") + (nExtra ? " (" + nExtra + " valittu)" : "") + "</button>" +
+      '<div class="tech">' +
+      rg(nb("hpmin", "Teho min hv", HP), nb("hpmax", "Teho max hv", HP)) + nb("co2max", "CO₂-päästöt max g/km", CO) + nb("smin", "Henkilömäärä vähintään", SE) +
+      cb("doors", "Ovien lukumäärä", O.doors) + nb("cmax", "Kulutus max l/100 km", CN) + nb("emax", "Sähkö max kWh/100 km", EN) + nb("rmin", "Toimintamatka min km", RA) +
+      "</div></div>" +
       '<p class="cnt">' + (v.length < cars.length ? "Näytetään " + v.length + " / " + cars.length + ' autoa · <button type="button" id="xl-clear" class="clr">Tyhjennä suodattimet</button>' : v.length + " autoa") + " · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + "</p>" +
       (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">Valituilla ehdoilla ei löytynyt autoja.</div>');
     root.querySelector("#xl-sort").value = F.sort;
