@@ -42,17 +42,17 @@
     function opts(o, cur, all) { return '<option value="">' + all + "</option>" + Object.keys(o).sort().map(function (k) { return '<option' + (k === cur ? " selected" : "") + ">" + esc(k) + "</option>"; }).join(""); }
     var good = cars.filter(ok).length;
     root.innerHTML =
-      '<div class="top"><div><h1>Amerikanautot New Yorkista ja New Jerseystä</h1><p>Lava-autoja, isoja maastureita ja urheiluautoja, joita Suomessa on vain kourallinen. Jokaiselle autolle on laskettu koko hinta Suomessa rekisteröitynä: kuljetus, tulli, ALV, autovero ja rekisteröinti. Vertailuhinta on Verohallinnon arvio vastaavan auton hinnasta Suomessa, ja liikennemäärä on Traficomin rekisteristä.</p></div></div>' +
+      '<div class="top"><div><h1>Autot USA:sta halvemmalla kuin Suomesta</h1><p>Jokainen tämän sivun auto tulee valmiiksi rekisteröitynä halvemmaksi kuin vastaava auto Suomessa. Hinnassa ovat mukana kuljetus, tulli, ALV, autovero ja rekisteröinti. Vertailuhinta on Verohallinnon arvio vastaavan auton hinnasta Suomessa. Autot ovat New Yorkin ja New Jerseyn autoliikkeistä.</p></div></div>' +
       (DATA.mock ? '<div class="note">Testidata: nämä neljä autoa ovat esimerkkejä hakuohjelman testaamiseen. Oikeat ilmoitukset päivittyvät tähän joka yö, kun API-avain on otettu käyttöön.</div>' : "") +
       '<div class="bar"><select id="xl-make" aria-label="Merkki">' + opts(makes, F.make, "Kaikki merkit") + '</select><select id="xl-fuel" aria-label="Käyttövoima">' + opts(fuels, F.fuel, "Kaikki käyttövoimat") + '</select>' +
       '<select id="xl-sort" aria-label="Järjestys"><option value="save">Suurin säästö</option><option value="rare">Harvinaisin Suomessa</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="km">Vähiten ajettu</option></select>' +
-      '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" +
+      (good < cars.length ? '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" : "") +
       '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + cars.filter(isRare).length + ")</label></div>" +
       '<p class="cnt">' + (v.length < cars.length ? "Näytetään " + v.length + " / " + cars.length + ' autoa · <button type="button" id="xl-clear" class="clr">Tyhjennä suodattimet</button>' : v.length + " autoa") + " · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + " · dollarin kurssi " + String(DATA.fx.rate).replace(".", ",") + "</p>" +
       (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">Valituilla ehdoilla ei löytynyt autoja.</div>');
     root.querySelector("#xl-sort").value = F.sort;
     ["make", "fuel", "sort"].forEach(function (k) { root.querySelector("#xl-" + k).addEventListener("change", function (e) { F[k] = e.target.value; keep(); list(); }); });
-    root.querySelector("#xl-good").addEventListener("change", function (e) { F.good = e.target.checked; keep(); list(); });
+    var xg = root.querySelector("#xl-good"); if (xg) xg.addEventListener("change", function (e) { F.good = e.target.checked; keep(); list(); });
     var clr = root.querySelector("#xl-clear"); if (clr) clr.addEventListener("click", function () { F.make = ""; F.fuel = ""; F.good = false; F.rare = false; list(); });
     root.querySelector("#xl-rare").addEventListener("change", function (e) { F.rare = e.target.checked; keep(); list(); });
   }
