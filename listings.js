@@ -1,6 +1,7 @@
 /* X-auto: autoilmoitukset (lista + yksittäinen ilmoitus). Data: data/listings.json */
 (function () {
   var root = document.querySelector(".xl"); if (!root) return;
+  var MODE = root.dataset.mode || "", LISTURL = root.dataset.list || "", LIMIT = +root.dataset.limit || 12;
   var base = root.dataset.base || "", tarjous = root.dataset.offer || "/kysy-lisatietoa/";
   var DATA = null, F = { make: "", fuel: "", sort: "save", good: false };
   // Muistetaan vain järjestys, ei suodattimia (muuten kävijä näkee vain osan autoista eikä tiedä miksi)
@@ -82,7 +83,7 @@
   function ok(c) { return c.saving != null && c.saving > 0; }
   function keep() { try { localStorage.setItem("xl-sort", F.sort); } catch (e) {} }
   function card(c) {
-    return '<a class="car" href="#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : "", c.body || c.engine].filter(Boolean).map(esc).join(" · ") + "</p>" + photo(c, null) +
+    return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : "", c.body || c.engine].filter(Boolean).map(esc).join(" · ") + "</p>" + photo(c, null) +
       '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b></div><div class=\"badges\">" + saveBadge(c) + "</div>" +
       '<div class="row"><span>Hinta USA:ssa</span><b>' + fmt(c.priceUsd) + " $</b></div>" +
       (c.fleet != null && !isRare(c) ? '<div class="row"><span>Suomessa liikenteessä</span><b>' + fleetTxt(c) + "</b></div>" : "") +
@@ -285,13 +286,28 @@
     load(i);
   }
 
+  // Etusivun nosto: samat autokortit kuin Autot-sivulla. Halvemmat ensin (mallit vuorotellen), sitten harvinaiset.
+  function featured() {
+    var withImg = DATA.cars.filter(function (c) { return c.img; });
+    var good = withImg.filter(function (c) { return c.saving > 0; }).sort(function (a, b) { return b.saving - a.saving; });
+    var rest = withImg.filter(function (c) { return !(c.saving > 0); }).sort(function (a, b) { return (a.fleet || 0) - (b.fleet || 0); });
+    function rounds(list, max) {
+      var g = {}, order = [], out = [];
+      list.forEach(function (c) { var k = c.make + "|" + c.model; if (!g[k]) { g[k] = []; order.push(k); } g[k].push(c); });
+      for (var r = 0; r < 60 && out.length < max; r++) { var added = false; order.forEach(function (k) { if (out.length < max && g[k][r]) { out.push(g[k][r]); added = true; } }); if (!added) break; }
+      return out;
+    }
+    var pick = rounds(good, LIMIT); if (pick.length < LIMIT) pick = pick.concat(rounds(rest, LIMIT - pick.length));
+    root.innerHTML = '<div class="grid">' + pick.map(card).join("") + '</div><div class="more"><a href="' + esc(LISTURL) + '">Näytä kaikki autot</a></div>';
+  }
   function route() {
     if (!DATA) return;
+    if (MODE === "featured") { featured(); return; }
     var id = decodeURIComponent(location.hash.slice(1));
     var c = id && DATA.cars.filter(function (x) { return x.id === id; })[0];
     if (c) detail(c); else list();
   }
-  window.addEventListener("hashchange", route);
+  if (MODE !== "featured") window.addEventListener("hashchange", route);
   root.innerHTML = '<div class="empty">Ladataan autoja…</div>';
   fetch(base + "data/listings.json?t=" + Math.floor(Date.now() / 60000), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(function (j) { DATA = j; route(); })
