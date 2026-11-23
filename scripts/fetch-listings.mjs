@@ -193,7 +193,7 @@ function epaMatch(mk, v, F, cc, year) {
   R = R.filter((r) => r.ex === minEx);
   const vs = R.map((r) => r.v).sort((a, b) => a - b);
   const mean = Math.round(vs.reduce((a, b) => a + b, 0) / vs.length);
-  return { v: mean, lo: vs[0], hi: vs[vs.length - 1], n: vs.length, src: "EPA " + year + ": " + [...new Set(R.map((r) => r.nm))].join(", ") + (vs.length > 1 ? " (" + vs.length + " versiota, " + vs[0] + "–" + vs[vs.length - 1] + " g/km)" : "") };
+  return { v: mean, lo: vs[0], hi: vs[vs.length - 1], n: vs.length, src: "EPA " + year + ": " + [...new Set(R.map((r) => r.nm))].join(", ") + (vs.length > 1 ? " (" + vs.length + " versiota, " + vs[0] + " – " + vs[vs.length - 1] + " g/km)" : "") };
 }
 
 function calc(L, fx) {
@@ -217,7 +217,7 @@ function calc(L, fx) {
   else {
     const e = epaMatch(mk, v, F, cc, year);
     if (e) { co2 = e.v; co2lo = e.lo; co2hi = e.hi; co2src = e.src;
-      if (e.hi - e.lo > 10) warn.push("EPA-datassa on tälle autolle useita versioita (" + e.lo + "–" + e.hi + " g/km). Tarkka arvo varmistetaan VIN-numerosta tarjousvaiheessa."); }
+      if (e.hi - e.lo > 10) warn.push("EPA-datassa on tälle autolle useita versioita (" + e.lo + " – " + e.hi + " g/km). Tarkka arvo varmistetaan VIN-numerosta tarjousvaiheessa."); }
     if (co2 == null) { DBG && console.error("ei CO2", vin, mk, v.model); return null; }
     const r = M.rate(reg, co2, W, false);
     if (!r || r.p == null) { DBG && console.error("ei prosenttia", vin, co2); return null; }
