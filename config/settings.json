@@ -1,15 +1,38 @@
 {
   "_ohje": "Kulut euroina. Muuta tästä, niin kaikki ilmoitukset lasketaan uudelleen seuraavana yönä.",
   "usdEurFallback": 1.0979,
-  "kuljetus": { "ita": 2000, "lansi": 2700, "kanada": 2300 },
-  "lansiosavaltiot": ["CA","OR","WA","NV","AZ","UT","ID","MT","WY","CO","NM","AK","HI"],
+  "kuljetus": {
+    "ita": 2000,
+    "lansi": 2700,
+    "kanada": 2300
+  },
+  "lansiosavaltiot": [
+    "CA",
+    "OR",
+    "WA",
+    "NV",
+    "AZ",
+    "UT",
+    "ID",
+    "MT",
+    "WY",
+    "CO",
+    "NM",
+    "AK",
+    "HI"
+  ],
   "kuljetusYlarajaKerroin": 1.15,
   "huolinta": 150,
   "katsastusJaRekisterointi": 450,
   "palvelumaksu": 1500,
   "alv": 0.255,
-  "tulli": 0.10,
+  "tulli": 0.1,
   "minVuosi": 2016,
   "maxMailit": 90000,
-  "naytaVainKannattavat": false
+  "naytaVainKannattavat": false,
+  "osavaltiot": [
+    "NY",
+    "NJ"
+  ],
+  "_osavaltiot": "Vain näiden osavaltioiden autot haetaan ja näytetään (lyhenteet). Tyhjä lista = kaikki."
 }

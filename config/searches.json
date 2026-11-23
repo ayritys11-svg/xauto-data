@@ -1,20 +1,110 @@
 {
-  "_ohje": "Jokainen rivi on yksi haku auto.devistä. pages = montako 20 auton sivua haetaan. Ilmaisversiossa 1000 hakua/kk, eli enintään noin 30 sivua yössä.",
+  "_ohje": "Jokainen rivi on yksi haku auto.devistä jokaiseen asetuksissa valittuun osavaltioon. pages = montako 20 auton sivua haetaan. Ilmaisversiossa 1000 hakua/kk: 15 hakua × 2 osavaltiota × 1 sivu = 30 hakua yössä.",
   "searches": [
-    { "make": "Toyota", "model": "RAV4 Hybrid", "year": "2019-2024", "price": "15000-40000", "pages": 2 },
-    { "make": "Toyota", "model": "Camry Hybrid", "year": "2019-2024", "price": "12000-35000", "pages": 1 },
-    { "make": "Toyota", "model": "Corolla Hybrid", "year": "2020-2024", "price": "10000-28000", "pages": 1 },
-    { "make": "Toyota", "model": "Highlander Hybrid", "year": "2019-2024", "price": "20000-45000", "pages": 1 },
-    { "make": "Lexus", "model": "RX 450h", "year": "2017-2022", "price": "18000-45000", "pages": 1 },
-    { "make": "Lexus", "model": "NX 300h", "year": "2017-2021", "price": "15000-35000", "pages": 1 },
-    { "make": "Ford", "model": "Mustang", "year": "2016-2023", "price": "15000-45000", "pages": 2 },
-    { "make": "Ford", "model": "F-150", "year": "2018-2023", "price": "18000-45000", "pages": 1 },
-    { "make": "Dodge", "model": "Challenger", "year": "2016-2023", "price": "15000-45000", "pages": 1 },
-    { "make": "Chevrolet", "model": "Corvette", "year": "2016-2023", "price": "30000-75000", "pages": 1 },
-    { "make": "Jeep", "model": "Wrangler", "year": "2018-2023", "price": "18000-40000", "pages": 1 },
-    { "make": "Tesla", "model": "Model Y", "year": "2021-2024", "price": "15000-35000", "pages": 2 },
-    { "make": "Tesla", "model": "Model 3", "year": "2020-2024", "price": "12000-30000", "pages": 2 },
-    { "make": "Hyundai", "model": "Ioniq 5", "year": "2022-2024", "price": "15000-32000", "pages": 1 },
-    { "make": "Kia", "model": "EV6", "year": "2022-2024", "price": "15000-32000", "pages": 1 }
+    {
+      "make": "Toyota",
+      "model": "RAV4 Hybrid",
+      "year": "2019-2024",
+      "price": "15000-40000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Camry Hybrid",
+      "year": "2019-2024",
+      "price": "12000-35000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Corolla Hybrid",
+      "year": "2020-2024",
+      "price": "10000-28000",
+      "pages": 1
+    },
+    {
+      "make": "Toyota",
+      "model": "Highlander Hybrid",
+      "year": "2019-2024",
+      "price": "20000-45000",
+      "pages": 1
+    },
+    {
+      "make": "Lexus",
+      "model": "RX 450h",
+      "year": "2017-2022",
+      "price": "18000-45000",
+      "pages": 1
+    },
+    {
+      "make": "Lexus",
+      "model": "NX 300h",
+      "year": "2017-2021",
+      "price": "15000-35000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "Mustang",
+      "year": "2016-2023",
+      "price": "15000-45000",
+      "pages": 1
+    },
+    {
+      "make": "Ford",
+      "model": "F-150",
+      "year": "2018-2023",
+      "price": "18000-45000",
+      "pages": 1
+    },
+    {
+      "make": "Dodge",
+      "model": "Challenger",
+      "year": "2016-2023",
+      "price": "15000-45000",
+      "pages": 1
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Corvette",
+      "year": "2016-2023",
+      "price": "30000-75000",
+      "pages": 1
+    },
+    {
+      "make": "Jeep",
+      "model": "Wrangler",
+      "year": "2018-2023",
+      "price": "18000-40000",
+      "pages": 1
+    },
+    {
+      "make": "Tesla",
+      "model": "Model Y",
+      "year": "2021-2024",
+      "price": "15000-35000",
+      "pages": 1
+    },
+    {
+      "make": "Tesla",
+      "model": "Model 3",
+      "year": "2020-2024",
+      "price": "12000-30000",
+      "pages": 1
+    },
+    {
+      "make": "Hyundai",
+      "model": "Ioniq 5",
+      "year": "2022-2024",
+      "price": "15000-32000",
+      "pages": 1
+    },
+    {
+      "make": "Kia",
+      "model": "EV6",
+      "year": "2022-2024",
+      "price": "15000-32000",
+      "pages": 1
+    }
   ]
 }

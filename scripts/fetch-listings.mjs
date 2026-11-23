@@ -35,10 +35,11 @@ async function usdEur() {
   return { rate: S.usdEurFallback, date: "oletus", src: "asetukset" };
 }
 
-async function search(q) {
+async function search(q, state) {
   const out = [];
   for (let page = 1; page <= (q.pages || 1); page++) {
     const p = new URLSearchParams({ "vehicle.make": q.make, "vehicle.model": q.model, "vehicle.year": q.year, page: String(page), limit: "20" });
+    if (state) p.set("retailListing.state", state);
     if (q.price) p.set("retailListing.price", q.price);
     p.set("retailListing.miles", "1-" + S.maxMailit);
     const url = "https://api.auto.dev/listings?" + p.toString();
@@ -168,6 +169,7 @@ function calc(L, fx) {
   const vin = v.vin || L.vin;
   const priceUsd = +rl.price || 0, miles = +rl.miles || +rl.mileage || +L.miles || 0;
   const year = +v.year;
+  if (S.osavaltiot && S.osavaltiot.length && !S.osavaltiot.includes(String(rl.state || "").toUpperCase())) return null;
   if (!vin || !priceUsd || !year || year < S.minVuosi) { DBG && console.error("perustiedot puuttuu", vin); return null; }
   const mk = up(v.make), F = fuelOf(v), cc = ccOf(v), models = veroModels(v.model);
   const reg = (year - 1) + "-10-01"; // USA:n mallivuosi alkaa tyypillisesti edellisenä syksynä
@@ -292,7 +294,8 @@ let raw = [];
 if (MOCK) raw = MOCK_DATA;
 else {
   if (!KEY) { console.error("AUTODEV_KEY puuttuu"); process.exit(1); }
-  for (const q of Q) { const r = await search(q); console.log(q.make, q.model, r.length); raw.push(...r); }
+  const STATES = (S.osavaltiot && S.osavaltiot.length) ? S.osavaltiot : [null];
+  for (const q of Q) for (const st of STATES) { const r = await search(q, st); console.log(q.make, q.model, st || "kaikki", r.length); raw.push(...r); }
 }
 const seen = new Set(), cars = [];
 let skipped = 0;
