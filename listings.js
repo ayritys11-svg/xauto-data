@@ -24,9 +24,8 @@
     return '<span class="conf ' + c.confidence + '" title="Loppuhinnan vaihteluväli keskiarvosta"><i></i>' + CONF[c.confidence] + (pct != null ? " · heitto ±" + pct + " %" : "") + "</span>";
   }
   function saveBadge(c) {
-    if (isRare(c)) return '<span class="sv r">' + (c.fleet === 0 ? "Ei yhtään Suomessa" : "Vain " + fmt(c.fleet) + " kpl Suomessa") + "</span>" + (c.sure ? ' <span class="sv g">' + eur(c.saving) + " halvempi</span>" : "");
+    if (isRare(c)) return '<span class="sv r">' + (c.fleet === 0 ? "Ei yhtään Suomessa" : "Vain " + fmt(c.fleet) + " kpl Suomessa") + "</span>" + (c.saving > 0 ? ' <span class="sv g">' + eur(c.saving) + " halvempi</span>" : "");
     if (c.saving == null) return '<span class="sv n">Ei vertailukohtaa Suomessa</span>';
-    if (c.saving > 0 && c.sure === false) return '<span class="sv u">Mahdollisesti ' + eur(c.saving) + " halvempi</span>";
     return c.saving > 0 ? '<span class="sv g">' + eur(c.saving) + " halvempi</span>" : '<span class="sv b">' + eur(-c.saving) + " kalliimpi</span>";
   }
   function origin(c) { return (c.country === "CA" || /^(ON|QC|BC|AB)$/.test(c.state || "") ? "KANADA" : "USA") + (c.state ? " · " + c.state : ""); }
@@ -62,7 +61,7 @@
   var RARE = 300;
   function isRare(c) { return c.fleet != null && c.fleet < RARE; }
   function fleetTxt(c) { return c.fleet === 0 ? "ei yhtään" : fmt(c.fleet) + " kpl"; }
-  function ok(c) { return c.saving != null && (c.sure === undefined ? c.saving > 0 : c.sure); }
+  function ok(c) { return c.saving != null && c.saving > 0; }
   function keep() { try { localStorage.setItem("xl-sort", F.sort); } catch (e) {} }
   function card(c) {
     return '<a class="car" href="#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [c.fuel, c.engine, fmt(c.km) + " km"].filter(Boolean).map(esc).join(" · ") + "</p>" + photo(c, null) +
