@@ -83,9 +83,12 @@
     var S = { save: function (a, b) { return (HT(a) - HT(b)) || SV(b) - SV(a); }, saveonly: function (a, b) { return SV(b) - SV(a); }, rare: function (a, b) { return (a.fleet || 0) - (b.fleet || 0) || SV(b) - SV(a); }, low: function (a, b) { return a.total.mid - b.total.mid; }, high: function (a, b) { return b.total.mid - a.total.mid; }, new: function (a, b) { return b.year - a.year || a.km - b.km; }, old: function (a, b) { return a.year - b.year || a.km - b.km; }, km: function (a, b) { return a.km - b.km; } };
     v.sort(S[F.sort] || S.save);
     function dl(id, o, keep) { var ks = keep ? o : Object.keys(o).sort(function (a, b) { return a.localeCompare(b, "fi"); }); return '<datalist id="' + id + '">' + ks.map(function (k) { return '<option value="' + esc(k) + '">'; }).join("") + "</datalist>"; }
-    function cb(k, ph, o) { return '<div class="cb"><input id="xl-' + k + '" data-f="' + k + '" data-list="xl-' + k + 's" autocomplete="off" placeholder="' + ph + '" aria-label="' + ph + '" value="' + esc(F[k] || "") + '">' + (F[k] ? '<button type="button" class="x" data-k="' + k + '" aria-label="Tyhjennä">×</button>' : "") + dl("xl-" + k + "s", o) + "</div>"; }
+    function cb(k, ph, o) { return '<div class="cb"><input id="xl-' + k + '" data-f="' + k + '" ' + (Object.keys(o).length ? 'data-list="xl-' + k + 's" ' : "") + 'autocomplete="off" placeholder="' + ph + '" aria-label="' + ph + '" value="' + esc(F[k] || "") + '">' + (F[k] ? '<button type="button" class="x" data-k="' + k + '" aria-label="Tyhjennä">×</button>' : "") + dl("xl-" + k + "s", o) + "</div>"; }
     function nb(k, ph, steps) { return '<div class="cb n"><input id="xl-' + k + '" data-f="' + k + '" data-list="xl-' + k + 's" inputmode="decimal" autocomplete="off" placeholder="' + ph + '" aria-label="' + ph + '" value="' + esc(F[k] || "") + '">' + dl("xl-" + k + "s", steps, true) + "</div>"; }
     function rg(a, b) { return '<div class="rg">' + a + b + "</div>"; }
+    // Vaihteluväli (min – max): napautus avaa alapaneelin numeronäppäimistöllä
+    function rtxt(a, b, u) { var f = function (v) { var n = num(v); return n == null ? "" : (u === "l" ? String(n).replace(".", ",") : u === "" ? String(n) : fmt(n)); }; a = f(a); b = f(b); if (!a) { if (!b) return ""; } return (a || "…") + " – " + (b || "…") + (u ? " " + u : ""); }
+    function rb(k1, k2, label, u) { var t = rtxt(F[k1], F[k2], u); return '<button type="button" class="vrf' + (t ? " set" : "") + '" data-r="' + k1 + "," + k2 + "," + esc(label) + "," + u + '"><span>' + esc(t ? label + ": " + t : label) + "</span></button>"; }
     var st = function (a, b, d, f) { var o = []; for (var x = a; x <= b + 1e-9; x += d) o.push(f ? f(x) : String(x)); return o; };
     var yrs = cars.map(function (c) { return c.year; }), y0 = Math.min.apply(null, yrs), y1 = Math.max.apply(null, yrs);
     var PR = st(20000, 200000, 10000, fmt), KM = [10000, 20000, 30000, 50000, 75000, 100000, 150000].map(fmt), DS = st(1, 7, 0.5, function (x) { return x.toFixed(1).replace(".", ","); }), YR = st(y0, y1, 1);
@@ -100,15 +103,13 @@
       '<select id="xl-sort" aria-label="Järjestys"><option value="save">Pienin heitto ensin</option><option value="saveonly">Suurin säästö</option><option value="rare">Harvinaisin Suomessa</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="old">Vanhin ensin</option><option value="km">Vähiten ajettu</option></select>' +
       '<div class="ext">' +
       cb("trim", "Mallitarkennus", O.trim) + cb("body", "Korimalli", O.body) + cb("gear", "Vaihteisto", O.gear) + cb("drive", "Veto", O.drive) + cb("loc", "Sijainti", O.loc) + cb("color", "Väri", O.color) + nb("kmax", "Mittarilukema max km", KM) +
-      rg(nb("pmin", "Hinta min €", PR), nb("pmax", "Hinta max €", PR)) +
-      rg(nb("ymin", "Vuosimalli min", YR), nb("ymax", "Vuosimalli max", YR)) +
-      rg(nb("dmin", "Moottori min l", DS), nb("dmax", "Moottori max l", DS)) +
+      rb("pmin", "pmax", "Hinta", "€") + rb("ymin", "ymax", "Vuosimalli", "") + rb("dmin", "dmax", "Moottorin tilavuus", "l") +
       "</div>" +
       (good < cars.length ? '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" : "") +
       '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + cars.filter(isRare).length + ")</label>" +
       '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Näytä vähemmän suodattimia" : "Näytä lisää suodattimia") + (nExtra ? " (" + nExtra + " valittu)" : "") + "</button>" +
       '<div class="tech">' +
-      rg(nb("hpmin", "Teho min hv", HP), nb("hpmax", "Teho max hv", HP)) + nb("co2max", "CO₂-päästöt max g/km", CO) + nb("smin", "Henkilömäärä vähintään", SE) +
+      rb("hpmin", "hpmax", "Teho", "hv") + nb("co2max", "CO₂-päästöt max g/km", CO) + nb("smin", "Henkilömäärä vähintään", SE) +
       cb("doors", "Ovien lukumäärä", O.doors) + cb("steer", "Ohjauslaite", O.steer) + nb("cmax", "Kulutus max l/100 km", CN) + nb("emax", "Sähkö max kWh/100 km", EN) + nb("rmin", "Toimintamatka min km", RA) +
       "</div></div>" +
       '<p class="cnt">' + (v.length < cars.length ? "Näytetään " + v.length + " / " + cars.length + ' autoa · <button type="button" id="xl-clear" class="clr">Tyhjennä suodattimet</button>' : v.length + " autoa") + " · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + "</p>" +
@@ -121,6 +122,12 @@
     });
     Array.prototype.forEach.call(root.querySelectorAll(".cb .x"), function (b) { b.addEventListener("click", function () { F[b.dataset.k] = ""; list(); }); });
     root.querySelector("#xl-more").addEventListener("click", function () { OPEN = !OPEN; list(); });
+    Array.prototype.forEach.call(root.querySelectorAll(".vrf[data-r]"), function (b) {
+      b.addEventListener("click", function () {
+        var r = b.getAttribute("data-r").split(",");
+        window.VeloRange({ title: r[2], unit: r[3], dec: r[3] === "l", min: F[r[0]], max: F[r[1]], onOk: function (a, c) { F[r[0]] = a; F[r[1]] = c; list(); } });
+      });
+    });
     var xg = root.querySelector("#xl-good"); if (xg) xg.addEventListener("change", function (e) { F.good = e.target.checked; keep(); list(); });
     var clr = root.querySelector("#xl-clear"); if (clr) clr.addEventListener("click", function () { TXT.concat(NUM).forEach(function (k) { F[k] = ""; }); F.good = false; F.rare = false; list(); });
     root.querySelector("#xl-rare").addEventListener("change", function (e) { F.rare = e.target.checked; keep(); list(); });
@@ -445,4 +452,40 @@
     else if (e.key === "Enter") { if (act >= 0) { if (panel) { e.preventDefault(); e.stopPropagation(); pick(panel.children[act].getAttribute("data-v")); } } }
   }, true);
   document.addEventListener("keydown", function (e) { if (e.key === "Tab") close(); });
+})();
+
+/* Velo-väliikkuna: alhaalta avautuva paneeli "Minimi – Maksimi" numeronäppäimistöllä (kuten Nettiautossa). */
+(function () {
+  if (window.VeloRange) return;
+  function fmt(n) { return new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 1 }).format(n); }
+  function clean(v, dec) { v = String(v || "").replace(/\s/g, ""); if (dec) { v = v.replace(".", ",").replace(/[^0-9,]/g, ""); var i = v.indexOf(","); if (i >= 0) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/,/g, "").slice(0, 1); return v; } return v.replace(/[^0-9]/g, ""); }
+  function show(v, dec) { v = clean(v, dec); if (!v) return ""; if (dec) return v; return fmt(+v); }
+  window.VeloRange = function (o) {
+    var old = document.querySelector(".vrs"); if (old) old.remove();
+    var w = document.createElement("div"); w.className = "vrs";
+    w.innerHTML = '<div class="vrs-bg"></div><div class="vrs-sh" role="dialog" aria-label="' + o.title + '"><div class="vrs-hd"><b>' + o.title + '</b><button type="button" class="vrs-ok">OK</button></div>' +
+      '<div class="vrs-row"><input class="vrs-a" inputmode="' + (o.dec ? "decimal" : "numeric") + '" ' + (o.dec ? "" : 'pattern="[0-9]*" ') + 'placeholder="Minimi" aria-label="Minimi" autocomplete="off"><span class="vrs-d">–</span><input class="vrs-b" inputmode="' + (o.dec ? "decimal" : "numeric") + '" ' + (o.dec ? "" : 'pattern="[0-9]*" ') + 'placeholder="Maksimi" aria-label="Maksimi" autocomplete="off"><span class="vrs-u">' + (o.unit || "") + '</span></div>' +
+      '<button type="button" class="vrs-clr">Tyhjennä</button></div>';
+    document.body.appendChild(w);
+    var a = w.querySelector(".vrs-a"), b = w.querySelector(".vrs-b"), sh = w.querySelector(".vrs-sh");
+    a.value = show(o.min, o.dec); b.value = show(o.max, o.dec);
+    [a, b].forEach(function (i) { i.addEventListener("input", function () { var p = i.value.length - i.selectionStart; i.value = show(i.value, o.dec); var q = Math.max(0, i.value.length - p); try { i.setSelectionRange(q, q); } catch (e) {} }); });
+    function vp() { var v = window.visualViewport; if (!v) return; if (window.innerWidth >= 700) { sh.style.bottom = ""; return; } var off = window.innerHeight - (v.height + v.offsetTop); sh.style.bottom = Math.max(0, off) + "px"; }
+    if (window.visualViewport) { window.visualViewport.addEventListener("resize", vp); window.visualViewport.addEventListener("scroll", vp); }
+    function done(ok) {
+      if (window.visualViewport) { window.visualViewport.removeEventListener("resize", vp); window.visualViewport.removeEventListener("scroll", vp); }
+      document.removeEventListener("keydown", key, true);
+      var x = clean(a.value, o.dec).replace(",", "."), y = clean(b.value, o.dec).replace(",", ".");
+      if (x) { if (y) { if (+x > +y) { var t = x; x = y; y = t; } } }
+      w.classList.remove("in"); setTimeout(function () { w.remove(); }, 220);
+      if (ok) o.onOk(x, y);
+    }
+    function key(e) { if (e.key === "Escape") done(false); if (e.key === "Enter") { e.preventDefault(); if (document.activeElement === a) b.focus(); else done(true); } }
+    document.addEventListener("keydown", key, true);
+    w.querySelector(".vrs-ok").addEventListener("click", function () { done(true); });
+    w.querySelector(".vrs-bg").addEventListener("click", function () { done(true); });
+    w.querySelector(".vrs-clr").addEventListener("click", function () { a.value = ""; b.value = ""; a.focus(); });
+    a.focus();
+    requestAnimationFrame(function () { w.classList.add("in"); vp(); });
+  };
 })();

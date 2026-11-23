@@ -28,20 +28,27 @@
   /* perushaku */
   var MK=combo("vh-make","Merkki (kirjoita tai valitse)"), MD=combo("vh-model","Malli (kirjoita tai valitse)");
   sel[0].parentNode.replaceChild(MK.w,sel[0]); sel[1].parentNode.replaceChild(MD.w,sel[1]);
-  var pr=sel[2]; pr.innerHTML=""; pr.appendChild(opt("","Hinta Suomessa enintään"));
-  [30000,40000,50000,60000,70000,80000,100000,120000,150000].forEach(function(v){ pr.appendChild(opt(String(v),fmt(v)+" €")); });
+  /* vaihteluvälit avautuvat alapaneeliin (Minimi – Maksimi, numeronäppäimistö) */
+  var R={pmin:"",pmax:"",ymin:"",ymax:""};
+  function rlabel(a,b,u,lab){ var f=function(v){ return v ? (u==="€" ? fmt(+v) : String(v)) : ""; }; a=f(a); b=f(b); if(!a){ if(!b){ return lab; } } return lab+": "+(a||"…")+" – "+(b||"…")+(u ? " "+u : ""); }
+  function rbtn(k1,k2,lab,u){
+    var bt=el("button","vrf"); bt.type="button";
+    function upd(){ var t=rlabel(R[k1],R[k2],u,lab); bt.textContent=t; bt.classList.toggle("set",t!==lab); }
+    bt.addEventListener("click",function(){ if(!window.VeloRange){return} window.VeloRange({title:lab,unit:u,min:R[k1],max:R[k2],onOk:function(a,b){ R[k1]=a; R[k2]=b; upd(); count(); }}); });
+    upd(); return {w:bt,upd:upd};
+  }
+  var PR=rbtn("pmin","pmax","Hinta Suomessa","€"); sel[2].parentNode.replaceChild(PR.w,sel[2]);
 
   /* lisähakuehdot */
-  var y=new Date().getFullYear();
   var X={
     fuel:combo("vh-fuel","Käyttövoima"), gear:combo("vh-gear","Vaihteisto"), drive:combo("vh-drive","Veto"),
-    pmin:pick("Hinta alkaen",steps(20000,140000,10000,function(v){return fmt(v)+" €"})),
-    ymin:pick("Vuosimalli alkaen",steps(y-12,y,1,String)), ymax:pick("Vuosimalli enintään",steps(y-12,y,1,String)),
+
     kmax:pick("Mittarilukema enintään",[[20000,"20 000 km"],[50000,"50 000 km"],[75000,"75 000 km"],[100000,"100 000 km"],[150000,"150 000 km"],[200000,"200 000 km"]]),
     hpmin:pick("Teho vähintään",steps(150,600,50,function(v){return v+" hv"}))
   };
   var wrap=el("div","vmore"), inner=el("div","vmore-in"), grid=el("div","vmore-grid");
-  ["fuel","gear","drive","pmin","ymin","ymax","kmax","hpmin"].forEach(function(k){ grid.appendChild(X[k].w); });
+  var YR=rbtn("ymin","ymax","Vuosimalli","");
+  ["fuel","gear","drive"].forEach(function(k){ grid.appendChild(X[k].w); }); grid.appendChild(YR.w); ["kmax","hpmin"].forEach(function(k){ grid.appendChild(X[k].w); });
   inner.appendChild(grid); wrap.appendChild(inner); fields.parentNode.insertBefore(wrap,fields.nextSibling);
   wrap.setAttribute("aria-hidden","true");
 
@@ -61,7 +68,7 @@
     if(!hasStrict(c.make,MK.get())){return false} if(!hasStrict(mn(c),MD.get())){return false}
     if(!has(c.fuel,X.fuel.get())){return false} if(!has(gear(c.transmission),X.gear.get())){return false} if(!has(drive(c.drivetrain),X.drive.get())){return false}
     var mid=c.total ? c.total.mid : null;
-    return inR(mid,X.pmin.get(),pr.value) ? (inR(c.year,X.ymin.get(),X.ymax.get()) ? (inR(c.km,0,X.kmax.get()) ? inR(c.hp||null,X.hpmin.get(),0) : false) : false) : false;
+    return inR(mid,R.pmin,R.pmax) ? (inR(c.year,R.ymin,R.ymax) ? (inR(c.km,0,X.kmax.get()) ? inR(c.hp||null,X.hpmin.get(),0) : false) : false) : false;
   }
   function count(){ go.textContent="Hae autoja"+(CARS.length ? " ("+CARS.filter(ok).length+")" : ""); }
   function models(){ var o={}; CARS.forEach(function(c){ if(hasStrict(c.make,MK.get())){ o[mn(c)]=1; } }); fill(MD.d,Object.keys(o)); }
@@ -75,12 +82,12 @@
   box.addEventListener("click",function(e){ if(e.target.closest(".type")){ setTimeout(count,0); } });
   function url(){
     var u=new URLSearchParams(), set=function(k,v){ if(v){u.set(k,v)} };
-    set("make",MK.get()); set("model",MD.get()); set("pmax",pr.value);
+    set("make",MK.get()); set("model",MD.get()); Object.keys(R).forEach(function(k){ set(k,R[k]); });
     Object.keys(X).forEach(function(k){ set(k,X[k].get()); });
     var t=types(); if(t.length){u.set("body",t.join("|"))}
     var q=u.toString(); return LIST+(q ? "?"+q : "");
   }
   go.addEventListener("click",function(){ location.href=url(); });
   box.addEventListener("keydown",function(e){ if(e.key==="Enter"){ if(e.target.tagName==="INPUT"){ location.href=url(); } } });
-  clr.addEventListener("click",function(){ MK.clear(); MD.clear(); pr.value=""; Object.keys(X).forEach(function(k){X[k].clear()}); models(); setTimeout(count,0); });
+  clr.addEventListener("click",function(){ MK.clear(); MD.clear(); Object.keys(R).forEach(function(k){R[k]=""}); PR.upd(); YR.upd(); Object.keys(X).forEach(function(k){X[k].clear()}); models(); setTimeout(count,0); });
 })();

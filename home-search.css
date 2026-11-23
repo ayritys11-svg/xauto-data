@@ -11,3 +11,4 @@
 .xh .vmore:not(.open) .vmore-grid{visibility:hidden;transition:visibility 0s .45s}
 @media (prefers-reduced-motion:reduce){.xh .vmore{transition:none}}
 .xh .vmore.done .vmore-in{overflow:visible}
+.xh .fields .vrf,.xh .vmore-grid .vrf{height:48px;font-size:16px}
