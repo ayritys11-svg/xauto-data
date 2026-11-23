@@ -178,9 +178,9 @@
           line("b) Valmiit autoveropäätökset", "Samasta autosta ei ole riittävästi päätöksiä vertailuun. Arvio perustuu CO₂-laskentaan.", "–")) +
         '<div class="ln sum"><div class="t">' + (exact(c) ? "Autovero" : "Autoveroarvio") + '</div><div class="d">' + (A.same ? "a- ja b-tavan keskiarvo, " : "") + "vaihteluväli " + rng(R.tax[0], R.tax[1]) + '</div><div class="v">' + eur(A.avg) + "</div></div>";
     }
-    var SP = c.spec || [], has = function (k) { return SP.some(function (x) { return x[0] === k; }); };
+    var SP = (c.spec || []).map(function (x) { return EVC ? (x[0] === "Moottori" ? ["Moottori", "Sähkö"] : x) : x; }), has = function (k) { return SP.some(function (x) { return x[0] === k; }); };
     var facts = [["Vuosimalli", c.year], ["Varustelu", c.trim], ["Ajettu", fmt(c.km) + " km"], ["Väri", c.color], ["Sisustus", c.interior], ["Valmistajan sertifioima käytetty (CPO)", c.cpo ? "Kyllä" : ""]]
-      .concat(has("Moottori") || /^electric$/i.test(c.engine || "") ? [] : [["Moottori", c.engine]])
+      .concat(has("Moottori") ? [] : [["Moottori", EVC ? "Sähkö" : c.engine]])
       .concat(has("Polttoaine") ? [] : [["Käyttövoima", c.fuel]])
       .concat(has("Vaihteisto") ? [] : [["Vaihteisto", gear(c.transmission)]])
       .concat(has("Veto") ? [] : [["Veto", ({ AWD: "Neliveto (AWD)", "4WD": "Neliveto (4WD)", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || c.drivetrain]])
@@ -235,6 +235,7 @@
     var U = urls(c), main = root.querySelector("#xl-main"); if (!main || U.length < 2) return;
     var ok = U.map(function () { return true; }), cur = 0, th = root.querySelector("#xl-th");
     function show(i) {
+      if (!main.isConnected) return; /* sivu vaihtui jo: myöhässä tullut kuvavirhe ei saa kaatua */
       var n = U.length, k = 0; i = ((i % n) + n) % n;
       while (!ok[i] && k++ < n) i = (i + 1) % n;
       cur = i; main.src = U[i]; root.querySelector("#xl-num").textContent = (i + 1) + " / " + n;
