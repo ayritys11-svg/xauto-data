@@ -140,6 +140,8 @@
     var xf = root.querySelector("#xl-fav"); if (xf) xf.addEventListener("change", function (e) { F.fav = e.target.checked; list(); });
   }
   // Suomen hintataso vaihteluvälinä (verotusarvon 80 %:n väli, pyöristys 100 €)
+  /* Arvo Suomessa kaikille autoille, myös harvinaisille (Verohallinnon arvio, vaikka vertailukohtaa ei olisi) */
+  function arvoFi(c) { var A = c.autovero || {}; if (c.saving == null) { return A.VLo ? (A.VHi ? rng(Math.round(A.VLo / 100) * 100, Math.round(A.VHi / 100) * 100) : "–") : "–"; } return fiR(c); }
   function fiR(c) { if (c.saving == null) return "ei vertailukohtaa"; var A = c.autovero || {}, lo = A.VLo, hi = A.VHi; if (!lo || !hi) return eur(c.fiPrice); return rng(Math.round(lo / 100) * 100, Math.round(hi / 100) * 100); }
   function gear(t) { return !t ? "" : /MANUAL|MT\b|STICK/i.test(t) ? "Manuaali" : "Automaatti"; }
   var RARE = 1500;
@@ -160,7 +162,7 @@
     return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : "", c.body || c.engine].filter(Boolean).map(esc).join(" · ") + "</p>" + photo(c, null) +
       '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b>" + favBtn(c) + "</div><div class=\"badges\">" + saveBadge(c) + "</div>" +
       (c.fleet != null && !isRare(c) ? '<div class="row"><span>Sama malli Suomessa</span><b>' + fleetTxt(c) + "</b></div>" : "") +
-      (isRare(c) ? "" : '<div class="row"><span>Arvo Suomessa</span><b>' + fiR(c) + "</b></div>") + conf(c) + "</a>";
+      '<div class="row"><span>Arvo Suomessa</span><b>' + arvoFi(c) + "</b></div>" + conf(c) + "</a>";
   }
 
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
