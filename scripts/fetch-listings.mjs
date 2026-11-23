@@ -289,13 +289,13 @@ function calc(L, fx) {
     const near = [...cand].filter((w) => Math.abs(w - kw) / kw <= 0.12).sort((a, b) => Math.abs(a - kw) - Math.abs(b - kw));
     for (const w of near) {
       const e = M.estimate({ reg, co2: F.ev ? 100 : (co2 || 0), wltp: W, ev: false, make: mk, model: best.md, kw: w, km, fu: F.fu });
-      if (e && !e.error && e.V && (e.n || 0) >= 10) { best = Object.assign(e, { md: best.md }); warn.push(F.ev && p === 0 ? "Vertailuhinta Suomessa on laskettu lähimmästä yleisestä versiosta (" + w + " kW), koska tästä tehoversiosta (" + kw + " kW) on vähän tietoa." : "Tästä tehoversiosta (" + kw + " kW) on vähän verotuspäätöksiä, joten verotusarvo on laskettu lähimmästä yleisestä versiosta (" + w + " kW)."); break; }
+      if (e && !e.error && e.V && (e.n || 0) >= 10) { best = Object.assign(e, { md: best.md }); warn.push(F.ev && p === 0 ? "Vertailuhinta Suomessa on laskettu lähimmästä yleisestä versiosta (" + w + " kW), koska tästä tehoversiosta (" + kw + " kW) on vähän tietoa." : "Tästä tehoversiosta (" + kw + " kW) on vähän verotuspäätöksiä, joten auton arvo Suomessa on laskettu lähimmästä yleisestä versiosta (" + w + " kW)."); break; }
     }
   }
   if (!best) {
     best = { V: Vfb, VLow: Vfb * 0.8, VHigh: Vfb * 1.3, s: 0.25, n: 0, md: models[0], level: "Ei Verohallinnon päätöksiä tästä mallista: arvio tuontihinnasta", warnings: [] };
     noCompare = true;
-    warn.push("Verohallinnolla ei ole päätöksiä tästä mallista, joten verotusarvo on arvioitu tuontihinnasta. Suosittelemme pyytämään Verohallinnolta ennakkoratkaisun ennen ostoa.");
+    warn.push("Verohallinnolla ei ole päätöksiä tästä mallista, joten auton arvo Suomessa on arvioitu tuontihinnasta. Suosittelemme pyytämään Verohallinnolta ennakkoratkaisun ennen ostoa.");
   } else if ((best.n || 0) < 10 || best.V > Vfb * 2.5 || (fleetCount(mk, models) < 300 && (best.warnings || []).some((w) => /vanhempi kuin|ulkopuolelle/.test(w)))) {
     // Vähän päätöksiä tai arvio ristiriidassa tuontihinnan kanssa (verotusarvo ei voi olla alle tuontikulujen)
     // Vähän päätöksiä: yhdistetään päätöksiin ja tuontihintaan perustuva arvio
@@ -309,7 +309,7 @@ function calc(L, fx) {
     const alt = M.estimate({ reg, co2: F.ev ? 100 : (co2 || 0), wltp: W, ev: false, make: mk, model: best.md, kw: 0, km, fu: F.fu });
     if (alt && alt.V && (best.V / alt.V > 1.5 || best.V / alt.V < 0.67)) {
       clash = true;
-      warn.push("Verotusarvo poikkeaa paljon saman mallin muista päätöksistä (" + Math.round(alt.V / 100) * 100 + " €). Moottoriversio ja teho varmistetaan VIN-numerosta tarjousvaiheessa.");
+      warn.push("Auton arvo Suomessa poikkeaa paljon saman mallin muista päätöksistä (" + Math.round(alt.V / 100) * 100 + " €). Moottoriversio ja teho varmistetaan VIN-numerosta tarjousvaiheessa.");
 
     }
   }
@@ -346,8 +346,8 @@ function calc(L, fx) {
   const sPct = best.s;
   const outside = (best.warnings || []).some((w) => /vanhempi kuin|suuremmat kuin|ulkopuolelle/.test(w));
   const conf = noCompare || F.phev || sPct > 0.15 || !kw || best.w3 || outside || clash || KG.src === "traficom-muu-vuosi" || KG.src === "vero-vuosimalli-kaikki" ? "matala" : sPct > 0.07 || F.ev ? "keskitaso" : "korkea";
-  if (F.ev && p === 0) warn.push("Täyssähköautosta ei makseta autoveroa. Verotusarvoa käytetään tässä vain vastaavan auton hinnan arvioimiseen Suomessa.");
-  if (!kw && !F.ev) warn.push("Moottorin tehoa ei löytynyt Traficomin rekisteristä. Verotusarvo on arvioitu koko mallin päätöksistä, joten vaihteluväli on leveä.");
+  if (F.ev && p === 0) warn.push("Täyssähköautosta ei makseta autoveroa. Auton arvoa Suomessa käytetään tässä vain vastaavan auton hinnan arvioimiseen.");
+  if (!kw && !F.ev) warn.push("Moottorin tehoa ei löytynyt Traficomin rekisteristä. Auton arvo Suomessa on arvioitu koko mallin päätöksistä, joten vaihteluväli on leveä.");
   if (best.warnings) warn.push(...best.warnings.filter((w) => !/tulkittiin/.test(w)));
 
   return {
