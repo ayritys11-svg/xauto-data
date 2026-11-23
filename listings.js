@@ -407,6 +407,12 @@
     if (Date.now() - skipT < 450) return; /* juuri valittu: estä haamuklikkaus ja uudelleenpiirron fokus */
     if (cur !== inp) { close(); cur = inp; }
     act = -1; render();
+    /* Puhelimessa näppäimistö peittää listan: vieritä kenttä näytön yläosaan */
+    if (window.matchMedia) { if (window.matchMedia("(pointer:coarse)").matches) setTimeout(function () {
+      if (cur !== inp) return;
+      var r = inp.getBoundingClientRect(), vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      if (r.bottom + 220 > vh) window.scrollBy({ top: r.top - 64, behavior: "smooth" });
+    }, 350); }
   }
   function pick(v) {
     var inp = cur; if (!inp) return;
@@ -420,9 +426,13 @@
   document.addEventListener("focusin", function (e) { var t = e.target; if (t.matches) { if (t.matches("input[data-list]")) open(t); } });
   document.addEventListener("click", function (e) { var t = e.target; if (t.matches) { if (t.matches("input[data-list]")) { if (!panel) open(t); } } });
   document.addEventListener("input", function (e) { if (e.target === cur) { act = -1; render(); } });
-  document.addEventListener("pointerdown", function (e) {
+  /* Valinta napautuksella (click), ei kosketuksen alussa: näin listaa voi vierittää sormella. */
+  document.addEventListener("click", function (e) {
     var o = e.target.closest ? e.target.closest(".vdd-o") : null;
-    if (o) { e.preventDefault(); pick(o.getAttribute("data-v")); return; }
+    if (o) { e.preventDefault(); pick(o.getAttribute("data-v")); }
+  });
+  document.addEventListener("mousedown", function (e) { if (e.target.closest) { if (e.target.closest(".vdd")) e.preventDefault(); } });
+  document.addEventListener("pointerdown", function (e) {
     if (panel) { if (!panel.contains(e.target)) { if (e.target !== cur) close(); } }
   });
   document.addEventListener("keydown", function (e) {
@@ -434,5 +444,5 @@
     else if (e.key === "ArrowUp") { e.preventDefault(); act = Math.max(0, act - 1); render(); }
     else if (e.key === "Enter") { if (act >= 0) { if (panel) { e.preventDefault(); e.stopPropagation(); pick(panel.children[act].getAttribute("data-v")); } } }
   }, true);
-  document.addEventListener("focusout", function (e) { if (e.target === cur) { setTimeout(function () { if (cur) { if (document.activeElement !== cur) close(); } }, 180); } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Tab") close(); });
 })();
