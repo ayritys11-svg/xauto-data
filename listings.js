@@ -194,7 +194,7 @@
     var lb = document.createElement("div"); lb.className = "xl-lb"; lb.setAttribute("role", "dialog"); lb.setAttribute("aria-label", "Kuvat: " + title);
     lb.innerHTML = '<div class="xl-lb-stage"><img alt=""></div><button type="button" class="xl-lb-x" aria-label="Sulje">×</button>' +
       (list.length > 1 ? '<button type="button" class="xl-lb-p" aria-label="Edellinen kuva">‹</button><button type="button" class="xl-lb-n" aria-label="Seuraava kuva">›</button>' : "") +
-      '<div class="xl-lb-c"></div><div class="xl-lb-h">Zoomaa sormilla tai kaksoisnapautuksella · hiirellä rullalla</div>';
+      '<div class="xl-lb-c"></div><div class="xl-lb-h">' + (window.matchMedia && matchMedia("(pointer: coarse)").matches ? "Zoomaa sormilla" : "Zoomaa kaksoisklikkauksella tai hiiren rullalla") + '</div>';
     document.body.appendChild(lb);
     var stage = lb.querySelector(".xl-lb-stage"), img = stage.querySelector("img"), cnt = lb.querySelector(".xl-lb-c");
     var prevOverflow = document.documentElement.style.overflow; document.documentElement.style.overflow = "hidden";
