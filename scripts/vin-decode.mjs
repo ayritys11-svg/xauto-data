@@ -55,7 +55,7 @@ export function specFi(d, c) {
   if (eng.length) add("Moottori", eng.join(", "));
   if (d.EngineHP) add("Teho (valmistaja)", Math.round(+d.EngineHP) + " hv / " + Math.round(+d.EngineHP * 0.7457) + " kW");
   if (d.ElectrificationLevel) add("Sähköistys", T(d.ElectrificationLevel, [[/BEV/i, "Täyssähkö"], [/PHEV/i, "Lataushybridi"], [/Strong HEV|HEV/i, "Hybridi"], [/Mild/i, "Kevythybridi"]]));
-  if (d.BatteryKWh) add("Akku", d.BatteryKWh.replace(".", ",") + " kWh");
+  if (d.BatteryKWh) add("Akku", String(+(+d.BatteryKWh).toFixed(1)).replace(".", ",") + " kWh");
   if (d.DriveType) add("Veto", T(d.DriveType, DRIVE));
   if (d.TransmissionStyle || d.TransmissionSpeeds) add("Vaihteisto", (/Manual/i.test(d.TransmissionStyle || "") ? "Manuaali" : "Automaatti") + (d.TransmissionSpeeds ? ", " + d.TransmissionSpeeds + " vaihdetta" : ""));
   if (d.FuelTypePrimary) add("Polttoaine", T(d.FuelTypePrimary, FUEL) + (d.FuelTypeSecondary ? " + " + T(d.FuelTypeSecondary, FUEL).toLowerCase() : ""));
