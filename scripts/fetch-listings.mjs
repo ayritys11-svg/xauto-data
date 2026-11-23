@@ -231,10 +231,11 @@ function calc(L, fx) {
     best = { V: Vfb, VLow: Vfb * 0.8, VHigh: Vfb * 1.3, s: 0.25, n: 0, md: models[0], level: "Ei Verohallinnon päätöksiä tästä mallista: arvio tuontihinnasta", warnings: [] };
     noCompare = true;
     warn.push("Verohallinnolla ei ole päätöksiä tästä mallista, joten verotusarvo on arvioitu tuontihinnasta. Suosittelemme pyytämään Verohallinnolta ennakkoratkaisun ennen ostoa.");
-  } else if ((best.n || 0) < 10) {
+  } else if ((best.n || 0) < 10 || best.V < landedE * 0.9 || best.V > Vfb * 2.5) {
+    // Vähän päätöksiä tai arvio ristiriidassa tuontihinnan kanssa (verotusarvo ei voi olla alle tuontikulujen)
     // Vähän päätöksiä: yhdistetään päätöksiin ja tuontihintaan perustuva arvio
     const Vm = Math.sqrt(best.V * Vfb);
-    best = Object.assign({}, best, { V: Vm, VLow: Math.min(best.VLow, Vfb * 0.8), VHigh: Math.max(best.VHigh, Vfb * 1.3), s: Math.max(best.s || 0, 0.25), level: "Vähän päätöksiä (" + (best.n || 0) + "): yhdistetty arvio päätöksistä ja tuontihinnasta" });
+    best = Object.assign({}, best, { V: Vm, VLow: Math.min(best.VLow, Vfb * 0.8), VHigh: Math.max(best.VHigh, Vfb * 1.3), s: Math.max(best.s || 0, 0.25), level: ((best.n || 0) < 10 ? "Vähän päätöksiä (" + (best.n || 0) + ")" : "Päätökset koskevat eri ikäisiä autoja") + ": yhdistetty arvio päätöksistä ja tuontihinnasta" });
     noCompare = true;
   }
   // Varmistus: verrataan koko mallin päätöksiin. Iso ero = teho tai ryhmä luultavasti väärin.
