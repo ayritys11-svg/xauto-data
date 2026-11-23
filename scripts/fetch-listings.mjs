@@ -305,6 +305,7 @@ const MOCK_DATA = [
 
 const fx = MOCK ? { rate: S.usdEurFallback, date: "testi", src: "asetukset" } : await usdEur();
 let raw = [];
+const counts = {};
 if (MOCK) raw = MOCK_DATA;
 else {
   if (!KEY) { console.error("AUTODEV_KEY puuttuu"); process.exit(1); }
@@ -313,7 +314,6 @@ else {
 }
 const seen = new Set(), cars = [];
 let skipped = 0, common = 0;
-const counts = {};
 for (const L of raw) {
   const vin = (L.vehicle && L.vehicle.vin) || L.vin;
   if (!vin || seen.has(vin)) continue;
