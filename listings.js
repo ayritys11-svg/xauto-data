@@ -138,6 +138,8 @@
       '<p class="lead" style="margin-top:12px">Alaraja: tulli 0 % (jos mahdollista) ja autovero alarajalla. Yläraja: tulli 10 %, autovero ylärajalla ja kuljetus 15 % arvioitua kalliimpi. Verohallinto päättää lopullisen autoveron. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p></section>' +
       '<section class="sec"><h2>Tiedot</h2><div class="facts">' + facts + "</div></section>";
     bindGallery(c);
+    var single = root.querySelector(".gal .ph img:not(#xl-main)");
+    if (single) { single.style.cursor = "zoom-in"; single.addEventListener("click", function () { openLB([c.img], 0, c.title); }); }
     Array.prototype.forEach.call(root.querySelectorAll(".copy"), function (b) {
       b.addEventListener("click", function () {
         var t = b.dataset.copy, lbl = b.querySelector("span");
@@ -179,8 +181,83 @@
     root.querySelector(".nav.prev").addEventListener("click", function () { show(cur - 1); });
     root.querySelector(".nav.next").addEventListener("click", function () { show(cur + 1); });
     root.querySelector(".gal").addEventListener("keydown", function (e) { if (e.key === "ArrowLeft") show(cur - 1); if (e.key === "ArrowRight") show(cur + 1); });
+    main.style.cursor = "zoom-in";
+    main.addEventListener("click", function () { openLB(U.filter(function (u, i) { return ok[i]; }), U.filter(function (u, i) { return ok[i]; }).indexOf(U[cur]), c.title); });
     var x0 = null; main.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; }, { passive: true });
     main.addEventListener("touchend", function (e) { if (x0 == null) return; var dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) show(cur + (dx < 0 ? 1 : -1)); x0 = null; });
+  }
+
+  // Kuvien suurennus: koko ruutu, sormilla zoomaus (pinch), kaksoisnapautus, vetäminen, pyyhkäisy, hiiren rulla
+  function openLB(list, start, title) {
+    if (!list.length) return;
+    var i = Math.max(0, start), sc = 1, tx = 0, ty = 0;
+    var lb = document.createElement("div"); lb.className = "xl-lb"; lb.setAttribute("role", "dialog"); lb.setAttribute("aria-label", "Kuvat: " + title);
+    lb.innerHTML = '<div class="xl-lb-stage"><img alt=""></div><button type="button" class="xl-lb-x" aria-label="Sulje">×</button>' +
+      (list.length > 1 ? '<button type="button" class="xl-lb-p" aria-label="Edellinen kuva">‹</button><button type="button" class="xl-lb-n" aria-label="Seuraava kuva">›</button>' : "") +
+      '<div class="xl-lb-c"></div><div class="xl-lb-h">Zoomaa sormilla tai kaksoisnapautuksella · hiirellä rullalla</div>';
+    document.body.appendChild(lb);
+    var stage = lb.querySelector(".xl-lb-stage"), img = stage.querySelector("img"), cnt = lb.querySelector(".xl-lb-c");
+    var prevOverflow = document.documentElement.style.overflow; document.documentElement.style.overflow = "hidden";
+    function clamp() {
+      if (sc <= 1) { sc = 1; tx = 0; ty = 0; return; }
+      var r = stage.getBoundingClientRect(), w = img.offsetWidth || r.width, h = img.offsetHeight || r.height;
+      var mx = Math.max(0, (w * sc - r.width) / 2), my = Math.max(0, (h * sc - r.height) / 2);
+      tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty));
+    }
+    function apply(anim) { clamp(); img.style.transition = anim ? "transform .2s ease" : "none"; img.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + sc + ")"; img.style.cursor = sc > 1 ? "grab" : "zoom-in"; }
+    function load(k) { i = (k + list.length) % list.length; sc = 1; tx = 0; ty = 0; img.src = list[i]; img.alt = title + " kuva " + (i + 1); cnt.textContent = (i + 1) + " / " + list.length; apply(false); }
+    function zoomAt(ns, cx, cy) {
+      var r = stage.getBoundingClientRect(), ox = cx - (r.left + r.width / 2), oy = cy - (r.top + r.height / 2);
+      ns = Math.max(1, Math.min(5, ns)); tx = ox - (ox - tx) * (ns / sc); ty = oy - (oy - ty) * (ns / sc); sc = ns;
+    }
+    function close() { document.removeEventListener("keydown", onKey); document.documentElement.style.overflow = prevOverflow; lb.remove(); }
+    function onKey(e) { if (e.key === "Escape") close(); else if (e.key === "ArrowLeft") load(i - 1); else if (e.key === "ArrowRight") load(i + 1); }
+    document.addEventListener("keydown", onKey);
+    lb.querySelector(".xl-lb-x").addEventListener("click", close);
+    var bp = lb.querySelector(".xl-lb-p"), bn = lb.querySelector(".xl-lb-n");
+    if (bp) bp.addEventListener("click", function () { load(i - 1); });
+    if (bn) bn.addEventListener("click", function () { load(i + 1); });
+    stage.addEventListener("click", function (e) { if (e.target === stage && sc === 1) close(); });
+    // Hiiri: rulla zoomaa, kaksoisklikkaus vaihtaa 1x/2,5x, vetäminen siirtää
+    stage.addEventListener("wheel", function (e) { e.preventDefault(); zoomAt(sc * (e.deltaY < 0 ? 1.2 : 1 / 1.2), e.clientX, e.clientY); apply(false); }, { passive: false });
+    img.addEventListener("dblclick", function (e) { zoomAt(sc > 1 ? 1 : 2.5, e.clientX, e.clientY); apply(true); });
+    var drag = null;
+    img.addEventListener("mousedown", function (e) { if (sc <= 1) return; e.preventDefault(); drag = { x: e.clientX - tx, y: e.clientY - ty }; img.style.cursor = "grabbing"; });
+    window.addEventListener("mousemove", function (e) { if (!drag) return; tx = e.clientX - drag.x; ty = e.clientY - drag.y; apply(false); });
+    window.addEventListener("mouseup", function () { if (drag) { drag = null; apply(false); } });
+    // Kosketus: kaksi sormea zoomaa, yksi sormi siirtää (zoomattuna) tai vaihtaa kuvaa (pyyhkäisy), kaksoisnapautus zoomaa
+    var t0 = null, pinch = null, lastTap = 0;
+    function dist(a, b) { return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); }
+    stage.addEventListener("touchstart", function (e) {
+      if (e.touches.length === 2) { var a = e.touches[0], b = e.touches[1]; pinch = { d: dist(a, b), s: sc, mx: (a.clientX + b.clientX) / 2, my: (a.clientY + b.clientY) / 2, tx: tx, ty: ty }; t0 = null; }
+      else if (e.touches.length === 1) { var t = e.touches[0]; t0 = { x: t.clientX, y: t.clientY, tx: tx, ty: ty, time: Date.now(), moved: false }; }
+    }, { passive: true });
+    stage.addEventListener("touchmove", function (e) {
+      e.preventDefault();
+      if (pinch) {
+        if (e.touches.length < 2) return;
+        var a = e.touches[0], b = e.touches[1], mx = (a.clientX + b.clientX) / 2, my = (a.clientY + b.clientY) / 2;
+        sc = pinch.s; tx = pinch.tx; ty = pinch.ty; zoomAt(pinch.s * dist(a, b) / pinch.d, pinch.mx, pinch.my);
+        tx += mx - pinch.mx; ty += my - pinch.my; apply(false);
+      } else if (t0) {
+        var t = e.touches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) t0.moved = true;
+        if (sc > 1) { tx = t0.tx + dx; ty = t0.ty + dy; apply(false); }
+        else { img.style.transition = "none"; img.style.transform = "translateX(" + dx + "px)"; }
+      }
+    }, { passive: false });
+    stage.addEventListener("touchend", function (e) {
+      if (pinch) { if (e.touches.length === 0) { pinch = null; if (sc < 1.05) { sc = 1; } apply(true); } return; }
+      if (!t0) return;
+      var t = e.changedTouches[0], dx = t.clientX - t0.x, now = Date.now();
+      if (!t0.moved) {
+        if (now - lastTap < 300) { zoomAt(sc > 1 ? 1 : 2.5, t.clientX, t.clientY); apply(true); lastTap = 0; } else lastTap = now;
+      } else if (sc === 1) {
+        if (Math.abs(dx) > 60 && list.length > 1) load(i + (dx < 0 ? 1 : -1)); else apply(true);
+      }
+      t0 = null;
+    });
+    load(i);
   }
 
   function route() {
