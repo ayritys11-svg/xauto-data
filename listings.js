@@ -19,14 +19,15 @@
   }
   window.__xlCar = CAR;
   var CONF = { korkea: "Tarkka arvio", keskitaso: "Kohtalainen tarkkuus", matala: "Epävarma arvio" };
-  // Tarkkuus = kuinka tarkasti lopullinen autovero tiedetään (autoveron vaihteluväli suhteessa auton loppuhintaan)
+  // Tarkkuus = kuinka tarkasti lopullinen autovero tiedetään: autoveron vaihteluväli prosentteina autoveroarviosta
   function taxAcc(c) {
-    var t = (c.rows && c.rows.tax) || [0, 0], pm = Math.max(0, (t[1] - t[0]) / 2), mid = (c.total && c.total.mid) || 1, pct = pm / mid * 100;
-    return { pm: pm, pct: pct, cls: pct <= 3 ? "korkea" : pct <= 10 ? "keskitaso" : "matala" };
+    var t = (c.rows && c.rows.tax) || [0, 0], avg = (c.autovero && c.autovero.avg) || 0;
+    var pct = avg > 0 ? Math.max(0, (t[1] - t[0]) / 2) / avg * 100 : 0;
+    return { pct: pct, cls: pct <= 10 ? "korkea" : pct <= 30 ? "keskitaso" : "matala" };
   }
   function conf(c) {
     var a = taxAcc(c);
-    return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti lopullinen autovero tiedetään"><i></i>' + CONF[a.cls] + " · autovero ±" + fmt(Math.round(a.pm / 100) * 100) + " €</span>";
+    return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti lopullinen autovero tiedetään"><i></i>' + CONF[a.cls] + " · autovero ±" + Math.round(a.pct) + " %</span>";
   }
   function saveBadge(c) {
     if (isRare(c)) return '<span class="sv r">' + (c.fleet === 0 ? "Ei yhtään Suomessa" : "Vain " + fmt(c.fleet) + " kpl Suomessa") + "</span>" + (c.saving > 0 ? ' <span class="sv g">' + eur(c.saving) + " halvempi</span>" : "");
