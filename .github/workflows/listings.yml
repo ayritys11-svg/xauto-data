@@ -5,7 +5,7 @@ on:
   workflow_dispatch: {}      # käsin: Actions -> Autoilmoitukset -> Run workflow
   push:                      # ajetaan myös kun hakuja, kuluja tai laskentaa muutetaan
     branches: [main]
-    paths: ["config/**", "scripts/**", "calc.js", "data/autovero_core.json", "listings.js", "listings.css"]
+    paths: ["config/searches.json", "config/settings.json", "scripts/**", "calc.js", "data/autovero_core.json", "listings.js", "listings.css"]
 permissions:
   contents: write
 jobs:

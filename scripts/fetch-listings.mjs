@@ -8,7 +8,10 @@ import { loadEngine } from "./engine.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const S = JSON.parse(fs.readFileSync(path.join(ROOT, "config/settings.json"), "utf8"));
-const Q = JSON.parse(fs.readFileSync(path.join(ROOT, "config/searches.json"), "utf8")).searches;
+const DISCOVER = process.argv.includes("--discover");
+const DQ = DISCOVER ? JSON.parse(fs.readFileSync(path.join(ROOT, "config/discover.json"), "utf8")) : null;
+const Q = DISCOVER ? DQ.searches : JSON.parse(fs.readFileSync(path.join(ROOT, "config/searches.json"), "utf8")).searches;
+if (DISCOVER) S.osavaltiot = [DQ.state];
 const KEY = process.env.AUTODEV_KEY || "";
 const MOCK = process.argv.includes("--mock");
 const DBG = process.argv.includes("--debug");
@@ -340,10 +343,26 @@ for (const L of raw) {
   if (!c) { skipped++; continue; }
   if (S.naytaVainKannattavat && c.saving <= 0) continue;
   c.rare = c.fleet < (S.yleinenRaja || 3000);
-  if (!c.rare && !(c.saving > 0)) { common++; continue; } // yleinen malli, ei halvempi -> ei näytetä
+  if (!DISCOVER && !c.rare && !(c.saving > 0)) { common++; continue; } // yleinen malli, ei halvempi -> ei näytetä
   cars.push(c);
 }
 cars.sort((a, b) => (b.saving ?? -1e9) - (a.saving ?? -1e9));
 const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, skipped, common, searches: counts, cars };
+if (DISCOVER) {
+  const by = {};
+  for (const c of cars) { const k = c.make + " " + c.model; (by[k] = by[k] || []).push(c); }
+  const med = (a) => { const x = a.slice().sort((p, q) => p - q); return x.length ? x[Math.floor(x.length / 2)] : null; };
+  const rows = Q.map((q) => {
+    const k = Object.keys(by).find((x) => x.toLowerCase() === (q.make + " " + q.model).toLowerCase()) || (q.make + " " + q.model);
+    const cs = by[k] || [], cmp = cs.filter((c) => c.saving != null);
+    return { malli: q.make + " " + q.model, haettu: counts[q.make + " " + q.model + " " + DQ.state] || 0, laskettu: cs.length,
+      suomessa: cs.length ? cs[0].fleet : null, vertailtavia: cmp.length,
+      halvempia: cmp.filter((c) => c.saving > 0).length, varmasti: cs.filter((c) => c.sure).length,
+      osuusHalvempia: cmp.length ? Math.round(cmp.filter((c) => c.saving > 0).length / cmp.length * 100) : null,
+      eroMediaani: med(cmp.map((c) => c.saving)), hintaUsdMediaani: med(cs.map((c) => c.priceUsd)), loppuhintaMediaani: med(cs.map((c) => c.total.mid)) };
+  }).sort((a, b) => (b.osuusHalvempia ?? -1) - (a.osuusHalvempia ?? -1));
+  fs.writeFileSync(path.join(ROOT, "data/discover.json"), JSON.stringify({ updated: today.toISOString(), state: DQ.state, rows }, null, 1));
+  console.log("Kartoitus valmis"); process.exit(0);
+}
 fs.writeFileSync(path.join(ROOT, "data/listings.json"), JSON.stringify(out));
 console.log("Valmis:", cars.length, "autoa,", skipped, "ohitettu,", common, "yleistä ei-kannattavaa pois");
