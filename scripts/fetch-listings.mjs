@@ -27,7 +27,13 @@ function fleetCount(mk, models) {
   let best = 0;
   for (const md of models) {
     let n = 0;
-    const add = (m, name) => { const t = FLEET[m] || {}, k0 = z(name); for (const k of Object.keys(t)) if (k0 && k.indexOf(k0) === 0) n += t[k]; };
+    const add = (m, name) => {
+      const t = FLEET[m] || {}, cls = String(name).toUpperCase().match(/^([A-Z]{1,3})[\s-]?CLASS$/);
+      const k0 = z(name).slice(0, 14); // rekisterin nimet on lyhennetty 14 merkkiin
+      for (const k of Object.keys(t)) {
+        if (cls ? new RegExp("^" + cls[1] + "\\d").test(k) : (k0 && k.indexOf(k0) === 0)) n += t[k];
+      }
+    };
     add(mk, md);
     if (mk === "RAM") add("DODGE", "RAM " + md);
     best = Math.max(best, n);
@@ -85,6 +91,7 @@ function veroModels(model) {
   const m = up(model), list = [m];
   const s = m.replace(/\s+(HYBRID|PLUG-IN HYBRID|PLUG-IN|PRIME|AWD|4XE)$/g, "").trim();
   if (s !== m) list.push(s);
+  const g = s.replace(/^GR\s+/, ""); if (g !== s) list.push(g);
   return list;
 }
 // Teho (kW) Traficomin rekisteristä: sama merkki, malli, käyttövoima, iskutilavuus ja vuosimalli
@@ -234,11 +241,11 @@ function calc(L, fx) {
     best = { V: Vfb, VLow: Vfb * 0.8, VHigh: Vfb * 1.3, s: 0.25, n: 0, md: models[0], level: "Ei Verohallinnon päätöksiä tästä mallista: arvio tuontihinnasta", warnings: [] };
     noCompare = true;
     warn.push("Verohallinnolla ei ole päätöksiä tästä mallista, joten verotusarvo on arvioitu tuontihinnasta. Suosittelemme pyytämään Verohallinnolta ennakkoratkaisun ennen ostoa.");
-  } else if ((best.n || 0) < 10 || best.V < landedE * 0.9 || best.V > Vfb * 2.5) {
+  } else if ((best.n || 0) < 10 || best.V > Vfb * 2.5 || (fleetCount(mk, models) < 300 && (best.warnings || []).some((w) => /vanhempi kuin|ulkopuolelle/.test(w)))) {
     // Vähän päätöksiä tai arvio ristiriidassa tuontihinnan kanssa (verotusarvo ei voi olla alle tuontikulujen)
     // Vähän päätöksiä: yhdistetään päätöksiin ja tuontihintaan perustuva arvio
     const Vm = Math.sqrt(best.V * Vfb);
-    best = Object.assign({}, best, { V: Vm, VLow: Math.min(best.VLow, Vfb * 0.8), VHigh: Math.max(best.VHigh, Vfb * 1.3), s: Math.max(best.s || 0, 0.25), level: ((best.n || 0) < 10 ? "Vähän päätöksiä (" + (best.n || 0) + ")" : "Päätökset koskevat eri ikäisiä autoja") + ": yhdistetty arvio päätöksistä ja tuontihinnasta" });
+    best = Object.assign({}, best, { V: Vm, VLow: Math.min(best.VLow, Vfb * 0.8), VHigh: Math.max(best.VHigh, Vfb * 1.3), s: Math.max(best.s || 0, 0.25), level: ((best.n || 0) < 10 ? "Vähän päätöksiä (" + (best.n || 0) + ")" : "Päätökset koskevat eri ikäisiä tai erilaisia autoja") + ": yhdistetty arvio päätöksistä ja tuontihinnasta" });
     noCompare = true;
   }
   // Varmistus: verrataan koko mallin päätöksiin. Iso ero = teho tai ryhmä luultavasti väärin.
