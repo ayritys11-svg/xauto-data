@@ -256,7 +256,7 @@ function calc(L, fx) {
     title: [year, v.make, v.model, v.trim].filter(Boolean).join(" "),
     miles, km, engine: v.engine || "", fuel: F.fi, drivetrain: v.drivetrain || "", transmission: v.transmission || "",
     img: rl.primaryImage || "", photos: rl.photoCount || 0,
-    dealer: rl.dealer || "", city: rl.city || "", state: st, vdp: rl.vdp || "", carfax: rl.carfaxUrl || "",
+    country: /^(ON|QC|BC|AB|MB|SK|NS|NB|NL|PE)$/.test(st) ? "CA" : "US", // myyjän tietoja ei julkaista
     priceUsd, fx: fx.rate, fxDate: fx.date,
     rows: {
       car: r0(car), ship: r0(ship), shipHi: r0(ship * S.kuljetusYlarajaKerroin),

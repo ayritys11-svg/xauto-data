@@ -22,7 +22,7 @@
     if (c.saving > 0 && c.sure === false) return '<span class="sv u">Mahdollisesti ' + eur(c.saving) + " halvempi</span>";
     return c.saving > 0 ? '<span class="sv g">' + eur(c.saving) + " halvempi</span>" : '<span class="sv b">' + eur(-c.saving) + " kalliimpi</span>";
   }
-  function origin(c) { return c.state === "ON" || c.state === "QC" || c.state === "BC" || c.state === "AB" ? "KANADA" : "USA" + (c.state ? " · " + c.state : ""); }
+  function origin(c) { return c.country === "CA" || /^(ON|QC|BC|AB)$/.test(c.state || "") ? "KANADA" : "USA"; }
 
   function list() {
     var cars = DATA.cars.slice();
@@ -62,7 +62,7 @@
     var R = c.rows, A = c.autovero;
     var s1 =
       line("Auton hinta", fmt(c.priceUsd) + " $, kurssi 1 € = " + String(c.fx).replace(".", ",") + " $", eur(R.car)) +
-      line("Kuljetus " + (origin(c).indexOf("KANADA") === 0 ? "Kanadasta" : "USA:sta") + " Suomeen", "Rahti ja vakuutus Suomen satamaan" + (c.state ? ", lähtö " + esc(c.state) : ""), rng(R.ship, R.shipHi), "arvio") +
+      line("Kuljetus " + (origin(c).indexOf("KANADA") === 0 ? "Kanadasta" : "USA:sta") + " Suomeen", "Rahti ja vakuutus Suomen satamaan", rng(R.ship, R.shipHi), "arvio") +
       line("Tulli 0–10 %", R.usOrigin ? "USA:ssa valmistettu (VIN alkaa " + esc(c.vin.charAt(0)) + "): 0 % alkuperätodistuksella (EU 2026/1455), muuten 10 %" : "Valmistettu muualla kuin USA:ssa (VIN alkaa " + esc(c.vin.charAt(0)) + "): 10 %", rng(R.duty[0], R.duty[1])) +
       line("Huolinta ja satamamaksut", "Tullaus ja käsittely", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "Auton, kuljetuksen, tullin ja huolinnan päälle", rng(R.vat[0], R.vat[1])) +
@@ -79,14 +79,14 @@
           line("b) Valmiit autoveropäätökset", "Samasta autosta ei ole riittävästi päätöksiä vertailuun. Arvio perustuu CO₂-laskentaan.", "–")) +
         '<div class="ln sum"><div class="t">Autoveroarvio</div><div class="d">' + (A.same ? "a- ja b-tavan keskiarvo, " : "") + "vaihteluväli " + rng(R.tax[0], R.tax[1]) + '</div><div class="v">' + eur(A.avg) + "</div></div>";
     }
-    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km (" + fmt(c.miles) + " mi)"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", c.transmission], ["Veto", c.drivetrain], ["Myyjä", [c.dealer, c.city, c.state].filter(Boolean).join(", ")], ["VIN", c.vin]]
+    var facts = [["Vuosimalli", c.year], ["Ajettu", fmt(c.km) + " km (" + fmt(c.miles) + " mi)"], ["Moottori", c.engine], ["Käyttövoima", c.fuel], ["Teho (Veron tiedoista)", A.kw ? A.kw + " kW" : "–"], ["Vaihteisto", c.transmission], ["Veto", c.drivetrain], ["VIN", c.vin]]
       .filter(function (f) { return f[1]; }).map(function (f) { return "<div><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
       '<div class="hd">' + gallery(c) + '<div class="info"><h1>' + esc(c.title) + '</h1><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.engine, c.drivetrain].filter(Boolean).map(esc).join(" · ") + "</p>" +
       '<div><small style="color:var(--muted)">Hinta Suomessa rekisteröitynä</small><div class="big">' + rng(c.total.lo, c.total.hi) + "</div></div>" + saveBadge(c) + conf(c) +
       '<a class="cta" href="' + esc(tarjous) + "?auto=" + encodeURIComponent(c.vin) + '">Pyydä sitova tarjous</a>' +
-      (c.vdp ? '<a href="' + esc(c.vdp) + '" target="_blank" rel="noopener" style="font-size:13.5px">Alkuperäinen ilmoitus myyjän sivulla ↗</a>' : "") + "</div></div>" +
+      "</div></div>" +
       '<section class="sec"><h2><b>1</b>Mistä hinta koostuu</h2>' + s1 + "</section>" +
       '<section class="sec"><h2><b>2</b>Mistä autoveroarvio koostuu</h2><p class="lead">Autovero = verotusarvo × veroprosentti. Verotusarvo on arvioitu Verohallinnon omista päätöksistä, veroprosentti CO₂-taulukosta ja valmiista päätöksistä.</p>' + s2 +
       (c.warnings.length ? '<ul class="warn">' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>" : "") + "</section>" +
