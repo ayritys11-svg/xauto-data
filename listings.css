@@ -87,3 +87,17 @@ font-family:var(--font-body);color:var(--fg);font-size:15px;line-height:1.5;widt
 .xl .sv.r{background:#E3EEFB;color:#1D4E89}
 .xl .cmp div.rare{background:#E3EEFB}
 .xl .cmp div.rare b{color:#1D4E89}
+/* WordPress-teeman tyylit eivät saa sotkea kortteja */
+.xl .grid{gap:28px 24px!important;align-items:stretch!important}
+.xl .car{display:flex!important;flex-direction:column!important;align-items:stretch!important;text-align:left!important;background:var(--surface)!important;color:var(--fg)!important;text-decoration:none!important;box-shadow:0 1px 2px rgba(21,24,28,.06),0 6px 18px rgba(21,24,28,.06);padding:16px!important;height:100%}
+.xl .car>*{width:100%;margin:0!important}
+.xl .car h3{min-height:2.4em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.xl .car .spec{min-height:2.9em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.xl .car .price{display:flex!important;flex-wrap:wrap;justify-content:space-between;align-items:center;min-height:2.2em}
+.xl .car .row{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:baseline;width:100%!important;text-align:left!important;gap:12px}
+.xl .car .row span{flex:1 1 auto;min-width:0;text-align:left!important}
+.xl .car .row b{flex:0 0 auto;white-space:nowrap;text-align:right!important}
+.xl .car .conf{margin-top:auto!important;padding-top:4px}
+.xl .car .sv{display:inline-block}
+.xl .car .badges{display:flex;flex-wrap:wrap;gap:6px;min-height:26px}
+.xl,.xl .bar,.xl .cnt,.xl .top{text-align:left!important}
