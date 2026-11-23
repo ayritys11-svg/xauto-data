@@ -132,7 +132,8 @@
   function isRare(c) { return c.fleet != null && c.fleet < RARE; }
   function fleetTxt(c) { return c.fleet === 0 ? "ei yhtään" : fmt(c.fleet) + " kpl"; }
   // Haku: kirjoitettu teksti osuu, jos se löytyy nimestä (kirjainkoolla ei väliä)
-  function match(val, q) { q = String(q || "").trim().toLowerCase(); return !q || String(val || "").toLowerCase().indexOf(q) >= 0; }
+  // "|" erottaa vaihtoehdot (esim. etusivun korityypit: Sedan|Coupé)
+  function match(val, q) { q = String(q || "").trim().toLowerCase(); if (!q) return true; var v = String(val || "").toLowerCase(); return q.split("|").some(function (x) { x = x.trim(); return !x || v.indexOf(x) >= 0; }); }
   function ok(c) { return c.saving != null && c.saving > 0; }
   function keep() { try { localStorage.setItem("xl-sort", F.sort); } catch (e) {} }
   function card(c) {
@@ -352,6 +353,16 @@
     var pick = rounds(good, LIMIT); if (pick.length < LIMIT) pick = pick.concat(rounds(rest, LIMIT - pick.length));
     root.innerHTML = '<div class="grid">' + pick.map(card).join("") + '</div><div class="more"><a href="' + esc(LISTURL) + '">Näytä kaikki autot</a></div>';
   }
+  // Etusivun hakulomake välittää valinnat osoitteessa: /autot/?make=Porsche&pmax=60000&body=Sedan|Coupé&open=1
+  (function () {
+    try {
+      var u = new URLSearchParams(location.search);
+      TXT.concat(NUM).forEach(function (k) { var x = u.get(k); if (x) F[k] = x; });
+      if (u.get("open") === "1") OPEN = true;
+      var anyExtra = EXTRA.concat(TECH).some(function (k) { return F[k]; });
+      if (anyExtra) OPEN = true;
+    } catch (e) {}
+  })();
   function route() {
     if (!DATA) return;
     if (MODE === "featured") { featured(); return; }
