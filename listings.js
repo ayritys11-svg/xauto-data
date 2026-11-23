@@ -118,7 +118,7 @@
       .concat(has("Vaihteisto") ? [] : [["Vaihteisto", gear(c.transmission)]])
       .concat(has("Veto") ? [] : [["Veto", ({ AWD: "Neliveto (AWD)", "4WD": "Neliveto (4WD)", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || c.drivetrain]])
       .concat(SP)
-      .concat([["Teho Veron tiedoissa", A.kw ? A.kw + " kW" : ""], ["Suomessa liikenteessä (Traficom 9/2026)", c.fleet != null ? fleetTxt(c) : ""], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["VIN", c.vin]])
+      .concat([["Teho autoverolaskennassa", A.kw ? A.kw + " kW" + (A.kwSrc === "vin" ? " (VIN)" : " (arvio)") : ""], ["Suomessa liikenteessä (Traficom 9/2026)", c.fleet != null ? fleetTxt(c) : ""], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["VIN", c.vin]])
       .filter(function (f) { return f[1]; }).map(function (f) { var k = /liikenteessä/.test(f[0]) ? ' class="k-fleet"' : f[0] === "VIN" ? ' class="k-vin"' : ""; return "<div" + k + "><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
