@@ -41,6 +41,35 @@ function fleetCount(mk, models) {
   }
   return best;
 }
+// Tarkempi liikennemäärä: sama malli, korimalli, käyttövoima ja moottoriversio (kW), lähivuosimallit
+const FD = JSON.parse(fs.readFileSync(path.join(ROOT, "data/fleet_detail.json"), "utf8")).d;
+const BODY_CODES = { "Sedan": ["AA"], "Viistoperä": ["AB"], "Farmari": ["AC"], "Coupé": ["AD"], "Avoauto": ["AE"], "Maastoauto (SUV)": ["AC", "AF"], "Tila-auto": ["AF"], "Avolava": ["BA", "BB"], "Pakettiauto": ["BB", "BC"] };
+function fleetDetail(c) {
+  const z = (x) => String(x).toUpperCase().replace(/[\s\-\.\/]/g, "");
+  const mk = String(c.make || "").toUpperCase(), year = +c.year || 0;
+  const keys = [z(c.model).slice(0, 14), z(c.make + " " + c.model).slice(0, 14)].filter(Boolean);
+  let rows = [];
+  for (const m of new Set([mk, mk.replace(/ /g, "-")])) for (const [md, r] of Object.entries(FD[m] || {})) if (keys.some((k) => md.indexOf(k) === 0)) rows = rows.concat(r);
+  // [vuosi, kW, korityyppi, käyttövoima, hybridi, kpl]
+  const fu = { "Bensiini": "01", "Diesel": "02", "Sähkö": "04" }[c.fuel];
+  if (fu) rows = rows.filter((r) => r[3] === fu);
+  const el = ((c.spec || []).find((x) => x[0] === "Sähköistys") || [])[1] || "";
+  // hybridi (myös mild ja ladattava) on eri versio kuin pelkkä polttomoottori
+  if (fu !== "04") { const hy = /hybrid/i.test(el); rows = rows.filter((r) => (r[4] > 0) === hy); }
+  const bc = BODY_CODES[c.body];
+  if (bc) rows = rows.filter((r) => !r[2] || bc.includes(r[2]));
+  if (year) rows = rows.filter((r) => r[0] && Math.abs(r[0] - year) <= 2);
+  const kw = c.autovero && c.autovero.kw;
+  if (kw && fu !== "04") {
+    const ks = rows.filter((r) => r[1] > 0);
+    if (ks.length) {
+      // lähin moottoriversio rekisterissä (US- ja EU-tehoilmoitus eroavat hieman), sen ±3 %
+      const near = ks.reduce((b, r) => (Math.abs(r[1] - kw) < Math.abs(b - kw) ? r[1] : b), ks[0][1]);
+      rows = Math.abs(near - kw) > kw * 0.12 ? [] : ks.filter((r) => Math.abs(r[1] - near) <= Math.max(3, near * 0.03));
+    }
+  }
+  return rows.reduce((n, r) => n + r[5], 0);
+}
 const AN = JSON.parse(fs.readFileSync(path.join(ROOT, "data/analog.json"), "utf8"));
 const C2 = JSON.parse(fs.readFileSync(path.join(ROOT, "data/co2_table.json"), "utf8"));
 
@@ -450,6 +479,10 @@ if (!MOCK && !DISCOVER) {
     if (d.EngineHP && !c.hp) c.hp = Math.round(+d.EngineHP);
     if (d.BodyClass) c.body = (c.spec.find((x) => x[0] === "Korimalli") || [])[1];
   }
+}
+// Liikennemäärä tarkemmin: sama malli, korimalli, moottoriversio ja lähivuosimallit (koko mallin luku talteen)
+if (!MOCK && !DISCOVER) {
+  for (const c of cars) { c.fleetModel = c.fleetModel != null ? c.fleetModel : c.fleet; c.fleet = fleetDetail(c); }
 }
 const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, keptFromPrevious: kept, failedSearches: [...FAILED], scanned: total, limit: LIMIT, skipped, common, searches: counts, cars };
 if (DISCOVER) {
