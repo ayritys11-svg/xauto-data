@@ -29,8 +29,8 @@
   var MK=combo("vh-make","Merkki (kirjoita tai valitse)"), MD=combo("vh-model","Malli (kirjoita tai valitse)");
   sel[0].parentNode.replaceChild(MK.w,sel[0]); sel[1].parentNode.replaceChild(MD.w,sel[1]);
   /* vaihteluvälit avautuvat alapaneeliin (Minimi – Maksimi, numeronäppäimistö) */
-  var R={pmin:"",pmax:"",ymin:"",ymax:""};
-  function rlabel(a,b,u,lab){ var f=function(v){ return v ? (u==="€" ? fmt(+v) : String(v)) : ""; }; a=f(a); b=f(b); if(!a){ if(!b){ return lab; } } return lab+": "+(a||"…")+" – "+(b||"…")+(u ? " "+u : ""); }
+  var R={pmin:"",pmax:"",ymin:"",ymax:"",kmin:"",kmax:""};
+  function rlabel(a,b,u,lab){ var f=function(v){ return v ? (u==="€" ? fmt(+v) : (u==="km" ? fmt(+v) : String(v))) : ""; }; a=f(a); b=f(b); if(!a){ if(!b){ return lab; } } return lab+": "+(a||"…")+" – "+(b||"…")+(u ? " "+u : ""); }
   function rbtn(k1,k2,lab,u){
     var bt=el("button","vrf"); bt.type="button";
     function upd(){ var t=rlabel(R[k1],R[k2],u,lab); bt.textContent=t; bt.classList.toggle("set",t!==lab); }
@@ -43,12 +43,11 @@
   var X={
     fuel:combo("vh-fuel","Käyttövoima"), gear:combo("vh-gear","Vaihteisto"), drive:combo("vh-drive","Veto"),
 
-    kmax:pick("Mittarilukema enintään",[[20000,"20 000 km"],[50000,"50 000 km"],[75000,"75 000 km"],[100000,"100 000 km"],[150000,"150 000 km"],[200000,"200 000 km"]]),
     hpmin:pick("Teho vähintään",steps(150,600,50,function(v){return v+" hv"}))
   };
   var wrap=el("div","vmore"), inner=el("div","vmore-in"), grid=el("div","vmore-grid");
   var YR=rbtn("ymin","ymax","Vuosimalli","");
-  ["fuel","gear","drive"].forEach(function(k){ grid.appendChild(X[k].w); }); grid.appendChild(YR.w); ["kmax","hpmin"].forEach(function(k){ grid.appendChild(X[k].w); });
+  ["fuel","gear","drive"].forEach(function(k){ grid.appendChild(X[k].w); }); grid.appendChild(YR.w); var KM=rbtn("kmin","kmax","Mittarilukema","km"); grid.appendChild(KM.w); grid.appendChild(X.hpmin.w);
   inner.appendChild(grid); wrap.appendChild(inner); fields.parentNode.insertBefore(wrap,fields.nextSibling);
   wrap.setAttribute("aria-hidden","true");
 
@@ -68,7 +67,7 @@
     if(!hasStrict(c.make,MK.get())){return false} if(!hasStrict(mn(c),MD.get())){return false}
     if(!has(c.fuel,X.fuel.get())){return false} if(!has(gear(c.transmission),X.gear.get())){return false} if(!has(drive(c.drivetrain),X.drive.get())){return false}
     var mid=c.total ? c.total.mid : null;
-    return inR(mid,R.pmin,R.pmax) ? (inR(c.year,R.ymin,R.ymax) ? (inR(c.km,0,X.kmax.get()) ? inR(c.hp||null,X.hpmin.get(),0) : false) : false) : false;
+    return inR(mid,R.pmin,R.pmax) ? (inR(c.year,R.ymin,R.ymax) ? (inR(c.km,R.kmin,R.kmax) ? inR(c.hp||null,X.hpmin.get(),0) : false) : false) : false;
   }
   function count(){ go.textContent="Hae autoja"+(CARS.length ? " ("+CARS.filter(ok).length+")" : ""); }
   function models(){ var o={}; CARS.forEach(function(c){ if(hasStrict(c.make,MK.get())){ o[mn(c)]=1; } }); fill(MD.d,Object.keys(o)); }
@@ -89,5 +88,5 @@
   }
   go.addEventListener("click",function(){ location.href=url(); });
   box.addEventListener("keydown",function(e){ if(e.key==="Enter"){ if(e.target.tagName==="INPUT"){ location.href=url(); } } });
-  clr.addEventListener("click",function(){ MK.clear(); MD.clear(); Object.keys(R).forEach(function(k){R[k]=""}); PR.upd(); YR.upd(); Object.keys(X).forEach(function(k){X[k].clear()}); models(); setTimeout(count,0); });
+  clr.addEventListener("click",function(){ MK.clear(); MD.clear(); Object.keys(R).forEach(function(k){R[k]=""}); PR.upd(); YR.upd(); KM.upd(); Object.keys(X).forEach(function(k){X[k].clear()}); models(); setTimeout(count,0); });
 })();
