@@ -14,3 +14,5 @@
 .xh .fields .vrf,.xh .vmore-grid .vrf{height:48px;font-size:16px}
 /* maa-laatikot (USA/Eurooppa/Aasia) poistettu etusivulta */
 .xh .tiles{display:none!important}
+.xh .type svg{width:96px!important;height:36px!important;color:#15181C}
+.xh .type[aria-pressed="true"] svg{color:var(--accent)}
