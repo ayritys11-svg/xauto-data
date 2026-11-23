@@ -29,3 +29,6 @@
 .xh .origins span+span::before{content:none!important}
 .xh .hero .count{align-self:flex-start}
 @media(min-width:760px){.xh .hero .row{flex-direction:row;align-items:center}.xh .origins{flex:1 1 auto;width:auto}}
+@media(max-width:759px){.xh .origins{font-size:clamp(10.5px,3vw,13px)!important;letter-spacing:.06em!important;gap:4px 8px;padding:12px 12px!important;flex-wrap:nowrap}.xh .hero .count{align-self:stretch;justify-content:center}}
+@media(max-width:359px){.xh .origins{flex-wrap:wrap!important}}
+.xh .count b{white-space:nowrap}
