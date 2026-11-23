@@ -62,9 +62,9 @@
   function num(s) { s = String(s == null ? "" : s).replace(/\s/g, "").replace(",", "."); var n = parseFloat(s.replace(/[^\d.]/g, "")); return isNaN(n) ? null : n; }
   function hay(c) { return [c.title, c.make, c.model, c.trim, c.body, c.fuel, c.engine, c.color, colorFi(c.color), c.city, locFi(c), driveFi(c.drivetrain), gear(c.transmission)].concat((c.spec || []).map(function (x) { return x[1]; })).join(" ").toLowerCase(); }
   function words(c, q) { q = String(q || "").trim().toLowerCase(); if (!q) return true; var h = hay(c); return q.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; }); }
-  function inR(v, lo, hi) { lo = num(lo); hi = num(hi); if (lo == null) { if (hi == null) return true; } if (v == null) return false; if (lo != null) { if (v < lo) return false; } if (hi != null) { if (v > hi) return false; } return true; }
+  function inR(v, lo, hi) { lo = num(lo); hi = num(hi); if (lo == null) { if (hi == null) return true; } if (v == null) return true; /* puuttuva tieto ei piilota autoa */ if (lo != null) { if (v < lo) return false; } if (hi != null) { if (v > hi) return false; } return true; }
   function pass(c, skip) {
-    var t = function (k, val) { return k === skip || match(val, F[k]); };
+    var t = function (k, val) { return k === skip || !val || match(val, F[k]); }; /* puuttuva tieto ei piilota autoa */
     return words(c, F.q) && t("make", c.make) && t("model", modelName(c)) && t("trim", c.trim) && t("body", c.body) && t("fuel", c.fuel) && t("gear", gear(c.transmission)) && t("drive", driveFi(c.drivetrain)) && t("loc", locFi(c)) && t("color", colorFi(c.color)) && t("doors", doorsOf(c)) && t("steer", steerOf(c)) &&
       inR(c.total && c.total.mid, F.pmin, F.pmax) && inR(c.year, F.ymin, F.ymax) && inR(c.km, null, F.kmax) && inR(displ(c), F.dmin, F.dmax) &&
       inR(c.hp || null, F.hpmin, F.hpmax) && inR(sv(c, "CO₂ (EPA)"), null, F.co2max) && inR(sv(c, "Istumapaikat"), F.smin, null) && inR(fuelCons(c), null, F.cmax) && inR(evCons(c), null, F.emax) && inR(sv(c, "Toimintamatka (EPA)"), F.rmin, null) &&
