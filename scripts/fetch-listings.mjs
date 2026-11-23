@@ -359,7 +359,11 @@ let total = cars.length;
 if (!DISCOVER && S.halvempienOsuus > 0) {
   const good = cars.filter((c) => c.saving > 0), rest = cars.filter((c) => !(c.saving > 0)).sort((a, b) => a.fleet - b.fleet || a.total.mid - b.total.mid);
   const maxRest = Math.floor(good.length * (1 - S.halvempienOsuus) / S.halvempienOsuus);
-  cars.length = 0; cars.push(...good, ...rest.slice(0, maxRest));
+  // Muut autot tasaisesti eri malleista: harvinaisin malli ensin, yksi auto per malli kierroksittain
+  const groups = {}; for (const c of rest) { const k = c.make + "|" + c.model; (groups[k] = groups[k] || []).push(c); }
+  const order = Object.values(groups).sort((a, b) => a[0].fleet - b[0].fleet), pick = [];
+  for (let i = 0; pick.length < maxRest && order.some((g) => g.length > i); i++) for (const g of order) if (g[i] && pick.length < maxRest) pick.push(g[i]);
+  cars.length = 0; cars.push(...good, ...pick);
 }
 const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, scanned: total, skipped, common, searches: counts, cars };
 if (DISCOVER) {
