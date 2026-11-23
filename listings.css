@@ -118,3 +118,9 @@ font-family:var(--font-body);color:var(--fg);font-size:15px;line-height:1.5;widt
 .xl .facts div.k-fleet{border-left-color:#1D4E89!important;background:#E3EEFB}
 .xl .facts div.k-fleet b{color:#1D4E89}
 .xl .facts div.k-vin b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;letter-spacing:.02em}
+.xl .facts div.k-vin{position:relative;padding-right:110px!important}
+.xl .facts .copy{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer}
+.xl .facts .copy:hover{background:var(--accent-2)}
+.xl .facts .copy.ok{background:var(--good)}
+.xl .facts .copy svg{width:16px;height:16px}
+.xl .facts .copy span{color:#fff!important;font-size:13px!important;text-transform:none!important;letter-spacing:0!important;font-weight:600!important}
