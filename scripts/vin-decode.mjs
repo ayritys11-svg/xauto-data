@@ -70,6 +70,6 @@ export function specFi(d, c) {
   }
   // Kokonaismassaa ei näytetä: VIN kertoo vain painoluokan (esim. 2 700 – 3 200 kg), ei tarkkaa massaa
   if (d.WheelBaseShort) add("Akseliväli", Math.round(+d.WheelBaseShort * 2.54) + " cm");
-  if (d.PlantCountry) add("Valmistusmaa", (COUNTRY[d.PlantCountry.toUpperCase()] || d.PlantCountry) + (d.PlantCity ? " (" + d.PlantCity.charAt(0) + d.PlantCity.slice(1).toLowerCase() + ")" : ""));
+  if (d.PlantCountry) add("Valmistusmaa", (COUNTRY[d.PlantCountry.toUpperCase()] || d.PlantCountry) + (d.PlantCity ? " (" + d.PlantCity.toLowerCase().replace(/(^|[\s-])\S/g, (m) => m.toUpperCase()) + ")" : ""));
   return s;
 }
