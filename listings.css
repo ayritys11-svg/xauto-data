@@ -219,3 +219,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .hd .ttl{display:flex;align-items:flex-start;gap:12px}
 .xl .hd .ttl h1{flex:1;min-width:0}
 .xl .hd .ttl .fav{width:44px;height:44px;margin-top:2px}
+
+/* Puhelimessa kortit ovat yhdessä sarakkeessa: ei tasauskorkeutta otsikolle ja tiedoille, ettei yksirivisen otsikon alle jää tyhjää */
+@media (max-width:640px){.xl .car h3,.xl .car .spec{min-height:0!important}}
