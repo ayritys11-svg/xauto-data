@@ -19,9 +19,14 @@
   }
   window.__xlCar = CAR;
   var CONF = { korkea: "Tarkka arvio", keskitaso: "Kohtalainen tarkkuus", matala: "Epävarma arvio" };
+  // Tarkkuus = kuinka tarkasti lopullinen autovero tiedetään (autoveron vaihteluväli suhteessa auton loppuhintaan)
+  function taxAcc(c) {
+    var t = (c.rows && c.rows.tax) || [0, 0], pm = Math.max(0, (t[1] - t[0]) / 2), mid = (c.total && c.total.mid) || 1, pct = pm / mid * 100;
+    return { pm: pm, pct: pct, cls: pct <= 3 ? "korkea" : pct <= 10 ? "keskitaso" : "matala" };
+  }
   function conf(c) {
-    var t = c.total || {}, mid = (t.lo + t.hi) / 2, pct = mid ? Math.round((t.hi - t.lo) / 2 / mid * 100) : null;
-    return '<span class="conf ' + c.confidence + '" title="Loppuhinnan vaihteluväli keskiarvosta"><i></i>' + CONF[c.confidence] + (pct != null ? " · heitto ±" + pct + " %" : "") + "</span>";
+    var a = taxAcc(c);
+    return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti lopullinen autovero tiedetään"><i></i>' + CONF[a.cls] + " · autovero ±" + fmt(Math.round(a.pm / 100) * 100) + " €</span>";
   }
   function saveBadge(c) {
     if (isRare(c)) return '<span class="sv r">' + (c.fleet === 0 ? "Ei yhtään Suomessa" : "Vain " + fmt(c.fleet) + " kpl Suomessa") + "</span>" + (c.saving > 0 ? ' <span class="sv g">' + eur(c.saving) + " halvempi</span>" : "");
@@ -37,7 +42,7 @@
     var v = cars.filter(function (c) { return match(c.make, F.make) && match(c.fuel, F.fuel) && (!F.good || ok(c)) && (!F.rare || isRare(c)); });
     var SV = function (c) { return c.saving == null ? -1e9 : c.saving; };
     var CR = { korkea: 0, keskitaso: 1, matala: 2 };
-    var HT = function (c) { var t = c.total || {}, m = (t.lo + t.hi) / 2; return m ? Math.round((t.hi - t.lo) / 2 / m * 100) : 999; };
+    var HT = function (c) { return Math.round(taxAcc(c).pct * 10); };
     var S = { save: function (a, b) { return (HT(a) - HT(b)) || SV(b) - SV(a); }, saveonly: function (a, b) { return SV(b) - SV(a); }, rare: function (a, b) { return (a.fleet || 0) - (b.fleet || 0) || SV(b) - SV(a); }, low: function (a, b) { return a.total.mid - b.total.mid; }, high: function (a, b) { return b.total.mid - a.total.mid; }, new: function (a, b) { return b.year - a.year || a.km - b.km; }, km: function (a, b) { return a.km - b.km; } };
     v.sort(S[F.sort] || S.save);
     function dl(id, o) { return '<datalist id="' + id + '">' + Object.keys(o).sort().map(function (k) { return '<option value="' + esc(k) + '">'; }).join("") + "</datalist>"; }
