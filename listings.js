@@ -1,7 +1,7 @@
 /* X-auto: autoilmoitukset (lista + yksittäinen ilmoitus). Data: data/listings.json */
 (function () {
   var root = document.querySelector(".xl"); if (!root) return;
-  var base = root.dataset.base || "", tarjous = root.dataset.offer || "/pyyda-tarjous/";
+  var base = root.dataset.base || "", tarjous = root.dataset.offer || "/kysy-lisatietoa/";
   var DATA = null, F = { make: "", fuel: "", sort: "save", good: false };
   // Muistetaan vain järjestys, ei suodattimia (muuten kävijä näkee vain osan autoista eikä tiedä miksi)
   try { localStorage.removeItem("xl-f"); var so = localStorage.getItem("xl-sort"); if (so) F.sort = so; } catch (e) {}
@@ -124,7 +124,7 @@
       '<a class="back" href="#">← Kaikki autot</a>' +
       '<div class="hd">' + gallery(c) + '<div class="info"><h1>' + esc(c.title) + '</h1><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.engine, c.drivetrain].filter(Boolean).map(esc).join(" · ") + "</p>" +
       '<div><small style="color:var(--muted)">Hinta Suomessa rekisteröitynä</small><div class="big">' + rng(c.total.lo, c.total.hi) + "</div></div>" + saveBadge(c) + conf(c) +
-      '<a class="cta" href="' + esc(tarjous) + "?auto=" + encodeURIComponent(c.vin) + '">Pyydä sitova tarjous</a>' +
+      '<a class="cta" href="' + esc(tarjous + (tarjous.indexOf("?") >= 0 ? "&" : "?") + "auto=" + encodeURIComponent(c.vin) + "&nimi=" + encodeURIComponent(c.title)) + '">Kysy lisätietoa</a>' +
       "</div></div>" +
       '<section class="sec"><h2><b>1</b>Mistä hinta koostuu</h2>' + s1 + "</section>" +
       '<section class="sec"><h2><b>2</b>Mistä autoveroarvio koostuu</h2><p class="lead">Autovero = verotusarvo × veroprosentti. Verotusarvo on arvioitu Verohallinnon omista päätöksistä, veroprosentti CO₂-taulukosta ja valmiista päätöksistä.</p>' + s2 +
