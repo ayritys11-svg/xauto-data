@@ -113,13 +113,13 @@
     }
     var SP = c.spec || [], has = function (k) { return SP.some(function (x) { return x[0] === k; }); };
     var facts = [["Vuosimalli", c.year], ["Varustelu", c.trim], ["Ajettu", fmt(c.km) + " km"], ["Väri", c.color], ["Sisustus", c.interior], ["Valmistajan sertifioima käytetty (CPO)", c.cpo ? "Kyllä" : ""]]
-      .concat(has("Moottori") ? [] : [["Moottori", c.engine]])
+      .concat(has("Moottori") || /^electric$/i.test(c.engine || "") ? [] : [["Moottori", c.engine]])
       .concat(has("Polttoaine") ? [] : [["Käyttövoima", c.fuel]])
       .concat(has("Vaihteisto") ? [] : [["Vaihteisto", gear(c.transmission)]])
-      .concat(has("Veto") ? [] : [["Veto", c.drivetrain]])
+      .concat(has("Veto") ? [] : [["Veto", ({ AWD: "Neliveto (AWD)", "4WD": "Neliveto (4WD)", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || c.drivetrain]])
       .concat(SP)
       .concat([["Teho Veron tiedoissa", A.kw ? A.kw + " kW" : ""], ["Suomessa liikenteessä (Traficom 9/2026)", c.fleet != null ? fleetTxt(c) : ""], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["VIN", c.vin]])
-      .filter(function (f) { return f[1]; }).map(function (f) { return "<div><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("");
+      .filter(function (f) { return f[1]; }).map(function (f) { var k = /liikenteessä/.test(f[0]) ? ' class="k-fleet"' : f[0] === "VIN" ? ' class="k-vin"' : ""; return "<div" + k + "><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
       '<div class="hd">' + gallery(c) + '<div class="info"><h1>' + esc(c.title) + '</h1><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.engine, c.drivetrain].filter(Boolean).map(esc).join(" · ") + "</p>" +
