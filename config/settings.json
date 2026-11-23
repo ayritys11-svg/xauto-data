@@ -29,7 +29,7 @@
   "tulli": 0.1,
   "minVuosi": 2016,
   "maxMailit": 90000,
-  "naytaVainKannattavat": false,
+  "naytaVainKannattavat": true,
   "osavaltiot": [
     "NY",
     "NJ"
@@ -37,6 +37,8 @@
   "_osavaltiot": "Vain näiden osavaltioiden autot haetaan ja näytetään (lyhenteet). Tyhjä lista = kaikki.",
   "yleinenRaja": 3000,
   "_yleinenRaja": "Malli on Suomessa yleinen, jos sitä on liikenteessä vähintään näin monta (Traficom). Yleiset mallit näytetään vain, jos ne ovat halvempia kuin Suomessa.",
-  "halvempienOsuus": 0.5,
-  "_halvempienOsuus": "Tavoiteosuus Suomen hintaa halvemmille autoille. Muita autoja näytetään enintään niin monta, että tämä osuus täyttyy (harvinaisimmat ensin). 0 = ei rajausta."
+  "halvempienOsuus": 0,
+  "_halvempienOsuus": "Tavoiteosuus Suomen hintaa halvemmille autoille. Muita autoja näytetään enintään niin monta, että tämä osuus täyttyy (harvinaisimmat ensin). 0 = ei rajausta.",
+  "hakuKoko": 100,
+  "_hakuKoko": "Montako autoa yksi haku palauttaa (auto.dev). Jos API ei salli näin montaa, ohjelma käyttää 20."
 }

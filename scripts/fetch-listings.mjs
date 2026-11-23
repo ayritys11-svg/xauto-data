@@ -58,20 +58,26 @@ async function usdEur() {
   return { rate: S.usdEurFallback, date: "oletus", src: "asetukset" };
 }
 
+let LIMIT = S.hakuKoko || 20;
 async function search(q, state) {
   const out = [];
   for (let page = 1; page <= (q.pages || 1); page++) {
-    const p = new URLSearchParams({ "vehicle.make": q.make, "vehicle.model": q.model, "vehicle.year": q.year, page: String(page), limit: "20" });
+    const p = new URLSearchParams({ "vehicle.make": q.make, "vehicle.model": q.model, "vehicle.year": q.year, page: String(page), limit: String(LIMIT) });
     if (state) p.set("retailListing.state", state);
     if (q.price) p.set("retailListing.price", q.price);
     p.set("retailListing.miles", "1-" + S.maxMailit);
     const url = "https://api.auto.dev/listings?" + p.toString();
     const res = await fetch(url, { headers: { Authorization: "Bearer " + KEY } });
-    if (!res.ok) { console.error("HTTP", res.status, url, (await res.text()).slice(0, 300)); break; }
+    if (!res.ok) {
+      const body = (await res.text()).slice(0, 300);
+      console.error("HTTP", res.status, url, body);
+      if (LIMIT > 20 && res.status >= 400 && res.status < 500 && res.status !== 401 && res.status !== 429) { LIMIT = 20; page--; continue; }
+      break;
+    }
     const j = await res.json();
     const d = Array.isArray(j.data) ? j.data : [];
     out.push(...d);
-    if (d.length < 20) break;
+    if (d.length < LIMIT) break;
   }
   return out;
 }
@@ -365,7 +371,7 @@ if (!DISCOVER && S.halvempienOsuus > 0) {
   for (let i = 0; pick.length < maxRest && order.some((g) => g.length > i); i++) for (const g of order) if (g[i] && pick.length < maxRest) pick.push(g[i]);
   cars.length = 0; cars.push(...good, ...pick);
 }
-const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, scanned: total, skipped, common, searches: counts, cars };
+const out = { updated: today.toISOString(), fx, mock: MOCK, count: cars.length, scanned: total, limit: LIMIT, skipped, common, searches: counts, cars };
 if (DISCOVER) {
   const by = {};
   for (const c of cars) { const k = c.make + " " + c.model; (by[k] = by[k] || []).push(c); }
