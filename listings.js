@@ -69,7 +69,7 @@
     return words(c, F.q) && t("make", c.make) && t("model", modelName(c)) && t("trim", c.trim) && t("body", c.body) && t("fuel", c.fuel) && t("gear", gear(c.transmission)) && t("drive", driveFi(c.drivetrain)) && t("loc", locFi(c)) && t("color", colorFi(c.color)) && t("doors", doorsOf(c)) && t("steer", steerOf(c)) &&
       inR(c.total && c.total.mid, F.pmin, F.pmax) && inR(c.year, F.ymin, F.ymax) && inR(c.km, F.kmin, F.kmax) && inR(displ(c), F.dmin, F.dmax) &&
       inR(c.hp || null, F.hpmin, F.hpmax) && inR(sv(c, "CO₂ (EPA)"), null, F.co2max) && inR(sv(c, "Istumapaikat"), F.smin, null) && inR(fuelCons(c), null, F.cmax) && inR(evCons(c), null, F.emax) && inR(sv(c, "Toimintamatka (EPA)"), F.rmin, null) &&
-      (skip === "good" || !F.good || ok(c)) && (skip === "rare" || !F.rare || isRare(c));
+      (skip === "good" || !F.good || ok(c)) && (skip === "rare" || !F.rare || isRare(c)) && (skip === "fav" || !F.fav || isFav(c.id));
   }
   var SV = function (c) { return c.saving == null ? -1e9 : c.saving; };
   var HT = function (c) { return Math.round(taxAcc(c).pct * 10); };
@@ -98,7 +98,7 @@
     var nExtra = EXTRA.concat(TECH).filter(function (k) { return F[k]; }).length;
     var HP = st(100, 700, 50), CO = st(100, 400, 50), SE = ["2", "4", "5", "7"], CN = st(6, 16, 1), EN = st(16, 26, 2), RA = st(300, 600, 50);
     // Valintaruutujen luvut lasketaan muiden valittujen ehtojen mukaan (esim. Audi → vain Audien halvemmat)
-    var good = cars.filter(function (c) { return pass(c, "good") && ok(c); }).length, rareN = cars.filter(function (c) { return pass(c, "rare") && isRare(c); }).length;
+    var good = cars.filter(function (c) { return pass(c, "good") && ok(c); }).length, rareN = cars.filter(function (c) { return pass(c, "rare") && isRare(c); }).length, favN = cars.filter(function (c) { return pass(c, "fav") && isFav(c.id); }).length;
     root.innerHTML =
       '<div class="top"><div><h1>Autot USA:sta Suomeen</h1><p>Jokaiselle autolle on laskettu koko hinta Suomessa rekisteröitynä: kuljetus, tulli, ALV, autovero ja rekisteröinti. Suomen hintaa halvemmat autot näytetään ensin. Vertailuhinta on Verohallinnon arvio vastaavan auton hinnasta Suomessa, ja liikennemäärä on Traficomin rekisteristä.</p></div></div>' +
       (DATA.mock ? '<div class="note">Testidata: nämä neljä autoa ovat esimerkkejä hakuohjelman testaamiseen.</div>' : "") +
@@ -114,6 +114,7 @@
       "</div>" +
       '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" +
       '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + rareN + ")</label>" +
+      (FAV.length || F.fav ? '<label class="tg"><input type="checkbox" id="xl-fav"' + (F.fav ? " checked" : "") + "> Vain suosikit (" + favN + ")</label>" : "") +
       '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Näytä vähemmän suodattimia" : "Näytä lisää suodattimia") + (nExtra ? " (" + nExtra + " valittu)" : "") + "</button>" +
       "</div>" +
       '<div class="sortbox"><label for="xl-sort">Järjestys</label><select id="xl-sort" aria-label="Järjestys">' + SORTOPTS + '</select>' + "</div>" +
@@ -134,8 +135,9 @@
       });
     });
     var xg = root.querySelector("#xl-good"); if (xg) xg.addEventListener("change", function (e) { F.good = e.target.checked; keep(); list(); });
-    var clr = root.querySelector("#xl-clear"); if (clr) clr.addEventListener("click", function () { TXT.concat(NUM).forEach(function (k) { F[k] = ""; }); F.good = false; F.rare = false; list(); });
+    var clr = root.querySelector("#xl-clear"); if (clr) clr.addEventListener("click", function () { TXT.concat(NUM).forEach(function (k) { F[k] = ""; }); F.good = false; F.rare = false; F.fav = false; list(); });
     root.querySelector("#xl-rare").addEventListener("change", function (e) { F.rare = e.target.checked; keep(); list(); });
+    var xf = root.querySelector("#xl-fav"); if (xf) xf.addEventListener("change", function (e) { F.fav = e.target.checked; list(); });
   }
   // Suomen hintataso vaihteluvälinä (verotusarvon 80 %:n väli, pyöristys 100 €)
   function fiR(c) { if (c.saving == null) return "ei vertailukohtaa"; var A = c.autovero || {}, lo = A.VLo, hi = A.VHi; if (!lo || !hi) return eur(c.fiPrice); return rng(Math.round(lo / 100) * 100, Math.round(hi / 100) * 100); }
@@ -148,9 +150,15 @@
   function match(val, q) { q = String(q || "").trim().toLowerCase(); if (!q) return true; var v = String(val || "").toLowerCase(); return q.split("|").some(function (x) { x = x.trim(); return !x || v.indexOf(x) >= 0; }); }
   function ok(c) { return c.saving != null && c.saving > 0; }
   function keep() { try { localStorage.setItem("xl-sort", F.sort); } catch (e) {} }
+  // Suosikit: tallennetaan tähän selaimeen (localStorage). Jos tallennus ei toimi, suosikit pysyvät muistissa tämän käynnin ajan.
+  var FAV = (function () { try { return JSON.parse(localStorage.getItem("velo-fav") || "[]") || []; } catch (e) { return []; } })();
+  function isFav(id) { return FAV.indexOf(id) >= 0; }
+  function setFav(id, on) { FAV = FAV.filter(function (x) { return x !== id; }); if (on) FAV.push(id); try { localStorage.setItem("velo-fav", JSON.stringify(FAV)); } catch (e) {} }
+  var STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93z"/></svg>';
+  function favBtn(c) { var on = isFav(c.id); return '<button type="button" class="fav" data-fav="' + esc(c.id) + '" aria-pressed="' + on + '" aria-label="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '" title="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '">' + STAR + "</button>"; }
   function card(c) {
     return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : "", c.body || c.engine].filter(Boolean).map(esc).join(" · ") + "</p>" + photo(c, null) +
-      '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b></div><div class=\"badges\">" + saveBadge(c) + "</div>" +
+      '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b>" + favBtn(c) + "</div><div class=\"badges\">" + saveBadge(c) + "</div>" +
       (c.fleet != null && !isRare(c) ? '<div class="row"><span>Sama malli Suomessa</span><b>' + fleetTxt(c) + "</b></div>" : "") +
       (isRare(c) ? "" : '<div class="row"><span>Arvo Suomessa</span><b>' + fiR(c) + "</b></div>") + conf(c) + "</a>";
   }
@@ -193,7 +201,7 @@
     facts = facts.map(function (f) { return f[0] === "__CONS__" ? '<span class="frow">' + f[1].map(box).join("") + "</span>" : box(f); }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
-      '<div class="hd">' + gallery(c) + '<div class="info"><h1>' + esc(c.title) + '</h1><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : "", c.body || "", ({ AWD: "Neliveto", "4WD": "Neliveto", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || ""].filter(Boolean).map(esc).join(" · ") + "</p>" +
+      '<div class="hd">' + gallery(c) + '<div class="info"><div class="ttl"><h1>' + esc(c.title) + '</h1>' + favBtn(c) + "</div>" + '<p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : "", c.body || "", ({ AWD: "Neliveto", "4WD": "Neliveto", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || ""].filter(Boolean).map(esc).join(" · ") + "</p>" +
       '<div><small style="color:var(--muted)">Hinta Suomessa rekisteröitynä</small><div class="big">' + rng(c.total.lo, c.total.hi) + "</div></div>" + saveBadge(c, 1) + conf(c) +
       '<a class="cta" href="' + esc(tarjous + (tarjous.indexOf("?") >= 0 ? "&" : "?") + "auto=" + encodeURIComponent(c.vin) + "&nimi=" + encodeURIComponent(c.title)) + '">Kysy lisätietoa</a>' +
       "</div></div>" +
@@ -382,6 +390,14 @@
       if (anyExtra) OPEN = true;
     } catch (e) {}
   })();
+  // Tähti: tallenna/poista suosikki. Kortti on linkki, joten painallus ei saa avata ilmoitusta.
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest(".xl .fav") : null; if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var id = b.getAttribute("data-fav"), on = !isFav(id); setFav(id, on);
+    Array.prototype.forEach.call(document.querySelectorAll(".xl .fav"), function (x) { if (x.getAttribute("data-fav") === id) { x.setAttribute("aria-pressed", String(on)); x.setAttribute("aria-label", on ? "Poista suosikeista" : "Tallenna suosikiksi"); x.title = x.getAttribute("aria-label"); } });
+    if (MODE !== "featured") { if (!location.hash || location.hash === "#") { if (F.fav || FAV.length <= 1) list(); } }
+  }, true);
   function route() {
     if (!DATA) return;
     if (MODE === "featured") { featured(); return; }

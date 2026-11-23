@@ -207,3 +207,15 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 
 /* iOS zoomaa automaattisesti, jos kentän fontti on alle 16 px: kaikki kentät 16 px */
 .xl input:not([type=checkbox]),.xl select,.xl textarea,.xh input:not([type=checkbox]),.xh select{font-size:16px!important}
+
+/* Suosikkitähti */
+.xl .fav{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#8A939D;transition:transform .12s ease,color .12s ease,border-color .12s ease}
+.xl .fav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+.xl .fav[aria-pressed="true"]{color:#E8A317;border-color:#F2D58A;background:#FFF8E6}
+.xl .fav[aria-pressed="true"] svg{fill:currentColor}
+.xl .fav:active{transform:scale(.9)}
+.xl .car .price{flex-wrap:nowrap!important;gap:10px}
+.xl .car .price b{min-width:0}
+.xl .hd .ttl{display:flex;align-items:flex-start;gap:12px}
+.xl .hd .ttl h1{flex:1;min-width:0}
+.xl .hd .ttl .fav{width:44px;height:44px;margin-top:2px}
