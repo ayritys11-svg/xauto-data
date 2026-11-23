@@ -408,18 +408,23 @@
     if (!panel) { panel = document.createElement("div"); panel.className = "vdd"; panel.setAttribute("role", "listbox"); }
     var host = cur.parentNode;
     if (panel.parentNode !== host) host.appendChild(panel);
+    place();
     panel.innerHTML = list.map(function (v, i) { return '<button type="button" role="option" class="vdd-o' + (i === act ? " on" : "") + (v === cur.value ? " sel" : "") + '" data-v="' + esc(v) + '">' + esc(v) + "</button>"; }).join("");
   }
+  /* Lista avautuu sinne, missä on tilaa (näppäimistön yläpuolelle), eikä sivua vieritetä */
+  function place() {
+    if (!panel || !cur) return;
+    var r = cur.getBoundingClientRect(), v = window.visualViewport, vh = v ? v.height + v.offsetTop : window.innerHeight;
+    var below = vh - r.bottom - 8, above = r.top - 64;
+    var up = below < 200 ? above > below : false;
+    panel.classList.toggle("up", up);
+    panel.style.maxHeight = Math.max(120, Math.min(300, (up ? above : below) - 8)) + "px";
+  }
+  if (window.visualViewport) { window.visualViewport.addEventListener("resize", function () { place(); }); }
   function open(inp) {
     if (Date.now() - skipT < 450) return; /* juuri valittu: estä haamuklikkaus ja uudelleenpiirron fokus */
     if (cur !== inp) { close(); cur = inp; }
     act = -1; render();
-    /* Puhelimessa näppäimistö peittää listan: vieritä kenttä näytön yläosaan */
-    if (window.matchMedia) { if (window.matchMedia("(pointer:coarse)").matches) setTimeout(function () {
-      if (cur !== inp) return;
-      var r = inp.getBoundingClientRect(), vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      if (r.bottom + 220 > vh) window.scrollBy({ top: r.top - 64, behavior: "smooth" });
-    }, 350); }
   }
   function pick(v) {
     var inp = cur; if (!inp) return;
@@ -467,6 +472,10 @@
       '<div class="vrs-row"><input class="vrs-a" inputmode="' + (o.dec ? "decimal" : "numeric") + '" ' + (o.dec ? "" : 'pattern="[0-9]*" ') + 'placeholder="Minimi" aria-label="Minimi" autocomplete="off"><span class="vrs-d">–</span><input class="vrs-b" inputmode="' + (o.dec ? "decimal" : "numeric") + '" ' + (o.dec ? "" : 'pattern="[0-9]*" ') + 'placeholder="Maksimi" aria-label="Maksimi" autocomplete="off"><span class="vrs-u">' + (o.unit || "") + '</span></div>' +
       '<button type="button" class="vrs-clr">Tyhjennä</button></div>';
     document.body.appendChild(w);
+    /* Sivu ei saa liikkua paneelin ollessa auki: lukitaan vieritys ja palautetaan sama kohta suljettaessa */
+    var sy = window.scrollY, bs = document.body.style, prev = [bs.position, bs.top, bs.left, bs.right, bs.width];
+    bs.position = "fixed"; bs.top = -sy + "px"; bs.left = "0"; bs.right = "0"; bs.width = "100%";
+    function unlock() { bs.position = prev[0]; bs.top = prev[1]; bs.left = prev[2]; bs.right = prev[3]; bs.width = prev[4]; window.scrollTo(0, sy); }
     var a = w.querySelector(".vrs-a"), b = w.querySelector(".vrs-b"), sh = w.querySelector(".vrs-sh");
     a.value = show(o.min, o.dec); b.value = show(o.max, o.dec);
     [a, b].forEach(function (i) { i.addEventListener("input", function () { var p = i.value.length - i.selectionStart; i.value = show(i.value, o.dec); var q = Math.max(0, i.value.length - p); try { i.setSelectionRange(q, q); } catch (e) {} }); });
@@ -477,6 +486,8 @@
       document.removeEventListener("keydown", key, true);
       var x = clean(a.value, o.dec).replace(",", "."), y = clean(b.value, o.dec).replace(",", ".");
       if (x) { if (y) { if (+x > +y) { var t = x; x = y; y = t; } } }
+      if (document.activeElement) document.activeElement.blur();
+      unlock();
       w.classList.remove("in"); setTimeout(function () { w.remove(); }, 220);
       if (ok) o.onOk(x, y);
     }
@@ -485,7 +496,7 @@
     w.querySelector(".vrs-ok").addEventListener("click", function () { done(true); });
     w.querySelector(".vrs-bg").addEventListener("click", function () { done(true); });
     w.querySelector(".vrs-clr").addEventListener("click", function () { a.value = ""; b.value = ""; a.focus(); });
-    a.focus();
+    try { a.focus({ preventScroll: true }); } catch (e) { a.focus(); }
     requestAnimationFrame(function () { w.classList.add("in"); vp(); });
   };
 })();
