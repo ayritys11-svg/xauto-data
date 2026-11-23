@@ -1,0 +1,13 @@
+.xh .fields .vcb,.xh .vmore .vcb{position:relative;min-width:0}
+.xh .vcb input{height:48px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0 44px 0 12px;width:100%;min-width:0;font:inherit;font-size:16px;color:var(--fg)}
+.xh .vcb input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.xh .vcb .vx{position:absolute;right:30px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:0;border-radius:50%;background:var(--surface-2);cursor:pointer;font-size:17px;line-height:1;color:var(--muted)}
+.xh .vcb .vx[hidden]{display:none}
+.xh .vmore{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.22,.61,.36,1),opacity .35s ease;opacity:0}
+.xh .vmore.open{grid-template-rows:1fr;opacity:1}
+.xh .vmore-in{overflow:hidden;min-height:0}
+.xh .vmore-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;padding-top:12px}
+.xh .vmore-grid select{height:48px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0 12px;width:100%;min-width:0;font:inherit;font-size:16px;color:var(--fg)}
+.xh .vmore:not(.open) .vmore-grid{visibility:hidden;transition:visibility 0s .45s}
+@media (prefers-reduced-motion:reduce){.xh .vmore{transition:none}}
+.xh .vmore.done .vmore-in{overflow:visible}
