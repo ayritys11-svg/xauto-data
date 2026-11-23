@@ -187,50 +187,71 @@
     main.addEventListener("touchend", function (e) { if (x0 == null) return; var dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) show(cur + (dx < 0 ? 1 : -1)); x0 = null; });
   }
 
-  // Kuvien suurennus: koko ruutu, sormilla zoomaus (pinch), kaksoisnapautus, vetäminen, pyyhkäisy, hiiren rulla
+  // Kuvien suurennus: koko ruutu, sormilla zoomaus, kaksoisnapautus, vetäminen ja pehmeä pyyhkäisy kuvasta toiseen
   function openLB(list, start, title) {
     if (!list.length) return;
-    var i = Math.max(0, start), sc = 1, tx = 0, ty = 0;
+    var n = list.length, i = Math.max(0, start), sc = 1, tx = 0, ty = 0, busy = false;
+    var coarse = !!(window.matchMedia && matchMedia("(pointer: coarse)").matches);
     var lb = document.createElement("div"); lb.className = "xl-lb"; lb.setAttribute("role", "dialog"); lb.setAttribute("aria-label", "Kuvat: " + title);
-    lb.innerHTML = '<div class="xl-lb-stage"><img alt=""></div><button type="button" class="xl-lb-x" aria-label="Sulje">×</button>' +
-      (list.length > 1 ? '<button type="button" class="xl-lb-p" aria-label="Edellinen kuva">‹</button><button type="button" class="xl-lb-n" aria-label="Seuraava kuva">›</button>' : "") +
-      '<div class="xl-lb-c"></div><div class="xl-lb-h">' + (window.matchMedia && matchMedia("(pointer: coarse)").matches ? "Zoomaa sormilla" : "Zoomaa kaksoisklikkauksella tai hiiren rullalla") + '</div>';
+    lb.innerHTML = '<div class="xl-lb-stage"><div class="xl-lb-track">' + [0, 1, 2].map(function () { return '<div class="xl-lb-slide"><img alt="" draggable="false"></div>'; }).join("") + '</div></div>' +
+      '<button type="button" class="xl-lb-x" aria-label="Sulje">×</button>' +
+      (n > 1 ? '<button type="button" class="xl-lb-p" aria-label="Edellinen kuva">‹</button><button type="button" class="xl-lb-n" aria-label="Seuraava kuva">›</button>' : "") +
+      '<div class="xl-lb-c"></div><div class="xl-lb-h">' + (coarse ? "Zoomaa sormilla" : "Zoomaa kaksoisklikkauksella tai hiiren rullalla") + '</div>';
     document.body.appendChild(lb);
-    var stage = lb.querySelector(".xl-lb-stage"), img = stage.querySelector("img"), cnt = lb.querySelector(".xl-lb-c");
+    var stage = lb.querySelector(".xl-lb-stage"), track = lb.querySelector(".xl-lb-track"), imgs = track.querySelectorAll("img"), cnt = lb.querySelector(".xl-lb-c");
     var prevOverflow = document.documentElement.style.overflow; document.documentElement.style.overflow = "hidden";
+    function W() { return stage.clientWidth; }
+    function cur() { return imgs[1]; }
+    function setTrack(x, anim) { track.style.transition = anim ? "transform .3s cubic-bezier(.22,.61,.36,1)" : "none"; track.style.transform = "translate3d(" + (-W() + x) + "px,0,0)"; }
     function clamp() {
       if (sc <= 1) { sc = 1; tx = 0; ty = 0; return; }
-      var r = stage.getBoundingClientRect(), w = img.offsetWidth || r.width, h = img.offsetHeight || r.height;
+      var img = cur(), r = stage.getBoundingClientRect(), w = img.offsetWidth || r.width, h = img.offsetHeight || r.height;
       var mx = Math.max(0, (w * sc - r.width) / 2), my = Math.max(0, (h * sc - r.height) / 2);
       tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty));
     }
-    function apply(anim) { clamp(); img.style.transition = anim ? "transform .2s ease" : "none"; img.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + sc + ")"; img.style.cursor = sc > 1 ? "grab" : "zoom-in"; }
-    function load(k) { i = (k + list.length) % list.length; sc = 1; tx = 0; ty = 0; img.src = list[i]; img.alt = title + " kuva " + (i + 1); cnt.textContent = (i + 1) + " / " + list.length; apply(false); }
+    function apply(anim) { clamp(); var img = cur(); img.style.transition = anim ? "transform .2s ease" : "none"; img.style.transform = "translate3d(" + tx + "px," + ty + "px,0) scale(" + sc + ")"; img.style.cursor = sc > 1 ? "grab" : "zoom-in"; }
+    function idx(k) { return (k % n + n) % n; }
+    function load(k) {
+      i = idx(k); sc = 1; tx = 0; ty = 0;
+      [i - 1, i, i + 1].forEach(function (q, s2) { var im = imgs[s2]; var u = list[idx(q)]; if (im.getAttribute("src") !== u) im.src = u; im.style.transform = ""; im.style.transition = "none"; im.alt = title + " kuva " + (idx(q) + 1); });
+      if (n === 1) { imgs[0].removeAttribute("src"); imgs[2].removeAttribute("src"); }
+      cnt.textContent = (i + 1) + " / " + n; setTrack(0, false); apply(false);
+      var pre = new Image(); pre.src = list[idx(i + 2)]; var pre2 = new Image(); pre2.src = list[idx(i - 2)];
+    }
+    // Liukuu seuraavaan (dir = 1) tai edelliseen (dir = -1) kuvaan
+    function go(dir) {
+      if (busy || n < 2) return; busy = true;
+      if (sc > 1) { sc = 1; tx = 0; ty = 0; apply(true); }
+      setTrack(-dir * W(), true);
+      setTimeout(function () { load(i + dir); busy = false; }, 310);
+    }
     function zoomAt(ns, cx, cy) {
       var r = stage.getBoundingClientRect(), ox = cx - (r.left + r.width / 2), oy = cy - (r.top + r.height / 2);
       ns = Math.max(1, Math.min(5, ns)); tx = ox - (ox - tx) * (ns / sc); ty = oy - (oy - ty) * (ns / sc); sc = ns;
     }
-    function close() { document.removeEventListener("keydown", onKey); document.documentElement.style.overflow = prevOverflow; lb.remove(); }
-    function onKey(e) { if (e.key === "Escape") close(); else if (e.key === "ArrowLeft") load(i - 1); else if (e.key === "ArrowRight") load(i + 1); }
-    document.addEventListener("keydown", onKey);
+    function close() { document.removeEventListener("keydown", onKey); window.removeEventListener("resize", onResize); document.documentElement.style.overflow = prevOverflow; lb.remove(); }
+    function onKey(e) { if (e.key === "Escape") close(); else if (e.key === "ArrowLeft") go(-1); else if (e.key === "ArrowRight") go(1); }
+    function onResize() { setTrack(0, false); apply(false); }
+    document.addEventListener("keydown", onKey); window.addEventListener("resize", onResize);
     lb.querySelector(".xl-lb-x").addEventListener("click", close);
     var bp = lb.querySelector(".xl-lb-p"), bn = lb.querySelector(".xl-lb-n");
-    if (bp) bp.addEventListener("click", function () { load(i - 1); });
-    if (bn) bn.addEventListener("click", function () { load(i + 1); });
-    stage.addEventListener("click", function (e) { if (e.target === stage && sc === 1) close(); });
-    // Hiiri: rulla zoomaa, kaksoisklikkaus vaihtaa 1x/2,5x, vetäminen siirtää
+    if (bp) bp.addEventListener("click", function () { go(-1); });
+    if (bn) bn.addEventListener("click", function () { go(1); });
+    stage.addEventListener("click", function (e) { if (!coarse && sc === 1 && e.target.tagName !== "IMG") close(); });
+    // Hiiri
     stage.addEventListener("wheel", function (e) { e.preventDefault(); zoomAt(sc * (e.deltaY < 0 ? 1.2 : 1 / 1.2), e.clientX, e.clientY); apply(false); }, { passive: false });
-    img.addEventListener("dblclick", function (e) { zoomAt(sc > 1 ? 1 : 2.5, e.clientX, e.clientY); apply(true); });
+    stage.addEventListener("dblclick", function (e) { if (coarse) return; zoomAt(sc > 1 ? 1 : 2.5, e.clientX, e.clientY); apply(true); });
     var drag = null;
-    img.addEventListener("mousedown", function (e) { if (sc <= 1) return; e.preventDefault(); drag = { x: e.clientX - tx, y: e.clientY - ty }; img.style.cursor = "grabbing"; });
+    stage.addEventListener("mousedown", function (e) { if (sc <= 1) return; e.preventDefault(); drag = { x: e.clientX - tx, y: e.clientY - ty }; cur().style.cursor = "grabbing"; });
     window.addEventListener("mousemove", function (e) { if (!drag) return; tx = e.clientX - drag.x; ty = e.clientY - drag.y; apply(false); });
     window.addEventListener("mouseup", function () { if (drag) { drag = null; apply(false); } });
-    // Kosketus: kaksi sormea zoomaa, yksi sormi siirtää (zoomattuna) tai vaihtaa kuvaa (pyyhkäisy), kaksoisnapautus zoomaa
+    // Kosketus
     var t0 = null, pinch = null, lastTap = 0;
     function dist(a, b) { return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); }
     stage.addEventListener("touchstart", function (e) {
-      if (e.touches.length === 2) { var a = e.touches[0], b = e.touches[1]; pinch = { d: dist(a, b), s: sc, mx: (a.clientX + b.clientX) / 2, my: (a.clientY + b.clientY) / 2, tx: tx, ty: ty }; t0 = null; }
-      else if (e.touches.length === 1) { var t = e.touches[0]; t0 = { x: t.clientX, y: t.clientY, tx: tx, ty: ty, time: Date.now(), moved: false }; }
+      if (busy) return;
+      if (e.touches.length === 2) { var a = e.touches[0], b = e.touches[1]; pinch = { d: dist(a, b), s: sc, mx: (a.clientX + b.clientX) / 2, my: (a.clientY + b.clientY) / 2, tx: tx, ty: ty }; if (t0) setTrack(0, true); t0 = null; }
+      else if (e.touches.length === 1) { var t = e.touches[0]; t0 = { x: t.clientX, y: t.clientY, tx: tx, ty: ty, time: Date.now(), moved: false, axis: null }; }
     }, { passive: true });
     stage.addEventListener("touchmove", function (e) {
       e.preventDefault();
@@ -241,19 +262,23 @@
         tx += mx - pinch.mx; ty += my - pinch.my; apply(false);
       } else if (t0) {
         var t = e.touches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
-        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) t0.moved = true;
+        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) t0.moved = true;
         if (sc > 1) { tx = t0.tx + dx; ty = t0.ty + dy; apply(false); }
-        else { img.style.transition = "none"; img.style.transform = "translateX(" + dx + "px)"; }
+        else if (n > 1) {
+          if (!t0.axis && t0.moved) t0.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+          if (t0.axis === "x") setTrack(dx, false);
+        }
       }
     }, { passive: false });
     stage.addEventListener("touchend", function (e) {
-      if (pinch) { if (e.touches.length === 0) { pinch = null; if (sc < 1.05) { sc = 1; } apply(true); } return; }
+      if (pinch) { if (e.touches.length === 0) { pinch = null; if (sc < 1.05) sc = 1; apply(true); } return; }
       if (!t0) return;
-      var t = e.changedTouches[0], dx = t.clientX - t0.x, now = Date.now();
+      var t = e.changedTouches[0], dx = t.clientX - t0.x, dt = Math.max(1, Date.now() - t0.time), now = Date.now();
       if (!t0.moved) {
         if (now - lastTap < 300) { zoomAt(sc > 1 ? 1 : 2.5, t.clientX, t.clientY); apply(true); lastTap = 0; } else lastTap = now;
-      } else if (sc === 1) {
-        if (Math.abs(dx) > 60 && list.length > 1) load(i + (dx < 0 ? 1 : -1)); else apply(true);
+      } else if (sc === 1 && t0.axis === "x" && n > 1) {
+        var fast = Math.abs(dx) / dt > 0.45;
+        if (Math.abs(dx) > W() * 0.2 || (fast && Math.abs(dx) > 30)) go(dx < 0 ? 1 : -1); else setTrack(0, true);
       }
       t0 = null;
     });
