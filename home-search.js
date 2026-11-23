@@ -1,6 +1,7 @@
 (function(){
   /* Etusivun hakulomake: merkki ja malli kirjoittamalla tai listasta (oikeista ilmoituksista). Lisää hakuehtoja avaa lisäkentät liukuen; haku vie Autot-sivulle valinnoilla. */
   var LIST="/autot/", BASE=window.VELO_BASE||"https://raw.githubusercontent.com/ayritys11-svg/xauto-data/main/";
+  var tl=document.querySelector(".xh .tiles"); if(tl){tl.remove()}
   var box=document.querySelector(".xh .search"); if(!box){return}
   var fields=box.querySelector(".fields"), sel=fields.querySelectorAll("select");
   var CARS=[];

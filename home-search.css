@@ -12,3 +12,5 @@
 @media (prefers-reduced-motion:reduce){.xh .vmore{transition:none}}
 .xh .vmore.done .vmore-in{overflow:visible}
 .xh .fields .vrf,.xh .vmore-grid .vrf{height:48px;font-size:16px}
+/* maa-laatikot (USA/Eurooppa/Aasia) poistettu etusivulta */
+.xh .tiles{display:none!important}
