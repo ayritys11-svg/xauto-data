@@ -272,6 +272,20 @@ function calc(L, fx) {
   const landedE = (carE + shipE + dutyE + S.huolinta) * (1 + S.alv) + S.katsastusJaRekisterointi;
   const Vfb = landedE * 1.10 / (1 - Math.min(p, 50) / 100);
   let noCompare = false;
+  // Jos tehoryhmässä on vähän päätöksiä, käytetään lähintä saman mallin tehoryhmää (±12 %), jossa niitä on riittävästi
+  if (best && (best.n || 0) < 10 && kw) {
+    const cand = new Set();
+    for (const src of [CORE.wf, CORE.w, CORE.g]) for (const k of Object.keys(src || {})) {
+      const p = k.split("|"); if (p[0] !== mk || p.length < 3 || !nameHit(p[1], [best.md, ...models])) continue;
+      if (src[k][0] >= 10) cand.add(+p[2] * 10 + 5);
+    }
+    for (const k of Object.keys(AN.d)) { const p = k.split("|"); if (p[0] !== mk || !nameHit(p[1], [best.md, ...models])) continue; for (const w of Object.keys(AN.d[k].kw || {})) if (AN.d[k].kw[w][0] >= 10) cand.add(+w); }
+    const near = [...cand].filter((w) => Math.abs(w - kw) / kw <= 0.12).sort((a, b) => Math.abs(a - kw) - Math.abs(b - kw));
+    for (const w of near) {
+      const e = M.estimate({ reg, co2: F.ev ? 100 : (co2 || 0), wltp: W, ev: false, make: mk, model: best.md, kw: w, km, fu: F.fu });
+      if (e && !e.error && e.V && (e.n || 0) >= 10) { best = Object.assign(e, { md: best.md }); warn.push("Tästä tehoversiosta (" + kw + " kW) on vähän verotuspäätöksiä, joten verotusarvo on laskettu lähimmästä yleisestä versiosta (" + w + " kW)."); break; }
+    }
+  }
   if (!best) {
     best = { V: Vfb, VLow: Vfb * 0.8, VHigh: Vfb * 1.3, s: 0.25, n: 0, md: models[0], level: "Ei Verohallinnon päätöksiä tästä mallista: arvio tuontihinnasta", warnings: [] };
     noCompare = true;
@@ -280,8 +294,8 @@ function calc(L, fx) {
     // Vähän päätöksiä tai arvio ristiriidassa tuontihinnan kanssa (verotusarvo ei voi olla alle tuontikulujen)
     // Vähän päätöksiä: yhdistetään päätöksiin ja tuontihintaan perustuva arvio
     const Vm = Math.sqrt(best.V * Vfb);
+    noCompare = fleetCount(mk, models) < 300;
     best = Object.assign({}, best, { V: Vm, VLow: Math.min(best.VLow, Vfb * 0.8), VHigh: Math.max(best.VHigh, Vfb * 1.3), s: Math.max(best.s || 0, 0.25), level: ((best.n || 0) < 10 ? "Vähän päätöksiä (" + (best.n || 0) + ")" : "Päätökset koskevat eri ikäisiä tai erilaisia autoja") + ": yhdistetty arvio päätöksistä ja tuontihinnasta" });
-    noCompare = true;
   }
   // Varmistus: verrataan koko mallin päätöksiin. Iso ero = teho tai ryhmä luultavasti väärin.
   let clash = false;
@@ -367,17 +381,20 @@ const MOCK_DATA = [
 ];
 
 const fx = MOCK ? { rate: S.usdEurFallback, date: "testi", src: "asetukset" } : await usdEur();
+const RECOMPUTE = process.argv.includes("--recompute");
 let raw = [];
 const counts = {};
 if (MOCK) raw = MOCK_DATA;
 else {
-  if (!KEY) { console.error("AUTODEV_KEY puuttuu"); process.exit(1); }
+  if (!KEY && !RECOMPUTE) { console.error("AUTODEV_KEY puuttuu"); process.exit(1); }
   const STATES = (S.osavaltiot && S.osavaltiot.length) ? S.osavaltiot : [null];
-  for (const q of Q) for (const st of STATES) { const r = await search(q, st); console.log(q.make, q.model, st || "kaikki", r.length); counts[q.make + " " + q.model + " " + (st || "")] = r.length; raw.push(...r); }
+  if (!RECOMPUTE) for (const q of Q) for (const st of STATES) { const r = await search(q, st); console.log(q.make, q.model, st || "kaikki", r.length); counts[q.make + " " + q.model + " " + (st || "")] = r.length; raw.push(...r); }
 }
 const seen = new Set(), cars = [];
 // Epäonnistuneiden hakujen autot edellisestä ajosta, ettei sivu tyhjene kiintiön loppuessa
 let kept = 0;
+// --recompute: lasketaan edellisen ajon autot uudelleen ilman API-hakuja (testaus ja laskentamuutokset)
+if (RECOMPUTE) { try { const prev = JSON.parse(fs.readFileSync(path.join(ROOT, "data/listings.json"), "utf8")).cars || []; for (const c of prev) FAILED.add(c.make + "|" + c.model); } catch (e) {} }
 if (!MOCK && !DISCOVER && FAILED.size) {
   try {
     const prev = JSON.parse(fs.readFileSync(path.join(ROOT, "data/listings.json"), "utf8")).cars || [];
