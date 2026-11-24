@@ -263,7 +263,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       while (!ok[i] && k++ < n) i = (i + 1) % n;
       cur = i; main.src = U[i]; root.querySelector("#xl-num").textContent = (i + 1) + " / " + n;
       Array.prototype.forEach.call(th.children, function (b) { b.toggleAttribute("aria-current", +b.dataset.i === i); });
-      var b = th.children[i]; if (b && b.scrollIntoView) b.scrollIntoView({ block: "nearest", inline: "nearest" });
+      var b = th.children[i]; if (b) { var tr = th.getBoundingClientRect(), br = b.getBoundingClientRect(); if (br.left < tr.left) th.scrollLeft += br.left - tr.left; else if (br.right > tr.right) th.scrollLeft += br.right - tr.right; } /* vain pikkukuvarivi vierii sivuttain, sivu ei hyppää */
     }
     Array.prototype.forEach.call(th.querySelectorAll("img"), function (im, i) { im.addEventListener("error", function () { ok[i] = false; im.parentNode.hidden = true; }); });
     main.addEventListener("error", function () { ok[cur] = false; if (ok.some(Boolean)) show(cur + 1); else main.parentNode.outerHTML = photo({ title: c.title }, origin(c)); });
@@ -421,11 +421,42 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var c = id && DATA.cars.filter(function (x) { return x.id === id; })[0];
     if (c) detail(c); else list();
   }
-  if (MODE !== "featured") window.addEventListener("hashchange", route);
+  // Vierityskohta säilyy: sivun päivitys tai paluu ilmoituksesta listaan palauttaa samaan kohtaan.
+  // Sisältö piirretään vasta datan tultua, joten selaimen oma palautus ei toimi: tallennetaan kohta itse.
+  var SK = "velo-scroll:" + location.pathname + location.search, firstRoute = true, saveT = 0;
+  function skey(h) { return SK + (h == null ? location.hash : h); }
+  function saveScroll(h) { try { sessionStorage.setItem(skey(h), String(Math.round(window.scrollY))); } catch (e) {} }
+  function restoreScroll() {
+    var y = null; try { y = sessionStorage.getItem(skey()); } catch (e) {}
+    if (y == null) return;
+    y = +y; window.scrollTo(0, y);
+    requestAnimationFrame(function () { window.scrollTo(0, y); });
+    setTimeout(function () { if (Math.abs(window.scrollY - y) > 40) window.scrollTo(0, y); }, 350);
+  }
+  if (MODE !== "featured") {
+    try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (e) {}
+    window.addEventListener("scroll", function () { clearTimeout(saveT); saveT = setTimeout(function () { saveScroll(); }, 150); }, { passive: true });
+    window.addEventListener("pagehide", function () { saveScroll(); });
+    window.addEventListener("hashchange", function (e) {
+      clearTimeout(saveT);
+      var oh = ""; try { oh = new URL(e.oldURL).hash; } catch (x) {}
+      try { sessionStorage.setItem(skey(oh), String(Math.round(window.scrollY))); } catch (x) {}
+      route();
+      if (!location.hash || location.hash === "#") restoreScroll(); /* takaisin listaan: samaan kohtaan */
+    });
+  }
   root.innerHTML = '<div class="empty">Ladataan autoja…</div>';
   window.veloLoad(base, function (j) {
     if (!j) { root.innerHTML = '<div class="empty">Ilmoitusten lataus epäonnistui. Lataa sivu uudelleen.</div>'; return; }
+    var had = !!DATA, y = window.scrollY;
     DATA = j; route();
+    if (MODE === "featured") return;
+    if (had) { window.scrollTo(0, y); return; } /* tuore data tuli taustalla: ei hypätä ylös */
+    if (firstRoute) {
+      firstRoute = false;
+      var nt = ""; try { var ne = performance.getEntriesByType("navigation")[0]; nt = ne ? ne.type : ""; } catch (e) {}
+      if (nt === "reload" || nt === "back_forward") restoreScroll();
+    }
   });
 })();
 
