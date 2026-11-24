@@ -192,7 +192,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       (R.duty[0] > 0 ? line("Tulli 10 %", "Auton hinnasta ja kuljetuksesta", eur(R.duty[0])) : "") +
       line("Huolinta ja satamamaksut", "Tullaus ja käsittely", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
-      line("Katsastus ja rekisteröinti", '<select class="regsel" aria-label="Rekisteröinti: perus tai pika (48 h)" title="Pika = rekisteröinti 48 tunnissa"><option value="0">Perus</option><option value="' + REG_FAST + '">Pika</option></select>', '<span class="regv">' + eur(R.reg) + "</span>", "arvio") +
+      line("Katsastus ja rekisteröinti", '<span class="regw"><span class="regshow">Perus</span><select class="regsel" aria-label="Rekisteröinti"><option value="0">Perusrekisteröinti</option><option value="' + REG_FAST + '">Pikarekisteröinti (48 h)</option></select></span>', '<span class="regv">' + eur(R.reg) + "</span>", "arvio") +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       (EVC ? "" : line("Autovero", exact(c) ? "Erittely alla" : "Arvio, erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1])));
     var s2;
@@ -245,6 +245,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var rs = root.querySelector(".regsel");
     if (rs) rs.addEventListener("change", function () {
       var d = +rs.value || 0;
+      var sh = root.querySelector(".regshow"); if (sh) sh.textContent = d ? "Pika" : "Perus";
       var rv = root.querySelector(".regv"); if (rv) rv.textContent = eur(R.reg + d);
       Array.prototype.forEach.call(root.querySelectorAll(".xtot"), function (el) { el.textContent = rng(+el.getAttribute("data-lo") + d, +el.getAttribute("data-hi") + d); });
     });

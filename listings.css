@@ -302,3 +302,8 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 /* Rekisteröinnin valinta hintaerittelyssä */
 .xl .regsel{display:block;margin-top:6px;width:auto;max-width:100%;min-width:0;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B636D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center/16px;padding:0 34px 0 10px;-webkit-appearance:none;appearance:none;color:var(--fg);cursor:pointer}
 .xl .regsel:focus{border-color:var(--accent);outline:none}
+/* Valikko kiinni: lyhyt "Perus"/"Pika"; avattuna koko nimi (näkymätön oikea valikko näytetyn laatikon päällä) */
+.xl .regw{position:relative;display:inline-block;margin-top:6px}
+.xl .regshow{display:inline-flex;align-items:center;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B636D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center/16px;padding:0 36px 0 12px;font-size:16px;color:var(--fg);min-width:110px}
+.xl .regw .regsel{position:absolute!important;inset:0;width:100%!important;height:100%!important;margin:0!important;opacity:0;cursor:pointer}
+.xl .regw:focus-within .regshow{border-color:var(--accent)}
