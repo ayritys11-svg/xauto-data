@@ -190,7 +190,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var m = document.createElement("div");
     m.id = "xl-taxm"; m.className = "xl xl-taxm"; m.hidden = true;
     m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-label", "Autoveron erittely");
-    m.innerHTML = '<div class="tm-bar"><button type="button" class="tm-x" aria-label="Sulje ja palaa ilmoitukseen">‹ Takaisin</button><b>Autoveron erittely</b></div><div class="tm-body"></div>';
+    m.innerHTML = '<div class="tm-bar"><button type="button" class="tm-x" aria-label="Sulje ja palaa ilmoitukseen">‹ Takaisin</button></div><div class="tm-body"></div>';
     m.querySelector(".tm-body").appendChild(sec);
     document.body.appendChild(m);
     var pushed = false;
