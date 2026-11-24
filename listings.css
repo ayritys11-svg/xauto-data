@@ -265,3 +265,7 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 
 /* Tiedoissa enää km ja käyttövoima: ei varattua toista riviä */
 .xl .car .spec{min-height:0!important}
+
+/* Merkintälaatikot aina tekstin kokoisia (yksi laatikko ei veny rivin korkuiseksi) */
+.xl .car .badges{align-items:flex-start!important;align-content:flex-start!important}
+.xl .car .badges .sv{align-self:flex-start}
