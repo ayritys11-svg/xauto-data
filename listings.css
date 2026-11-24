@@ -348,3 +348,7 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 @keyframes xlTmFade{from{opacity:0}to{opacity:1}}
 /* Ei sinistä kohdistusrengasta ?- ja Takaisin-napeissa kosketuksella */
 .xl .qh:focus,.xl .qh:focus-visible,.xl-taxm .tm-x:focus,.xl-taxm .tm-x:focus-visible{outline:none;box-shadow:none}
+/* Ei punaista kohdistusreunusta missään (valikot, suodattimet, napit) */
+.xl :focus,.xl :focus-visible{outline:none!important}
+.xl .regsel:focus,.xl .bar .cb input:focus,.xl .bar select:focus,.xl .bar input:focus,.xl .sortbox select:focus{border-color:var(--line)!important;box-shadow:none!important}
+.xl .regw:focus-within .regshow{border-color:var(--line)!important}
