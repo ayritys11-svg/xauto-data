@@ -43,7 +43,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function exact(c) { return taxAcc(c).cls === "korkea"; }
   function conf(c) {
     var a = taxAcc(c);
-    return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti hinta tiedetään (autovero ±' + Math.round(a.pct) + ' %)"><i></i>' + CONFP[a.cls] + "</span>";
+    return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti hinta ja autovero tiedetään"><i></i>' + CONFP[a.cls] + " · autovero ±" + Math.round(a.pct) + "\u00a0%</span>";
   }
   var SHOW_SAVE = false; /* vihreä "halvempi"-laatikko pois toistaiseksi; true palauttaa sen */
   function saveBadge(c, full) {
