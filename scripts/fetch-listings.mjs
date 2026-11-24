@@ -359,7 +359,9 @@ function calc(L, fx) {
   }
   // Varmistus: verrataan koko mallin päätöksiin. Iso ero = teho tai ryhmä luultavasti väärin.
   let clash = false;
-  if (kw) {
+  // Jos juuri tällä teholla on runsaasti päätöksiä (>= 15), arvio on luotettava, vaikka koko mallin keskiarvo olisi eri
+  // (esim. Mustang: Suomessa enimmäkseen V8-malleja, EcoBoost 2.3 on halvempi). Silloin ei varoiteta.
+  if (kw && !((best.n || 0) >= 15 && /teho/.test(best.level || ""))) {
     const alt = M.estimate({ reg, co2: F.ev ? 100 : (co2 || 0), wltp: W, ev: false, make: mk, model: best.md, kw: 0, km, fu: F.fu });
     if (alt && alt.V && (best.V / alt.V > 1.5 || best.V / alt.V < 0.67)) {
       clash = true;
