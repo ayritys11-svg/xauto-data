@@ -256,3 +256,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 
 /* Tiedot täyttävät koko rivin (teeman text-wrap:pretty jätti tilaa käyttämättä); erotinpiste ei koskaan aloita riviä */
 .xl .spec{text-wrap:wrap!important}
+
+/* Arvo Suomessa: luku samalla fontilla ja harmaalla kuin otsikko */
+.xl .car .row.arvo b{font-weight:400!important;color:var(--muted)!important;font-size:inherit!important;font-family:inherit!important}

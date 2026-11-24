@@ -162,7 +162,7 @@
     return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : "", c.body || c.engine].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" +
       '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b>" + favBtn(c) + "</div><div class=\"badges\">" + saveBadge(c) + "</div>" +
       (c.fleet != null && !isRare(c) ? '<div class="row"><span>Sama malli Suomessa</span><b>' + fleetTxt(c) + "</b></div>" : "") +
-      '<div class="row"><span>Arvo Suomessa</span><b>' + arvoFi(c) + "</b></div>" + conf(c) + "</a>";
+      '<div class="row arvo"><span>Arvo Suomessa</span><b>' + arvoFi(c) + "</b></div>" + conf(c) + "</a>";
   }
 
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
