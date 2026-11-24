@@ -184,6 +184,12 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
   var REG_FAST = 200; /* pikarekisteröinnin (48 h) lisähinta perusrekisteröintiin */
   /* täysvakuutus kuljetukselle: 1,5 % auton hinnasta, vähintään 150 € */
+  var DET = [150, 450]; /* detailing: peruspesu ja sisäpuhdistus / kiillotus, vahaus ja syväpuhdistus */
+  /* valikollinen hintarivi: kiinni näkyy lyhyt nimi, auki pitkä; arvo = perushinta + valinnan lisähinta */
+  function opt(t, base, o) {
+    return line(t, '<span class="regw"><span class="regshow">' + o[0][0] + '</span><select class="regsel xo" data-base="' + base + '" aria-label="' + t + '">' +
+      o.map(function (x) { return '<option value="' + x[2] + '" data-s="' + x[0] + '">' + x[1] + "</option>"; }).join("") + "</select></span>", '<span class="xov">' + eur(base + o[0][2]) + "</span>");
+  }
   var INSP_FULL = 250; /* laaja tarkastus paikan päällä ennen ostoa */
   function insFull(R) { return Math.max(150, Math.round(R.car * 0.015 / 10) * 10); }
   function detail(c) {
@@ -197,9 +203,10 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       (EVC ? "" : line("Autovero", "Erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
-      line("Kuljetusvakuutus", '<span class="regw"><span class="regshow insshow">Perus</span><select class="regsel inssel" aria-label="Kuljetusvakuutus"><option value="0">Perusvakuutus (sisältyy rahtiin)</option><option value="' + insFull(R) + '">Täysvakuutus (koko auton arvo)</option></select></span>', '<span class="insv">0 €</span>') +
-      line("Katsastus ja rekisteröinti", '<span class="regw"><span class="regshow">Perus</span><select class="regsel" aria-label="Rekisteröinti"><option value="0">Perusrekisteröinti</option><option value="' + REG_FAST + '">Pikarekisteröinti (48 h)</option></select></span>', '<span class="regv">' + eur(R.reg) + "</span>") +
-      line("Tarkastus", '<span class="regw"><span class="regshow insshow tarshow">Perus</span><select class="regsel inssel tarsel" aria-label="Tarkastus"><option value="0">Perustarkastus (kuvat ja historia)</option><option value="' + INSP_FULL + '">Laaja tarkastus paikan päällä</option></select></span>', '<span class="tarv">0 €</span>');
+      opt("Kuljetusvakuutus", 0, [["Perus", "Perusvakuutus (sisältyy rahtiin)", 0], ["Täysi", "Täysvakuutus (koko auton arvo)", insFull(R)]]) +
+      opt("Katsastus ja rekisteröinti", R.reg, [["Perus", "Perusrekisteröinti", 0], ["Pika", "Pikarekisteröinti (48 h)", REG_FAST]]) +
+      opt("Tarkastus", 0, [["Perus", "Perustarkastus (kuvat ja historia)", 0], ["Laaja", "Laaja tarkastus paikan päällä", INSP_FULL]]) +
+      opt("Detailing", 0, [["Ei", "Ei detailingia", 0], ["Perus", "Peruspesu ja sisäpuhdistus", DET[0]], ["Laaja", "Kiillotus, vahaus ja syväpuhdistus", DET[1]]]);
     var s2;
     if (A.p === 0) {
       s2 = line("Veroprosentti", esc(A.pSrc), "0 %") + '<div class="ln sum"><div class="t">Autovero</div><div class="v">0 €</div></div>';
@@ -250,21 +257,19 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     Array.prototype.forEach.call(root.querySelectorAll(".qh"), function (q) {
       q.addEventListener("click", function () { var t = q.closest("h2").nextElementSibling; if (!t) return; var open = t.hidden; t.hidden = !open; q.setAttribute("aria-expanded", String(open)); q.classList.toggle("on", open); });
     });
-    // Rekisteröinnin ja vakuutuksen valinta päivittää rivit ja loppuhinnat heti
-    var rs = root.querySelector(".regsel:not(.inssel)"), is = root.querySelector(".inssel:not(.tarsel)"), ts = root.querySelector(".tarsel");
+    // Valikolliset rivit (vakuutus, rekisteröinti, tarkastus, detailing) päivittävät rivinsä ja loppuhinnat heti
+    var xos = root.querySelectorAll(".xo");
     function upd() {
-      var d = rs ? +rs.value || 0 : 0, v = is ? +is.value || 0 : 0, k = ts ? +ts.value || 0 : 0;
-      var sh = root.querySelector(".regshow:not(.insshow)"); if (sh) sh.textContent = d ? "Pika" : "Perus";
-      var rv = root.querySelector(".regv"); if (rv) rv.textContent = eur(R.reg + d);
-      var th = root.querySelector(".tarshow"); if (th) th.textContent = k ? "Laaja" : "Perus";
-      var tv = root.querySelector(".tarv"); if (tv) tv.textContent = eur(k);
-      var ih = root.querySelector(".insshow:not(.tarshow)"); if (ih) ih.textContent = v ? "Täysi" : "Perus";
-      var iv = root.querySelector(".insv"); if (iv) iv.textContent = v ? eur(v) : "0 €";
-      Array.prototype.forEach.call(root.querySelectorAll(".xtot"), function (el) { el.textContent = rng(+el.getAttribute("data-lo") + d + v + k, +el.getAttribute("data-hi") + d + v + k); });
+      var sum = 0;
+      Array.prototype.forEach.call(xos, function (se) {
+        var v = +se.value || 0, o = se.options[se.selectedIndex], w = se.closest(".ln");
+        sum += v;
+        var sh = se.parentNode.querySelector(".regshow"); if (sh) sh.textContent = o.getAttribute("data-s");
+        var ov = w && w.querySelector(".xov"); if (ov) ov.textContent = eur(+se.getAttribute("data-base") + v);
+      });
+      Array.prototype.forEach.call(root.querySelectorAll(".xtot"), function (el) { el.textContent = rng(+el.getAttribute("data-lo") + sum, +el.getAttribute("data-hi") + sum); });
     }
-    if (rs) rs.addEventListener("change", upd);
-    if (is) is.addEventListener("change", upd);
-    if (ts) ts.addEventListener("change", upd);
+    Array.prototype.forEach.call(xos, function (se) { se.addEventListener("change", upd); });
     window.scrollTo(0, 0);
   }
   // Kuvagalleria: myyjän kuvat nimetään VIN-1.jpg, VIN-2.jpg, ...
