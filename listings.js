@@ -191,6 +191,9 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     m.id = "xl-taxm"; m.className = "xl xl-taxm"; m.hidden = true;
     m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-label", "Autoveron erittely");
     m.innerHTML = '<div class="tm-bar"><button type="button" class="tm-x" aria-label="Sulje ja palaa ilmoitukseen">‹ Takaisin</button></div><div class="tm-body"></div>';
+    /* erittelyssä kaikki selitykset auki, ei ?-nappeja */
+    Array.prototype.forEach.call(sec.querySelectorAll(".qh"), function (q) { q.parentNode.removeChild(q); });
+    Array.prototype.forEach.call(sec.querySelectorAll(".qht"), function (t) { t.hidden = false; });
     m.querySelector(".tm-body").appendChild(sec);
     document.body.appendChild(m);
     var pushed = false;
