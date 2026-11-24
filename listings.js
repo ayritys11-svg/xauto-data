@@ -211,7 +211,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (A.p === 0) {
       s2 = line("Veroprosentti", esc(A.pSrc), "0 %") + '<div class="ln sum"><div class="t">Autovero</div><div class="v">0 €</div></div>';
     } else {
-      s2 = line("Auton arvo Suomessa", esc(A.level) + ". " + (A.n && !/päätös/.test(A.level) ? A.n + " päätöstä. " : "") + "Tyypillinen heitto ±" + pc((A.s * 100).toFixed(1)), eur(A.V)) +
+      s2 = line('Auton arvo Suomessa <button type="button" class="qh ql" aria-label="Näytä selitys" aria-expanded="false">?</button>', '<span class="qht" hidden>' + esc(A.level) + ". " + (A.n && !/päätös/.test(A.level) ? A.n + " päätöstä. " : "") + "Tyypillinen heitto ±" + pc((A.s * 100).toFixed(1)) + "</span>", eur(A.V)) +
         line("a) CO₂-laskenta", "CO₂ " + A.co2 + " g/km (" + esc(A.co2src) + ") → " + esc(A.pSrc) + " " + pc(A.p), eur(A.a)) +
         (A.same ? line("b) Valmiit autoveropäätökset", A.same.n + " päätöstä samasta mallista ja teholla (" + A.kw + " kW). Mediaani " + pc(A.same.p) + " (vaihtelu " + pc(A.same.lo) + " – " + pc(A.same.hi) + ")", eur(A.b)) :
           line("b) Valmiit autoveropäätökset", "Samasta autosta ei ole riittävästi päätöksiä vertailuun. Arvio perustuu CO₂-laskentaan.", "–")) +
@@ -255,7 +255,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     });
     // ?-nappi näyttää/piilottaa autoveron selityksen
     Array.prototype.forEach.call(root.querySelectorAll(".qh"), function (q) {
-      q.addEventListener("click", function () { var t = q.closest("h2").nextElementSibling; if (!t) return; var open = t.hidden; t.hidden = !open; q.setAttribute("aria-expanded", String(open)); q.classList.toggle("on", open); });
+      q.addEventListener("click", function () { var ln = q.closest(".ln"), t = ln ? ln.querySelector(".qht") : q.closest("h2").nextElementSibling; if (!t) return; var open = t.hidden; t.hidden = !open; q.setAttribute("aria-expanded", String(open)); q.classList.toggle("on", open); });
     });
     // Valikolliset rivit (vakuutus, rekisteröinti, tarkastus, detailing) päivittävät rivinsä ja loppuhinnat heti
     var xos = root.querySelectorAll(".xo");

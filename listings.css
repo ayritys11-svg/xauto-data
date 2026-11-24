@@ -329,3 +329,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .facts .copy span{color:var(--fg)!important}
 .xl .facts .copy.ok{background:var(--surface-2);color:var(--good);border-color:var(--good)}
 .xl .facts .copy.ok span{color:var(--good)!important}
+/* Rivin otsikon perään tuleva ?-nappi (Auton arvo Suomessa) */
+.xl .ln .qh.ql{width:22px;height:22px;font-size:13px;margin-left:6px;top:-1px;vertical-align:middle}
+.xl .ln .d:has(> .qht[hidden]:only-child){display:none}
