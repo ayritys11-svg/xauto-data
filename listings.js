@@ -159,7 +159,7 @@
   var STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93z"/></svg>';
   function favBtn(c) { var on = isFav(c.id); return '<button type="button" class="fav" data-fav="' + esc(c.id) + '" aria-pressed="' + on + '" aria-label="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '" title="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '">' + STAR + "</button>"; }
   function card(c) {
-    return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : "", c.body || c.engine].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" +
+    return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [fmt(c.km) + " km", c.fuel].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" +
       '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b>" + favBtn(c) + "</div><div class=\"badges\">" + saveBadge(c) + "</div>" +
       (c.fleet != null && !isRare(c) ? '<div class="row arvo"><span>Sama malli Suomessa</span><b>' + fleetTxt(c) + "</b></div>" : "") +
       '<div class="row arvo"><span>Arvo Suomessa</span><b>' + arvoFi(c) + "</b></div>" + conf(c) + "</a>";
