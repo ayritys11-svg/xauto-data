@@ -201,12 +201,10 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       if (m.hidden) return;
       m.hidden = true; document.documentElement.style.overflow = "";
       if (pushed) { pushed = false; if (!fromPop) history.back(); }
-      if (btn) btn.focus();
     }
     function open() {
       m.hidden = false; m.scrollTop = 0; document.documentElement.style.overflow = "hidden";
       try { history.pushState({ xlTax: 1 }, ""); pushed = true; } catch (e) {}
-      m.querySelector(".tm-x").focus();
     }
     m.shut = shut;
     if (btn) btn.addEventListener("click", open);
