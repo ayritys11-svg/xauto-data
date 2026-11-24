@@ -233,9 +233,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       (EVC ? "" : line('Autovero <button type="button" class="qh ql qm" aria-label="Näytä autoveron erittely" aria-haspopup="dialog">?</button>', "", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
-      opt("Kuljetusvakuutus", 0, [["Perus", "Perusvakuutus (sisältyy rahtiin)", 0], ["Täysi", "Täysvakuutus (koko auton arvo)", insFull(R)]]) +
       opt("Katsastus ja rekisteröinti", R.reg, [["Perus", "Perusrekisteröinti", 0], ["Pika", "Pikarekisteröinti (48 h)", REG_FAST]]) +
-      opt("Tarkastus", 0, [["Perus", "Perustarkastus (kuvat ja historia)", 0], ["Laaja", "Laaja tarkastus paikan päällä", INSP_FULL]]) +
       opt("Detailing", 0, [["Ei", "Ei detailingia", 0], ["Perus", "Peruspesu ja sisäpuhdistus", DET[0]], ["Laaja", "Kiillotus, vahaus ja syväpuhdistus", DET[1]]]);
     var s2;
     if (A.p === 0) {
