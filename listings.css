@@ -317,3 +317,7 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 
 /* Ilmoitussivun osioiden väliin enemmän tilaa */
 .xl .hd,.xl .sec{margin-bottom:32px}
+/* VIN-kopiointinappi harmaana (ei punainen) */
+.xl .facts .copy{background:#5B636D}
+.xl .facts .copy:hover{background:#454B53}
+.xl .facts .copy.ok{background:var(--good)}
