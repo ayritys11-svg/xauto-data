@@ -259,3 +259,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 
 /* Arvo Suomessa: luku samalla fontilla ja harmaalla kuin otsikko */
 .xl .car .row.arvo b{font-weight:400!important;color:var(--muted)!important;font-size:inherit!important;font-family:inherit!important}
+
+/* Merkintälaatikoiden (halvempi, kpl Suomessa) teksti pysty- ja vaakasuunnassa keskelle */
+.xl .sv{display:inline-flex!important;align-items:center;justify-content:center;text-align:center;line-height:1.25}
