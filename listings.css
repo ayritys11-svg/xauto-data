@@ -321,3 +321,5 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .facts .copy{background:#5B636D}
 .xl .facts .copy:hover{background:#454B53}
 .xl .facts .copy.ok{background:var(--good)}
+/* Ilmoitussivun iso hinta vihreällä kuten korteissa */
+.xl .big,.xl .big .xtot{color:var(--good)}
