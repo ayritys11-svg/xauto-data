@@ -198,8 +198,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       (EVC ? "" : line("Autovero", "Erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
       line("Kuljetusvakuutus", '<span class="regw"><span class="regshow insshow">Perus</span><select class="regsel inssel" aria-label="Kuljetusvakuutus"><option value="0">Perusvakuutus (sisältyy rahtiin)</option><option value="' + insFull(R) + '">Täysvakuutus (koko auton arvo)</option></select></span>', '<span class="insv">0 €</span>') +
-      line("Tarkastus", '<span class="regw"><span class="regshow insshow tarshow">Perus</span><select class="regsel inssel tarsel" aria-label="Tarkastus"><option value="0">Perustarkastus (kuvat ja historia)</option><option value="' + INSP_FULL + '">Laaja tarkastus paikan päällä</option></select></span>', '<span class="tarv">0 €</span>') +
-      line("Katsastus ja rekisteröinti", '<span class="regw"><span class="regshow">Perus</span><select class="regsel" aria-label="Rekisteröinti"><option value="0">Perusrekisteröinti</option><option value="' + REG_FAST + '">Pikarekisteröinti (48 h)</option></select></span>', '<span class="regv">' + eur(R.reg) + "</span>");
+      line("Katsastus ja rekisteröinti", '<span class="regw"><span class="regshow">Perus</span><select class="regsel" aria-label="Rekisteröinti"><option value="0">Perusrekisteröinti</option><option value="' + REG_FAST + '">Pikarekisteröinti (48 h)</option></select></span>', '<span class="regv">' + eur(R.reg) + "</span>") +
+      line("Tarkastus", '<span class="regw"><span class="regshow insshow tarshow">Perus</span><select class="regsel inssel tarsel" aria-label="Tarkastus"><option value="0">Perustarkastus (kuvat ja historia)</option><option value="' + INSP_FULL + '">Laaja tarkastus paikan päällä</option></select></span>', '<span class="tarv">0 €</span>');
     var s2;
     if (A.p === 0) {
       s2 = line("Veroprosentti", esc(A.pSrc), "0 %") + '<div class="ln sum"><div class="t">Autovero</div><div class="v">0 €</div></div>';
