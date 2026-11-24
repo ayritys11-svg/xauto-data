@@ -379,6 +379,9 @@ function calc(L, fx) {
     for (const nm of names) { const s = X.sameCar(mk, nm, kw, reg); if (s && s.p != null && s.n >= 3 && (!same || s.n > same.n)) same = { p: s.p, n: s.n, lo: s.lo, hi: s.hi }; }
   }
 
+  // Valmiit päätökset hylätään, jos niiden veroprosentti on aivan eri luokkaa kuin CO2-laskennan (esim. bensiini-Cayenne 41 %
+  // vs. samalla moottoriteholla rekisteröidyt E-Hybrid-lataushybridit ~6 %): silloin päätökset koskevat eri käyttövoimaa.
+  if (same && p > 0 && Math.abs(same.p - p) > 8 && (same.p / p < 0.5 || same.p / p > 2)) same = null;
   const taxA = V * p / 100, taxB = same ? V * same.p / 100 : null;
   const tax = taxB != null ? (taxA + taxB) / 2 : taxA;
   const pLo = Math.min(p, pA[0], same ? same.p : p), pHi = Math.max(p, pA[1], same ? same.p : p);
