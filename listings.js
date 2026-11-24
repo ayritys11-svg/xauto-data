@@ -184,6 +184,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
   var REG_FAST = 200; /* pikarekisteröinnin (48 h) lisähinta perusrekisteröintiin */
   /* täysvakuutus kuljetukselle: 1,5 % auton hinnasta, vähintään 150 € */
+  var QL = '<button type="button" class="qh ql" aria-label="Näytä selitys" aria-expanded="false">?</button>';
   var DET = [150, 450]; /* detailing: peruspesu ja sisäpuhdistus / kiillotus, vahaus ja syväpuhdistus */
   /* valikollinen hintarivi: kiinni näkyy lyhyt nimi, auki pitkä; arvo = perushinta + valinnan lisähinta */
   function opt(t, base, o) {
@@ -212,7 +213,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       s2 = line("Veroprosentti", esc(A.pSrc), "0 %") + '<div class="ln sum"><div class="t">Autovero</div><div class="v">0 €</div></div>';
     } else {
       s2 = line('Auton arvo Suomessa <button type="button" class="qh ql" aria-label="Näytä selitys" aria-expanded="false">?</button>', '<span class="qht" hidden>' + esc(A.level) + ". " + (A.n && !/päätös/.test(A.level) ? A.n + " päätöstä. " : "") + "Tyypillinen heitto ±" + pc((A.s * 100).toFixed(1)) + "</span>", eur(A.V)) +
-        line("a) CO₂-laskenta", "CO₂ " + A.co2 + " g/km (" + esc(A.co2src) + ") → " + esc(A.pSrc) + " " + pc(A.p), eur(A.a)) +
+        line('a) CO₂-laskenta ' + QL, '<span class="qht" hidden>CO₂ ' + A.co2 + " g/km (" + esc(A.co2src) + ") → " + esc(A.pSrc) + " " + pc(A.p) + "</span>", eur(A.a)) +
         (A.same ? line("b) Valmiit autoveropäätökset", A.same.n + " päätöstä samasta mallista ja teholla (" + A.kw + " kW). Mediaani " + pc(A.same.p) + " (vaihtelu " + pc(A.same.lo) + " – " + pc(A.same.hi) + ")", eur(A.b)) :
           line("b) Valmiit autoveropäätökset", "Samasta autosta ei ole riittävästi päätöksiä vertailuun. Arvio perustuu CO₂-laskentaan.", "–")) +
         '<div class="ln sum"><div class="t">' + (exact(c) ? "Autovero" : "Autoveroarvio") + '</div><div class="d">' + (A.same ? "a- ja b-tavan keskiarvo, " : "") + "vaihteluväli " + rng(R.tax[0], R.tax[1]) + '</div><div class="v">' + eur(A.avg) + "</div></div>";
