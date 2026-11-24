@@ -182,6 +182,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   }
 
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
+  var REG_FAST = 200; /* pikarekisteröinnin (48 h) lisähinta perusrekisteröintiin */
   function detail(c) {
     var EVC = c.fuel === "Sähkö"; /* täyssähköauto: ei autoveroa, ei autoverolaatikkoa */
     var R = c.rows, A = c.autovero;
@@ -191,7 +192,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       (R.duty[0] > 0 ? line("Tulli 10 %", "Auton hinnasta ja kuljetuksesta", eur(R.duty[0])) : "") +
       line("Huolinta ja satamamaksut", "Tullaus ja käsittely", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
-      line("Katsastus ja rekisteröinti", "Rekisteröintikatsastus, yksittäishyväksyntä, kilvet", eur(R.reg), "arvio") +
+      line("Katsastus ja rekisteröinti", '<select class="regsel" aria-label="Rekisteröinnin nopeus"><option value="0">Perusrekisteröinti</option><option value="' + REG_FAST + '">Pikarekisteröinti (48 h)</option></select>', '<span class="regv">' + eur(R.reg) + "</span>", "arvio") +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       (EVC ? "" : line("Autovero", exact(c) ? "Erittely alla" : "Arvio, erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1])));
     var s2;
@@ -220,13 +221,13 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
       '<div class="hd">' + gallery(c) + '<div class="info"><div class="ttl"><h1>' + esc(c.title) + '</h1>' + favBtn(c) + "</div>" + '<p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : "", c.body || "", ({ AWD: "Neliveto", "4WD": "Neliveto", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || ""].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
-      '<div><small style="color:var(--muted)">Hinta Suomessa rekisteröitynä</small><div class="big">' + rng(c.total.lo, c.total.hi) + "</div></div>" + saveBadge(c, 1) + conf(c) +
+      '<div><small style="color:var(--muted)">Hinta Suomessa rekisteröitynä</small><div class="big"><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></div></div>" + saveBadge(c, 1) + conf(c) +
       '<a class="cta" href="' + esc(tarjous + (tarjous.indexOf("?") >= 0 ? "&" : "?") + "auto=" + encodeURIComponent(c.vin) + "&nimi=" + encodeURIComponent(c.title)) + '">Kysy lisätietoa</a>' +
       "</div></div>" +
       '<section class="sec"><h2><b>1</b>Mistä hinta koostuu</h2>' + s1 + "</section>" +
       (EVC ? "" : '<section class="sec"><h2><b>2</b>Mistä autoveroarvio koostuu</h2><p class="lead">Autovero = auton arvo Suomessa × veroprosentti. Auton arvo Suomessa on arvioitu Verohallinnon omista päätöksistä, veroprosentti CO₂-taulukosta ja valmiista päätöksistä.</p>' + s2 +
       ('<ul class="warn"><li>Tarkka autovero lasketaan tarjousvaiheessa auton VIN-numeron ja tarkkojen tietojen perusteella. Lopullisen autoveron määrää Verohallinto.</li>' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>") + "</section>") +
-      '<section class="sec"><h2><b>' + (EVC ? 2 : 3) + '</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b>' + rng(c.total.lo, c.total.hi) + "</b></div>" + (isRare(c) ? "" : "<div><small>Arvo Suomessa</small><b>" + fiR(c) + "</b></div>") + (isRare(c) ? '<div class="rare"><small>Sama malli Suomessa (Traficom 9/2026)</small><b>' + (c.fleet === 0 ? "Ei yhtään" : fmt(c.fleet) + " kpl") + "</b>" : c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Ero keskiarvolla</small><b style=\"color:" + (c.saving > 0 ? "var(--good)" : "var(--bad)") + '">' + (c.saving > 0 ? "−" : "+") + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
+      '<section class="sec"><h2><b>' + (EVC ? 2 : 3) + '</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></b></div>" + (isRare(c) ? "" : "<div><small>Arvo Suomessa</small><b>" + fiR(c) + "</b></div>") + (isRare(c) ? '<div class="rare"><small>Sama malli Suomessa (Traficom 9/2026)</small><b>' + (c.fleet === 0 ? "Ei yhtään" : fmt(c.fleet) + " kpl") + "</b>" : c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Ero keskiarvolla</small><b style=\"color:" + (c.saving > 0 ? "var(--good)" : "var(--bad)") + '">' + (c.saving > 0 ? "−" : "+") + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
       (EVC ? '<p class="lead" style="margin-top:12px">Yläraja: kuljetus 15 % arvioitua kalliimpi. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p>' + (c.warnings.length ? '<ul class="warn">' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>" : "") : '<p class="lead" style="margin-top:12px">Alaraja: tulli 0 % (jos mahdollista) ja autovero alarajalla. Yläraja: tulli 10 %, autovero ylärajalla ja kuljetus 15 % arvioitua kalliimpi. Verohallinto päättää lopullisen autoveron. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p>') + '</section>' +
       '<section class="sec"><h2>Tiedot</h2><div class="facts">' + facts + "</div></section>";
     bindGallery(c);
@@ -239,6 +240,13 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
         var fallback = function () { var r = document.createRange(), el = b.previousElementSibling; r.selectNodeContents(el); var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); try { document.execCommand("copy"); done(); } catch (e) { lbl.textContent = "Valittu – paina Ctrl+C"; } };
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
       });
+    });
+    // Rekisteröinnin valinta päivittää rivin ja loppuhinnat heti
+    var rs = root.querySelector(".regsel");
+    if (rs) rs.addEventListener("change", function () {
+      var d = +rs.value || 0;
+      var rv = root.querySelector(".regv"); if (rv) rv.textContent = eur(R.reg + d);
+      Array.prototype.forEach.call(root.querySelectorAll(".xtot"), function (el) { el.textContent = rng(+el.getAttribute("data-lo") + d, +el.getAttribute("data-hi") + d); });
     });
     window.scrollTo(0, 0);
   }
