@@ -44,11 +44,12 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var a = taxAcc(c);
     return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti lopullinen autovero tiedetään"><i></i>' + CONF[a.cls] + " · autovero ±" + Math.round(a.pct) + "\u00a0%</span>";
   }
+  var SHOW_SAVE = false; /* vihreä "halvempi"-laatikko pois toistaiseksi; true palauttaa sen */
   function saveBadge(c, full) {
     var kS = full ? " kuin Suomessa" : "";
-    if (isRare(c)) return '<span class="sv r">' + (c.fleet === 0 ? "Ei yhtään Suomessa" : fmt(c.fleet) + " kpl Suomessa") + "</span>" + (c.saving > 0 ? ' <span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : "");
+    if (isRare(c)) return '<span class="sv r">' + (c.fleet === 0 ? "Ei yhtään Suomessa" : fmt(c.fleet) + " kpl Suomessa") + "</span>" + (SHOW_SAVE && c.saving > 0 ? ' <span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : "");
     if (c.saving == null) return '<span class="sv n">Ei vertailukohtaa Suomessa</span>';
-    return c.saving > 0 ? '<span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : '<span class="sv b">' + eur(-c.saving) + " kalliimpi" + kS + "</span>";
+    return c.saving > 0 ? (SHOW_SAVE ? '<span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : "") : '<span class="sv b">' + eur(-c.saving) + " kalliimpi" + kS + "</span>";
   }
   function origin(c) { return (c.country === "CA" || /^(ON|QC|BC|AB)$/.test(c.state || "") ? "KANADA" : "USA") + (c.state ? " · " + c.state : ""); }
 
