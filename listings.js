@@ -48,7 +48,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   var SHOW_SAVE = false; /* vihreä "halvempi"-laatikko pois toistaiseksi; true palauttaa sen */
   function saveBadge(c, full) {
     var kS = full ? " kuin Suomessa" : "";
-    if (isRare(c)) return '<span class="sv r">' + (c.fleet === 0 ? "Ei yhtään Suomessa" : fmt(c.fleet) + " kpl Suomessa") + "</span>" + (SHOW_SAVE && c.saving > 0 ? ' <span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : "");
+    /* Harvinaiset: ei sinistä kpl-laatikkoa eikä punaista kalliimpi-merkintää (kpl-määrä näkyy rivinä kuten muillakin) */
+    if (isRare(c)) return SHOW_SAVE && c.saving > 0 ? '<span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : "";
     if (c.saving == null) return '<span class="sv n">Ei vertailukohtaa Suomessa</span>';
     return c.saving > 0 ? (SHOW_SAVE ? '<span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : "") : '<span class="sv b">' + eur(-c.saving) + " kalliimpi" + kS + "</span>";
   }
@@ -175,8 +176,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function favBtn(c) { var on = isFav(c.id); return '<button type="button" class="fav" data-fav="' + esc(c.id) + '" aria-pressed="' + on + '" aria-label="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '" title="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '">' + STAR + "</button>"; }
   function card(c) {
     return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '"><h3>' + esc(c.title) + '</h3><p class="spec">' + [fmt(c.km) + " km", c.fuel].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" +
-      '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b>" + favBtn(c) + "</div><div class=\"badges\">" + saveBadge(c) + "</div>" +
-      (c.fleet != null && !isRare(c) ? '<div class="row arvo"><span>Sama malli Suomessa</span><b>' + fleetTxt(c) + "</b></div>" : "") +
+      '<div class="price"><b>' + rng(c.total.lo, c.total.hi) + "</b>" + favBtn(c) + "</div>" + (function (b) { return b ? '<div class="badges">' + b + "</div>" : ""; })(saveBadge(c)) +
+      (c.fleet != null ? '<div class="row arvo"><span>Sama malli Suomessa</span><b>' + fleetTxt(c) + "</b></div>" : "") +
       '<div class="row arvo"><span>Arvo Suomessa</span><b>' + arvoFi(c) + "</b></div>" + conf(c) + "</a>";
   }
 
