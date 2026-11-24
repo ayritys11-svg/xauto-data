@@ -189,7 +189,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var s1 =
       line("Auton hinta", "", eur(R.car)) +
       line("Kuljetus " + (c.city || c.state ? esc([c.city, c.state].filter(Boolean).join(", ")) : (origin(c).indexOf("KANADA") === 0 ? "Kanada" : "USA")) + " → Vantaa", "Rahti ja vakuutus", rng(R.ship, R.shipHi), "arvio") +
-      (R.duty[0] > 0 ? line("Tulli 10 %", "Auton hinnasta ja kuljetuksesta", eur(R.duty[0])) : "") +
+      (R.duty[0] > 0 ? line("Tulli 10 %", "", eur(R.duty[0])) : "") +
       line("Huolinta ja satamamaksut", "Tullaus ja käsittely", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
       line("Katsastus ja rekisteröinti", '<span class="regw"><span class="regshow">Perus</span><select class="regsel" aria-label="Rekisteröinti"><option value="0">Perusrekisteröinti</option><option value="' + REG_FAST + '">Pikarekisteröinti (48 h)</option></select></span>', '<span class="regv">' + eur(R.reg) + "</span>") +
