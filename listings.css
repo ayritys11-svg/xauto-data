@@ -269,3 +269,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 /* Merkintälaatikot aina tekstin kokoisia (yksi laatikko ei veny rivin korkuiseksi) */
 .xl .car .badges{align-items:flex-start!important;align-content:flex-start!important}
 .xl .car .badges .sv{align-self:flex-start}
+
+/* Harvinainen: kpl-määrä sinisessä laatikossa */
+.xl .car .row.arvo b.rc{display:inline-block;align-self:flex-start;background:#E3EEFB!important;color:#1D4E89!important;font-weight:600!important;border-radius:6px;padding:1px 7px;margin-top:2px;line-height:1.35}
