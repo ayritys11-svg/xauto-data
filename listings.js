@@ -1,3 +1,16 @@
+/* Yhteinen datalataus: näytetään heti selaimen muistissa oleva versio, haetaan tuore taustalla (yksi haku per sivu). */
+if (!window.veloLoad) window.veloLoad = function (base, cb) {
+  var K = "velo-data-v1", old = null;
+  try { old = JSON.parse(localStorage.getItem(K) || "null"); } catch (e) { old = null; }
+  if (old) { if (old.cars) cb(old, true); }
+  if (!window.__veloP) {
+    window.__veloP = fetch(base + "data/listings.json?t=" + Math.floor(Date.now() / 60000), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) { try { localStorage.setItem(K, t); } catch (e) {} return JSON.parse(t); });
+  }
+  window.__veloP.then(function (j) { if (!old || JSON.stringify(old) !== JSON.stringify(j)) cb(j, false); })
+    .catch(function (e) { if (!old) cb(null, false, e); });
+};
 /* Velo: autoilmoitukset (lista + yksittäinen ilmoitus). Data: data/listings.json */
 (function () {
   var root = document.querySelector(".xl"); if (!root) return;
@@ -410,9 +423,10 @@
   }
   if (MODE !== "featured") window.addEventListener("hashchange", route);
   root.innerHTML = '<div class="empty">Ladataan autoja…</div>';
-  fetch(base + "data/listings.json?t=" + Math.floor(Date.now() / 60000), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (j) { DATA = j; route(); })
-    .catch(function () { root.innerHTML = '<div class="empty">Ilmoitusten lataus epäonnistui. Lataa sivu uudelleen.</div>'; });
+  window.veloLoad(base, function (j) {
+    if (!j) { root.innerHTML = '<div class="empty">Ilmoitusten lataus epäonnistui. Lataa sivu uudelleen.</div>'; return; }
+    DATA = j; route();
+  });
 })();
 
 /* Velo-valintalista: oma pudotusvalikko kirjoitettaville kentille (input[data-list] + datalist).

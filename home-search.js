@@ -1,3 +1,16 @@
+/* Yhteinen datalataus: näytetään heti selaimen muistissa oleva versio, haetaan tuore taustalla (yksi haku per sivu). */
+if (!window.veloLoad) window.veloLoad = function (base, cb) {
+  var K = "velo-data-v1", old = null;
+  try { old = JSON.parse(localStorage.getItem(K) || "null"); } catch (e) { old = null; }
+  if (old) { if (old.cars) cb(old, true); }
+  if (!window.__veloP) {
+    window.__veloP = fetch(base + "data/listings.json?t=" + Math.floor(Date.now() / 60000), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) { try { localStorage.setItem(K, t); } catch (e) {} return JSON.parse(t); });
+  }
+  window.__veloP.then(function (j) { if (!old || JSON.stringify(old) !== JSON.stringify(j)) cb(j, false); })
+    .catch(function (e) { if (!old) cb(null, false, e); });
+};
 (function(){
   /* Etusivun hakulomake: merkki ja malli kirjoittamalla tai listasta (oikeista ilmoituksista). Lisää hakuehtoja avaa lisäkentät liukuen; haku vie Autot-sivulle valinnoilla. */
   var LIST="/autot/", BASE=window.VELO_BASE||"https://raw.githubusercontent.com/ayritys11-svg/xauto-data/main/";
@@ -76,11 +89,11 @@
   }
   function count(){ go.textContent="Hae autoja"+(CARS.length ? " ("+CARS.filter(ok).length+")" : ""); }
   function models(){ var o={}; CARS.forEach(function(c){ if(hasStrict(c.make,MK.get())){ o[mn(c)]=1; } }); fill(MD.d,Object.keys(o)); }
-  fetch(BASE+"data/listings.json?t="+Math.floor(Date.now()/60000),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){
+  window.veloLoad(BASE,function(j){ if(!j){return}
     CARS=j.cars||[]; var m={},f={},g={},d={};
     CARS.forEach(function(c){ m[c.make]=1; if(c.fuel){f[c.fuel]=1} var a=gear(c.transmission); if(a){g[a]=1} var b=drive(c.drivetrain); if(b){d[b]=1} });
     fill(MK.d,Object.keys(m)); fill(X.fuel.d,Object.keys(f)); fill(X.gear.d,Object.keys(g)); fill(X.drive.d,Object.keys(d)); models(); count();
-  }).catch(function(){});
+  });
   box.addEventListener("input",function(e){ if(e.target===MK.i){models()} count(); });
   box.addEventListener("change",count);
   box.addEventListener("click",function(e){ if(e.target.closest(".type")){ setTimeout(count,0); } });
