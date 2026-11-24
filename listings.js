@@ -188,7 +188,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var R = c.rows, A = c.autovero;
     var s1 =
       line("Auton hinta", "", eur(R.car)) +
-      line("Kuljetus " + (origin(c).indexOf("KANADA") === 0 ? "Kanadasta" : "USA:sta") + " Suomeen", "Rahti ja vakuutus Suomen satamaan" + (c.city || c.state ? ", lähtö " + esc([c.city, c.state].filter(Boolean).join(", ")) : ""), rng(R.ship, R.shipHi), "arvio") +
+      line("Kuljetus " + (c.city || c.state ? esc([c.city, c.state].filter(Boolean).join(", ")) : (origin(c).indexOf("KANADA") === 0 ? "Kanada" : "USA")) + " → Vantaa", "Rahti ja vakuutus", rng(R.ship, R.shipHi), "arvio") +
       (R.duty[0] > 0 ? line("Tulli 10 %", "Auton hinnasta ja kuljetuksesta", eur(R.duty[0])) : "") +
       line("Huolinta ja satamamaksut", "Tullaus ja käsittely", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
