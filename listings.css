@@ -295,3 +295,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 
 /* Korttien hinta vihreällä */
 .xl .car .price b{color:var(--good)!important}
+
+/* Hieman enemmän varjoa korttien reunoille ja kulmiin */
+.xl .car,.xl a.car:hover,.xl a.car:active{box-shadow:0 0 0 1px rgba(21,24,28,.06),0 2px 6px rgba(21,24,28,.12),0 6px 16px rgba(21,24,28,.08)!important}
