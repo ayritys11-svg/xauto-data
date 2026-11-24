@@ -262,3 +262,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 
 /* Merkintälaatikoiden (halvempi, kpl Suomessa) teksti pysty- ja vaakasuunnassa keskelle */
 .xl .sv{display:inline-flex!important;align-items:center;justify-content:center;text-align:center;line-height:1.25}
+
+/* Tiedoissa enää km ja käyttövoima: ei varattua toista riviä */
+.xl .car .spec{min-height:0!important}
