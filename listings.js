@@ -218,7 +218,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   /* valikollinen hintarivi: kiinni näkyy lyhyt nimi, auki pitkä; arvo = perushinta + valinnan lisähinta */
   function opt(t, base, o) {
     return line(t, '<span class="regw"><span class="regshow">' + o[0][0] + '</span><select class="regsel xo" data-base="' + base + '" aria-label="' + t + '">' +
-      o.map(function (x) { return '<option value="' + x[2] + '" data-s="' + x[0] + '">' + x[1] + " · " + eur(base + x[2]) + "</option>"; }).join("") + "</select></span>", '<span class="xov">' + eur(base + o[0][2]) + "</span>");
+      o.map(function (x) { return '<option value="' + x[2] + '" data-s="' + x[0] + '">' + (x[1] + " " + eur(base + x[2])).replace(/ /g, "\u00a0") + "</option>"; }).join("") + "</select></span>", '<span class="xov">' + eur(base + o[0][2]) + "</span>");
   }
   var INSP_FULL = 250; /* laaja tarkastus paikan päällä ennen ostoa */
   function insFull(R) { return Math.max(150, Math.round(R.car * 0.015 / 10) * 10); }
@@ -233,8 +233,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       (EVC ? "" : line('Autovero <button type="button" class="qh ql qm" aria-label="Näytä autoveron erittely" aria-haspopup="dialog">?</button>', "", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
-      opt("Katsastus ja rekisteröinti", R.reg, [["Perus", "Perusrekisteröinti", 0], ["Pika", "Pikarekisteröinti (48 h)", REG_FAST]]) +
-      opt("Detailing", 0, [["Ei", "Ei detailingia", 0], ["Perus", "Peruspesu ja sisäpuhdistus", DET[0]], ["Laaja", "Kiillotus, vahaus ja syväpuhdistus", DET[1]]]);
+      opt("Katsastus ja rekisteröinti", R.reg, [["Perus", "Perusrekisteröinti", 0], ["Pika", "Pikarekisteröinti 48 h", REG_FAST]]) +
+      opt("Detailing", 0, [["Ei", "Ei detailingia", 0], ["Perus", "Peruspesu", DET[0]], ["Laaja", "Laaja detailing", DET[1]]]);
     var s2;
     if (A.p === 0) {
       s2 = line("Veroprosentti", esc(A.pSrc), "0 %") + '<div class="ln sum"><div class="t">Autovero</div><div class="v">0 €</div></div>';
