@@ -311,3 +311,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .qh{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:2px;position:relative;top:-2px;border-radius:50%;border:1.5px solid var(--muted);background:transparent;color:var(--muted);font:600 14px/1 var(--font-body,inherit);cursor:pointer;vertical-align:middle;padding:0;flex:none}
 .xl .qh.on{background:var(--fg);border-color:var(--fg);color:#fff}
 .xl .qht{margin-top:6px}
+
+/* ?-nappi otsikkorivin oikeaan reunaan */
+.xl .qh.qr{margin-left:auto;top:0;align-self:flex-start;margin-top:4px;width:28px;height:28px;font-size:15px}
