@@ -32,7 +32,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     return '<div class="ph">' + img + (tag ? '<span class="tag">' + esc(tag) + "</span>" : "") + "</div>";
   }
   window.__xlCar = CAR;
-  var CONFP = { korkea: "Tarkka hinta-arvio", keskitaso: "Kohtalainen hinta-arvio", matala: "Epätarkka hinta-arvio" };
+  var CONFP = { korkea: "Tarkka hinta-arvio", keskitaso: "Kohtalaisen tarkka hinta-arvio", matala: "Epätarkka hinta-arvio" };
   var CONF = { korkea: "Tarkka arvio", keskitaso: "Kohtalainen tarkkuus", matala: "Epävarma arvio" };
   // Tarkkuus = kuinka tarkasti lopullinen autovero tiedetään: autoveron vaihteluväli prosentteina autoveroarviosta
   function taxAcc(c) {
