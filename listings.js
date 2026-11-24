@@ -183,12 +183,15 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
 
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
   var REG_FAST = 200; /* pikarekisteröinnin (48 h) lisähinta perusrekisteröintiin */
+  /* täysvakuutus kuljetukselle: 1,5 % auton hinnasta, vähintään 150 € */
+  function insFull(R) { return Math.max(150, Math.round(R.car * 0.015 / 10) * 10); }
   function detail(c) {
     var EVC = c.fuel === "Sähkö"; /* täyssähköauto: ei autoveroa, ei autoverolaatikkoa */
     var R = c.rows, A = c.autovero;
     var s1 =
       line("Auton hinta", "", eur(R.car)) +
-      line("Kuljetus " + (c.city || c.state ? esc([c.city, c.state].filter(Boolean).join(", ")) : (origin(c).indexOf("KANADA") === 0 ? "Kanada" : "USA")) + " → Vantaa", "Rahti ja vakuutus", rng(R.ship, R.shipHi), "arvio") +
+      line("Kuljetus " + (c.city || c.state ? esc([c.city, c.state].filter(Boolean).join(", ")) : (origin(c).indexOf("KANADA") === 0 ? "Kanada" : "USA")) + " → Vantaa", "", rng(R.ship, R.shipHi), "arvio") +
+      line("Kuljetusvakuutus", '<span class="regw"><span class="regshow insshow">Perus</span><select class="regsel inssel" aria-label="Kuljetusvakuutus"><option value="0">Perusvakuutus (sisältyy rahtiin)</option><option value="' + insFull(R) + '">Täysvakuutus (koko auton arvo)</option></select></span>', '<span class="insv">Sisältyy</span>') +
       (R.duty[0] > 0 ? line("Tulli 10 %", "", eur(R.duty[0])) : "") +
       line("Huolinta ja satamamaksut", "", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
@@ -245,14 +248,18 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     Array.prototype.forEach.call(root.querySelectorAll(".qh"), function (q) {
       q.addEventListener("click", function () { var t = q.closest("h2").nextElementSibling; if (!t) return; var open = t.hidden; t.hidden = !open; q.setAttribute("aria-expanded", String(open)); q.classList.toggle("on", open); });
     });
-    // Rekisteröinnin valinta päivittää rivin ja loppuhinnat heti
-    var rs = root.querySelector(".regsel");
-    if (rs) rs.addEventListener("change", function () {
-      var d = +rs.value || 0;
-      var sh = root.querySelector(".regshow"); if (sh) sh.textContent = d ? "Pika" : "Perus";
+    // Rekisteröinnin ja vakuutuksen valinta päivittää rivit ja loppuhinnat heti
+    var rs = root.querySelector(".regsel:not(.inssel)"), is = root.querySelector(".inssel");
+    function upd() {
+      var d = rs ? +rs.value || 0 : 0, v = is ? +is.value || 0 : 0;
+      var sh = root.querySelector(".regshow:not(.insshow)"); if (sh) sh.textContent = d ? "Pika" : "Perus";
       var rv = root.querySelector(".regv"); if (rv) rv.textContent = eur(R.reg + d);
-      Array.prototype.forEach.call(root.querySelectorAll(".xtot"), function (el) { el.textContent = rng(+el.getAttribute("data-lo") + d, +el.getAttribute("data-hi") + d); });
-    });
+      var ih = root.querySelector(".insshow"); if (ih) ih.textContent = v ? "Täysi" : "Perus";
+      var iv = root.querySelector(".insv"); if (iv) iv.textContent = v ? eur(v) : "Sisältyy";
+      Array.prototype.forEach.call(root.querySelectorAll(".xtot"), function (el) { el.textContent = rng(+el.getAttribute("data-lo") + d + v, +el.getAttribute("data-hi") + d + v); });
+    }
+    if (rs) rs.addEventListener("change", upd);
+    if (is) is.addEventListener("change", upd);
     window.scrollTo(0, 0);
   }
   // Kuvagalleria: myyjän kuvat nimetään VIN-1.jpg, VIN-2.jpg, ...
