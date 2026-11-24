@@ -184,6 +184,34 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
   var REG_FAST = 200; /* pikarekisteröinnin (48 h) lisähinta perusrekisteröintiin */
   /* täysvakuutus kuljetukselle: 1,5 % auton hinnasta, vähintään 150 € */
+  function taxModal(sec, btn) {
+    var old = document.getElementById("xl-taxm"); if (old) old.parentNode.removeChild(old);
+    if (!sec) { if (btn) btn.style.display = "none"; return; }
+    var m = document.createElement("div");
+    m.id = "xl-taxm"; m.className = "xl xl-taxm"; m.hidden = true;
+    m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-label", "Autoveron erittely");
+    m.innerHTML = '<div class="tm-bar"><button type="button" class="tm-x" aria-label="Sulje ja palaa ilmoitukseen">‹ Takaisin</button><b>Autoveron erittely</b></div><div class="tm-body"></div>';
+    m.querySelector(".tm-body").appendChild(sec);
+    document.body.appendChild(m);
+    var pushed = false;
+    function shut(fromPop) {
+      if (m.hidden) return;
+      m.hidden = true; document.documentElement.style.overflow = "";
+      if (pushed) { pushed = false; if (!fromPop) history.back(); }
+      if (btn) btn.focus();
+    }
+    function open() {
+      m.hidden = false; m.scrollTop = 0; document.documentElement.style.overflow = "hidden";
+      try { history.pushState({ xlTax: 1 }, ""); pushed = true; } catch (e) {}
+      m.querySelector(".tm-x").focus();
+    }
+    m.shut = shut;
+    if (btn) btn.addEventListener("click", open);
+    m.querySelector(".tm-x").addEventListener("click", function () { shut(false); });
+    m.addEventListener("keydown", function (e) { if (e.key === "Escape") shut(false); });
+  }
+  /* selaimen takaisin-ele sulkee erittelyn eikä poistu ilmoitukselta */
+  window.addEventListener("popstate", function () { var m = document.getElementById("xl-taxm"); if (m) if (m.shut) m.shut(true); });
   var QL = '<button type="button" class="qh ql" aria-label="Näytä selitys" aria-expanded="false">?</button>';
   var DET = [150, 450]; /* detailing: peruspesu ja sisäpuhdistus / kiillotus, vahaus ja syväpuhdistus */
   /* valikollinen hintarivi: kiinni näkyy lyhyt nimi, auki pitkä; arvo = perushinta + valinnan lisähinta */
@@ -203,7 +231,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       line("Huolinta ja satamamaksut", "", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
-      (EVC ? "" : line("Autovero " + QL, '<span class="qht" hidden>Autovero lasketaan auton arvosta Suomessa ja CO₂-päästöistä. Erittely osiossa 2 alla.</span>', A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
+      (EVC ? "" : line('Autovero <button type="button" class="qh ql qm" aria-label="Näytä autoveron erittely" aria-haspopup="dialog">?</button>', "", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
       opt("Kuljetusvakuutus", 0, [["Perus", "Perusvakuutus (sisältyy rahtiin)", 0], ["Täysi", "Täysvakuutus (koko auton arvo)", insFull(R)]]) +
       opt("Katsastus ja rekisteröinti", R.reg, [["Perus", "Perusrekisteröinti", 0], ["Pika", "Pikarekisteröinti (48 h)", REG_FAST]]) +
       opt("Tarkastus", 0, [["Perus", "Perustarkastus (kuvat ja historia)", 0], ["Laaja", "Laaja tarkastus paikan päällä", INSP_FULL]]) +
@@ -238,9 +266,9 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       '<a class="cta" href="' + esc(tarjous + (tarjous.indexOf("?") >= 0 ? "&" : "?") + "auto=" + encodeURIComponent(c.vin) + "&nimi=" + encodeURIComponent(c.title)) + '">Kysy lisätietoa</a>' +
       "</div></div>" +
       '<section class="sec"><h2><b>1</b>Mistä hinta koostuu</h2>' + s1 + "</section>" +
-      (EVC ? "" : '<section class="sec"><h2><b>2</b><span>Mistä autoveroarvio koostuu</span><button type="button" class="qh qr" aria-label="Näytä selitys" aria-expanded="false">?</button></h2><p class="lead qht" hidden>Autovero = auton arvo Suomessa × veroprosentti. Auton arvo Suomessa on arvioitu Verohallinnon omista päätöksistä, veroprosentti CO₂-taulukosta ja valmiista päätöksistä.</p>' + s2 +
+      (EVC ? "" : '<section class="sec sec2" id="xl-sec2"><h2><span>Mistä autoveroarvio koostuu</span><button type="button" class="qh qr" aria-label="Näytä selitys" aria-expanded="false">?</button></h2><p class="lead qht" hidden>Autovero = auton arvo Suomessa × veroprosentti. Auton arvo Suomessa on arvioitu Verohallinnon omista päätöksistä, veroprosentti CO₂-taulukosta ja valmiista päätöksistä.</p>' + s2 +
       ('<ul class="warn"><li>Tarkka autovero lasketaan tarjousvaiheessa auton VIN-numeron ja tarkkojen tietojen perusteella. Lopullisen autoveron määrää Verohallinto.</li>' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>") + "</section>") +
-      '<section class="sec"><h2><b>' + (EVC ? 2 : 3) + '</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></b></div>" + (isRare(c) ? "" : "<div><small>Arvo Suomessa</small><b>" + fiR(c) + "</b></div>") + (isRare(c) ? '<div class="rare"><small>Sama malli Suomessa (Traficom 9/2026)</small><b>' + (c.fleet === 0 ? "Ei yhtään" : fmt(c.fleet) + " kpl") + "</b>" : c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Ero keskiarvolla</small><b style=\"color:" + (c.saving > 0 ? "var(--good)" : "var(--bad)") + '">' + (c.saving > 0 ? "−" : "+") + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
+      '<section class="sec"><h2><b>2</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></b></div>" + (isRare(c) ? "" : "<div><small>Arvo Suomessa</small><b>" + fiR(c) + "</b></div>") + (isRare(c) ? '<div class="rare"><small>Sama malli Suomessa (Traficom 9/2026)</small><b>' + (c.fleet === 0 ? "Ei yhtään" : fmt(c.fleet) + " kpl") + "</b>" : c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Ero keskiarvolla</small><b style=\"color:" + (c.saving > 0 ? "var(--good)" : "var(--bad)") + '">' + (c.saving > 0 ? "−" : "+") + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
       (EVC ? '<p class="lead" style="margin-top:12px">Yläraja: kuljetus 15 % arvioitua kalliimpi. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p>' + (c.warnings.length ? '<ul class="warn">' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>" : "") : '<p class="lead" style="margin-top:12px">Alaraja: tulli 0 % (jos mahdollista) ja autovero alarajalla. Yläraja: tulli 10 %, autovero ylärajalla ja kuljetus 15 % arvioitua kalliimpi. Verohallinto päättää lopullisen autoveron. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p>') + '</section>' +
       '<section class="sec"><h2>Tiedot</h2><div class="facts">' + facts + "</div></section>";
     bindGallery(c);
@@ -256,8 +284,11 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     });
     // ?-nappi näyttää/piilottaa autoveron selityksen
     Array.prototype.forEach.call(root.querySelectorAll(".qh"), function (q) {
+      if (q.classList.contains("qm")) return;
       q.addEventListener("click", function () { var ln = q.closest(".ln"), t = ln ? ln.querySelector(".qht") : q.closest("h2").nextElementSibling; if (!t) return; var open = t.hidden; t.hidden = !open; q.setAttribute("aria-expanded", String(open)); q.classList.toggle("on", open); });
     });
+    // Autoveron erittely (osio "Mistä autoveroarvio koostuu") aukeaa omana koko näytön näkymänään Autovero-rivin ?-napista
+    taxModal(root.querySelector("#xl-sec2"), root.querySelector(".qm"));
     // Valikolliset rivit (vakuutus, rekisteröinti, tarkastus, detailing) päivittävät rivinsä ja loppuhinnat heti
     var xos = root.querySelectorAll(".xo");
     function upd() {
