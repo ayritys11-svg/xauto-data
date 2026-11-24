@@ -35,3 +35,6 @@
 
 /* Vanha toimimaton Tilattavat/Uusimmat-palkki piiloon: tilalla toimiva Järjestys-laatikko autokorttien yläpuolella */
 .xh .listhead>.sortbox{display:none}
+
+/* Palvelumme-laatikoiden tekstit keskelle (kuvake ja otsikko ovat jo keskellä) */
+.xh .svcg p{text-align:center!important;margin-left:auto!important;margin-right:auto!important}
