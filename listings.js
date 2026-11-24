@@ -130,7 +130,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       "</div>" +
       '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" +
       '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + rareN + ")</label>" +
-      (FAV.length || F.fav ? '<label class="tg"><input type="checkbox" id="xl-fav"' + (F.fav ? " checked" : "") + "> Vain suosikit (" + favN + ")</label>" : "") +
+      '<label class="tg" id="xl-favl"' + (FAV.length || F.fav ? "" : " hidden") + '><input type="checkbox" id="xl-fav"' + (F.fav ? " checked" : "") + '> Vain suosikit (<span id="xl-favn">' + favN + "</span>)</label>" +
       '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Näytä vähemmän suodattimia" : "Näytä lisää suodattimia") + (nExtra ? " (" + nExtra + " valittu)" : "") + "</button>" +
       "</div>" +
       '<div class="sortbox"><label for="xl-sort">Järjestys</label><select id="xl-sort" aria-label="Järjestys">' + SORTOPTS + '</select>' + "</div>" +
@@ -415,7 +415,13 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     e.preventDefault(); e.stopPropagation();
     var id = b.getAttribute("data-fav"), on = !isFav(id); setFav(id, on);
     Array.prototype.forEach.call(document.querySelectorAll(".xl .fav"), function (x) { if (x.getAttribute("data-fav") === id) { x.setAttribute("aria-pressed", String(on)); x.setAttribute("aria-label", on ? "Poista suosikeista" : "Tallenna suosikiksi"); x.title = x.getAttribute("aria-label"); } });
-    if (MODE !== "featured") { if (!location.hash || location.hash === "#") { if (F.fav || FAV.length <= 1) list(); } }
+    if (MODE !== "featured") { if (!location.hash || location.hash === "#") {
+      if (F.fav) { var y = window.scrollY; list(); window.scrollTo(0, y); return; } /* suosikkinäkymä: poistettu suosikki häviää listasta */
+      /* muuten ei piirretä listaa uudelleen (se vilkkui): päivitetään vain suodattimen määrä */
+      var fl = root.querySelector("#xl-favl"), fn = root.querySelector("#xl-favn");
+      if (fn) { var n = 0; DATA.cars.forEach(function (x) { if (isFav(x.id)) { if (pass(x, "fav")) n++; } }); fn.textContent = n; }
+      if (fl) fl.hidden = !FAV.length;
+    } }
   }, true);
   function route() {
     if (!DATA) return;
