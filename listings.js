@@ -32,6 +32,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     return '<div class="ph">' + img + (tag ? '<span class="tag">' + esc(tag) + "</span>" : "") + "</div>";
   }
   window.__xlCar = CAR;
+  var CONFP = { korkea: "Tarkka hinta-arvio", keskitaso: "Kohtalainen hinta-arvio", matala: "Epätarkka hinta-arvio" };
   var CONF = { korkea: "Tarkka arvio", keskitaso: "Kohtalainen tarkkuus", matala: "Epävarma arvio" };
   // Tarkkuus = kuinka tarkasti lopullinen autovero tiedetään: autoveron vaihteluväli prosentteina autoveroarviosta
   function taxAcc(c) {
@@ -42,7 +43,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function exact(c) { return taxAcc(c).cls === "korkea"; }
   function conf(c) {
     var a = taxAcc(c);
-    return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti lopullinen autovero tiedetään"><i></i>' + CONF[a.cls] + " · autovero ±" + Math.round(a.pct) + "\u00a0%</span>";
+    return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti hinta tiedetään (autovero ±' + Math.round(a.pct) + ' %)"><i></i>' + CONFP[a.cls] + "</span>";
   }
   var SHOW_SAVE = false; /* vihreä "halvempi"-laatikko pois toistaiseksi; true palauttaa sen */
   function saveBadge(c, full) {
