@@ -73,18 +73,28 @@ function fleetDetail(c) {
   let rows = [];
   for (const m of new Set([mk, mk.replace(/ /g, "-")])) for (const [md, r] of Object.entries(FD[m] || {})) if (keys.some((k) => md.indexOf(k) === 0)) rows = rows.concat(r);
   // [vuosi, kW, korityyppi, käyttövoima, hybridi, kpl]
+  // harvinaisuuden syyt: kirjataan, mikä rajaus pudottaa määrää selvästi (≥ 40 %)
+  const sum = (a) => a.reduce((n, r) => n + r[5], 0);
+  const why = [];
+  const step = (label, before, after) => { const b = sum(before), a = sum(after); if (label && b > 0 && a < b * 0.6) why.push([label, a / b]); };
   const fu = { "Bensiini": "01", "Diesel": "02", "Sähkö": "04" }[c.fuel];
-  if (fu) rows = rows.filter((r) => r[3] === fu);
   const el = ((c.spec || []).find((x) => x[0] === "Sähköistys") || [])[1] || "";
+  const hy = /hybrid/i.test(el);
+  const r0f = rows;
+  if (fu) rows = rows.filter((r) => r[3] === fu);
   // hybridi (myös mild ja ladattava) on eri versio kuin pelkkä polttomoottori
-  if (fu !== "04") { const hy = /hybrid/i.test(el); rows = rows.filter((r) => (r[4] > 0) === hy); }
+  if (fu !== "04") rows = rows.filter((r) => (r[4] > 0) === hy);
+  step(hy ? "hybridi" : fu === "04" ? "sähkö" : String(c.fuel || "").toLowerCase(), r0f, rows);
   const bc = BODY_CODES[c.body];
+  const r0b = rows;
   if (bc) rows = rows.filter((r) => !r[2] || bc.includes(r[2]));
+  { const b = String(c.body || ""); const m = b.match(/\(([^)]+)\)/); step(m ? m[1] : b.split(" ")[0].toLowerCase(), r0b, rows); }
   // sama korimalli (sukupolvi): käyttöönottovuosi korimallin vuosimallien sisällä (±1 v. vuosimallin ja käyttöönoton eron vuoksi;
   // rajavuosien autot erotellaan moottoritehon perusteella). Tuntemattomalla mallilla ei vuosirajausta.
   const g = genOf(c);
   if (g) rows = rows.filter((r) => r[0] && r[0] >= g[0] - 1 && r[0] <= g[1] + 1);
   const kw = c.autovero && c.autovero.kw;
+  const r0k = rows;
   if (kw && fu !== "04") {
     const ks = rows.filter((r) => r[1] > 0);
     if (ks.length) {
@@ -92,8 +102,13 @@ function fleetDetail(c) {
       const near = ks.reduce((b, r) => (Math.abs(r[1] - kw) < Math.abs(b - kw) ? r[1] : b), ks[0][1]);
       rows = Math.abs(near - kw) > kw * 0.12 ? [] : ks.filter((r) => Math.abs(r[1] - near) <= Math.max(3, near * 0.03));
     }
+    const cc = c.autovero.cc;
+    step(cc ? (cc / 1000).toFixed(1).replace(".", ",") + " l / " + kw + " kW" : kw + " kW", r0k, rows);
   }
-  return rows.reduce((n, r) => n + r[5], 0);
+  // korimalli näytetään aina; muista enintään kaksi voimakkainta rajausta, alkuperäisessä järjestyksessä
+  const keep = why.slice().sort((a, b) => a[1] - b[1]).slice(0, g ? 2 : 3).map((x) => x[0]);
+  c.fleetWhy = why.map((x) => x[0]).filter((x) => keep.includes(x));
+  return sum(rows);
 }
 const AN = JSON.parse(fs.readFileSync(path.join(ROOT, "data/analog.json"), "utf8"));
 const C2 = JSON.parse(fs.readFileSync(path.join(ROOT, "data/co2_table.json"), "utf8"));
