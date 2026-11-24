@@ -191,7 +191,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var s1 =
       line("Auton hinta", "", eur(R.car)) +
       line("Kuljetus " + (c.city || c.state ? esc([c.city, c.state].filter(Boolean).join(", ")) : (origin(c).indexOf("KANADA") === 0 ? "Kanada" : "USA")) + " → Vantaa", "", rng(R.ship, R.shipHi), "arvio") +
-      line("Kuljetusvakuutus", '<span class="regw"><span class="regshow insshow">Perus</span><select class="regsel inssel" aria-label="Kuljetusvakuutus"><option value="0">Perusvakuutus (sisältyy rahtiin)</option><option value="' + insFull(R) + '">Täysvakuutus (koko auton arvo)</option></select></span>', '<span class="insv">Sisältyy</span>') +
+      line("Kuljetusvakuutus", '<span class="regw"><span class="regshow insshow">Perus</span><select class="regsel inssel" aria-label="Kuljetusvakuutus"><option value="0">Perusvakuutus (sisältyy rahtiin)</option><option value="' + insFull(R) + '">Täysvakuutus (koko auton arvo)</option></select></span>', '<span class="insv">0 €</span>') +
       (R.duty[0] > 0 ? line("Tulli 10 %", "", eur(R.duty[0])) : "") +
       line("Huolinta ja satamamaksut", "", eur(R.huolinta), "arvio") +
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
@@ -255,7 +255,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       var sh = root.querySelector(".regshow:not(.insshow)"); if (sh) sh.textContent = d ? "Pika" : "Perus";
       var rv = root.querySelector(".regv"); if (rv) rv.textContent = eur(R.reg + d);
       var ih = root.querySelector(".insshow"); if (ih) ih.textContent = v ? "Täysi" : "Perus";
-      var iv = root.querySelector(".insv"); if (iv) iv.textContent = v ? eur(v) : "Sisältyy";
+      var iv = root.querySelector(".insv"); if (iv) iv.textContent = v ? eur(v) : "0 €";
       Array.prototype.forEach.call(root.querySelectorAll(".xtot"), function (el) { el.textContent = rng(+el.getAttribute("data-lo") + d + v, +el.getAttribute("data-hi") + d + v); });
     }
     if (rs) rs.addEventListener("change", upd);
