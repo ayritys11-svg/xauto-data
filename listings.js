@@ -199,7 +199,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
       line("Katsastus ja rekisteröinti", '<span class="regw"><span class="regshow">Perus</span><select class="regsel" aria-label="Rekisteröinti"><option value="0">Perusrekisteröinti</option><option value="' + REG_FAST + '">Pikarekisteröinti (48 h)</option></select></span>', '<span class="regv">' + eur(R.reg) + "</span>") +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
-      (EVC ? "" : line("Autovero", exact(c) ? "Erittely alla" : "Arvio, erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1])));
+      (EVC ? "" : line("Autovero", "Erittely alla", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1])));
     var s2;
     if (A.p === 0) {
       s2 = line("Veroprosentti", esc(A.pSrc), "0 %") + '<div class="ln sum"><div class="t">Autovero</div><div class="v">0 €</div></div>';
