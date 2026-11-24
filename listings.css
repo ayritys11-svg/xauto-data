@@ -307,3 +307,7 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .regshow{display:inline-flex;align-items:center;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B636D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center/16px;padding:0 36px 0 12px;font-size:16px;color:var(--fg);min-width:110px}
 .xl .regw .regsel{position:absolute!important;inset:0;width:100%!important;height:100%!important;margin:0!important;opacity:0;cursor:pointer}
 .xl .regw:focus-within .regshow{border-color:var(--accent)}
+/* ?-nappi otsikon perässä */
+.xl .qh{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:2px;position:relative;top:-2px;border-radius:50%;border:1.5px solid var(--muted);background:transparent;color:var(--muted);font:600 14px/1 var(--font-body,inherit);cursor:pointer;vertical-align:middle;padding:0;flex:none}
+.xl .qh.on{background:var(--fg);border-color:var(--fg);color:#fff}
+.xl .qht{margin-top:6px}
