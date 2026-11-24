@@ -130,7 +130,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       "</div>" +
       '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" +
       '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + rareN + ")</label>" +
-      '<label class="tg" id="xl-favl"' + (FAV.length || F.fav ? "" : " hidden") + '><input type="checkbox" id="xl-fav"' + (F.fav ? " checked" : "") + '> Vain suosikit (<span id="xl-favn">' + favN + "</span>)</label>" +
+      '<label class="tg" id="xl-favl"' + (FAV.length || F.fav ? "" : " hidden") + '><input type="checkbox" id="xl-fav"' + (F.fav ? " checked" : "") + '><span id="xl-favn"> Vain suosikit (' + favN + ")</span></label>" +
       '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Näytä vähemmän suodattimia" : "Näytä lisää suodattimia") + (nExtra ? " (" + nExtra + " valittu)" : "") + "</button>" +
       "</div>" +
       '<div class="sortbox"><label for="xl-sort">Järjestys</label><select id="xl-sort" aria-label="Järjestys">' + SORTOPTS + '</select>' + "</div>" +
@@ -419,7 +419,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       if (F.fav) { var y = window.scrollY; list(); window.scrollTo(0, y); return; } /* suosikkinäkymä: poistettu suosikki häviää listasta */
       /* muuten ei piirretä listaa uudelleen (se vilkkui): päivitetään vain suodattimen määrä */
       var fl = root.querySelector("#xl-favl"), fn = root.querySelector("#xl-favn");
-      if (fn) { var n = 0; DATA.cars.forEach(function (x) { if (isFav(x.id)) { if (pass(x, "fav")) n++; } }); fn.textContent = n; }
+      if (fn) { var n = 0; DATA.cars.forEach(function (x) { if (isFav(x.id)) { if (pass(x, "fav")) n++; } }); fn.textContent = " Vain suosikit (" + n + ")"; }
       if (fl) fl.hidden = !FAV.length;
     } }
   }, true);
