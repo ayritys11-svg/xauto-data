@@ -218,7 +218,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   /* valikollinen hintarivi: kiinni näkyy lyhyt nimi, auki pitkä; arvo = perushinta + valinnan lisähinta */
   function opt(t, base, o) {
     return line(t, '<span class="regw"><span class="regshow">' + o[0][0] + '</span><select class="regsel xo" data-base="' + base + '" aria-label="' + t + '">' +
-      o.map(function (x) { return '<option value="' + x[2] + '" data-s="' + x[0] + '">' + x[1] + "</option>"; }).join("") + "</select></span>", '<span class="xov">' + eur(base + o[0][2]) + "</span>");
+      o.map(function (x) { return '<option value="' + x[2] + '" data-s="' + x[0] + '">' + x[1] + " · " + eur(base + x[2]) + "</option>"; }).join("") + "</select></span>", '<span class="xov">' + eur(base + o[0][2]) + "</span>");
   }
   var INSP_FULL = 250; /* laaja tarkastus paikan päällä ennen ostoa */
   function insFull(R) { return Math.max(150, Math.round(R.car * 0.015 / 10) * 10); }
