@@ -628,6 +628,12 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   window.veloLoad(base, function (j) {
     if (!j) { root.innerHTML = '<div class="empty">Ilmoitusten lataus epäonnistui. Lataa sivu uudelleen.</div>'; return; }
     var had = !!DATA, y = window.scrollY;
+    /* Polttoaine näkyviin selkeästi: bensiini + sähkö (myös mild hybrid) = Hybridi, flex-fuel = Bensiini / E85 */
+    (j.cars || []).forEach(function (c) { (c.spec || []).forEach(function (r) {
+      if (r[0] !== "Polttoaine") return;
+      if (/\+ sähkö/i.test(r[1])) { r[1] = "Hybridi"; if (c.fuel === "Bensiini") c.fuel = "Hybridi"; }
+      else if (/e85/i.test(r[1])) r[1] = "Bensiini / E85";
+    }); });
     DATA = j; route();
     /* Etusivun laskuripilleri: autoilmoitusten määrä sivustolla */
     var cnt = document.querySelector(".xh .count");
