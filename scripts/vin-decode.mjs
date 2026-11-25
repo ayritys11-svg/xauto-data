@@ -86,7 +86,7 @@ export function specFi(d, c) {
   }
   if (d.EngineModel) add("Moottorikoodi", d.EngineModel);
   if (d.LowerBeamHeadlampLightSource) add("Ajovalot", T(d.LowerBeamHeadlampLightSource, [[/LED/i, "LED"], [/Xenon|HID/i, "Xenon"], [/Halogen/i, "Halogeeni"]]));
-  if (d.CurbWeightLB) add("Omamassa (valmistaja)", Math.round(+d.CurbWeightLB * 0.4536 / 10) * 10 + " kg");
+  if (d.CurbWeightLB) add("Omamassa (valmistaja)", String(Math.round(+d.CurbWeightLB * 0.4536 / 10) * 10).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " kg");
   if (d.TopSpeedMPH) add("Huippunopeus", Math.round(+d.TopSpeedMPH * 1.609) + " km/h");
   if (d.WheelSizeFront) add("Vanteet", d.WheelSizeFront + (d.WheelSizeRear && d.WheelSizeRear !== d.WheelSizeFront ? " / " + d.WheelSizeRear : "") + " tuumaa");
   if (d.ChargerPowerKW) add("Latausteho (AC)", String(+d.ChargerPowerKW).replace(".", ",") + " kW");
