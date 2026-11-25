@@ -85,7 +85,6 @@ export function specFi(d, c) {
     add("CO₂ (EPA)", (lo === hi ? lo : lo + " – " + hi) + " g/km");
   }
   if (d.EngineModel) add("Moottorikoodi", d.EngineModel);
-  if (d.LowerBeamHeadlampLightSource) add("Ajovalot", T(d.LowerBeamHeadlampLightSource, [[/LED/i, "LED"], [/Xenon|HID/i, "Xenon"], [/Halogen/i, "Halogeeni"]]));
   if (d.CurbWeightLB) add("Omamassa (valmistaja)", String(Math.round(+d.CurbWeightLB * 0.4536 / 10) * 10).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " kg");
   if (d.TopSpeedMPH) add("Huippunopeus", Math.round(+d.TopSpeedMPH * 1.609) + " km/h");
   if (d.WheelSizeFront) add("Vanteet", d.WheelSizeFront + (d.WheelSizeRear && d.WheelSizeRear !== d.WheelSizeFront ? " / " + d.WheelSizeRear : "") + " tuumaa");
@@ -123,6 +122,10 @@ export function equipFi(d) {
   put(1, std("RearAutomaticEmergencyBraking"), "Automaattinen jarrutus peruutettaessa");
   put(1, std("ParkAssist"), "Pysäköintitutkat / -avustin");
   put(1, std("RearVisibilitySystem"), "Peruutuskamera");
+  // ajovalot vain jos LED tai Xenon (halogeenia ei mainita)
+  const hl = d.LowerBeamHeadlampLightSource || "";
+  put(2, /LED/i.test(hl), "LED-ajovalot");
+  put(2, !/LED/i.test(hl) && /Xenon|HID/i.test(hl), "Xenon-ajovalot");
   put(2, std("AdaptiveHeadlights"), "Kaarrevalot");
   put(2, std("AdaptiveDrivingBeam"), "Mukautuvat kaukovalot (matrix)");
   put(2, std("SemiautomaticHeadlampBeamSwitching"), "Automaattiset kaukovalot");
