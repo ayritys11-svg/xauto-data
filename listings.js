@@ -362,7 +362,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var box = function (f) { var k = /Sama malli/.test(f[0]) ? ' class="k-fleet"' : f[0] === "VIN" ? ' class="k-vin"' : ""; return "<div" + k + "><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b>" + (f[0] === "VIN" ? '<button type="button" class="copy" data-copy="' + esc(f[1]) + '" aria-label="Kopioi VIN-koodi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Kopioi</span></button>' : "") + "</div>"; };
     /* Lyhyet otsikot: "Teho" ja "Omamassa"; vain yksi teho-rivi */
     var hasTeho = facts.some(function (f) { return f[0] === "Teho (valmistaja)" || f[0] === "Teho"; });
-    facts = facts.filter(function (f) { return f[0] !== "Sijainti"; }).filter(function (f) { return !(hasTeho && f[0] === "Teho autoverolaskennassa"); }).map(function (f) {
+    facts = facts.filter(function (f) { if (f[0] === "Vaihteisto") { if (c.fuel === "Sähkö") return false; } return f[0] !== "Sijainti"; }).filter(function (f) { return !(hasTeho && f[0] === "Teho autoverolaskennassa"); }).map(function (f) {
       var L = { "Teho (valmistaja)": "Teho", "Teho autoverolaskennassa": "Teho", "Omamassa (valmistaja)": "Omamassa" }[f[0]];
       return L ? [L].concat(f.slice(1)) : f;
     });
