@@ -649,11 +649,15 @@ if (!DISCOVER) {
   const xd = path.join(ROOT, "data/x");
   fs.rmSync(xd, { recursive: true, force: true }); fs.mkdirSync(xd, { recursive: true });
   for (const c of cars) {
-    const x = {};
+    // ilmoitussivun raskaat tiedot omaan tiedostoon; listaan jää vain kortteihin ja suodattimiin tarvittava
+    const x = { a: c.autovero, r: c.rows, w: c.warnings || [], q: c.equip || [] };
     if (c.photoList && c.photoList.length) x.p = c.photoList;
     if (EX[c.vin]) x.e = EX[c.vin];
-    delete c.photoList;
-    if (Object.keys(x).length) { fs.writeFileSync(path.join(xd, c.vin + ".json"), JSON.stringify(x)); c.px = 1; if (x.e) c.hx = 1; }
+    delete c.photoList; delete c.warnings; delete c.equip;
+    const A = c.autovero || {};
+    c.autovero = { avg: A.avg, VLo: A.VLo, VHi: A.VHi };
+    c.rows = { tax: c.rows && c.rows.tax };
+    fs.writeFileSync(path.join(xd, c.vin + ".json"), JSON.stringify(x)); c.px = 1; if (x.e) c.hx = 1;
   }
 }
 fs.writeFileSync(path.join(ROOT, "data/listings.json"), JSON.stringify(out));

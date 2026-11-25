@@ -84,7 +84,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
         (g[1].length > N ? '<details class="more"><summary>Näytä kaikki (' + g[1].length + ")</summary><ul>" + g[1].slice(N).map(li).join("") + "</ul></details>" : "") + "</div>";
     }).join("") + '<p class="eqn">Lisävarusteet myyjän ilmoituksesta. Varmistetaan ennen ostoa.</p></div>';
   }
-  function cardImg(u) { return "https://images.weserv.nl/?url=" + encodeURIComponent(u) + "&trim=12&w=640&h=480&fit=contain&cbg=ffffff&output=jpg&q=80"; }
+  function cardImg(u) { return "https://images.weserv.nl/?url=" + encodeURIComponent(u) + "&trim=12&w=480&h=360&fit=contain&cbg=ffffff&output=jpg&q=80"; }
   window.xlImgErr = function (im) {
     var o = im.getAttribute("data-o");
     if (o) { im.removeAttribute("data-o"); im.src = o; return; }
@@ -149,8 +149,27 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   var HT = function (c) { return Math.round(taxAcc(c).pct * 10); };
   var S = { save: function (a, b) { return (HT(a) - HT(b)) || SV(b) - SV(a); }, saveonly: function (a, b) { return SV(b) - SV(a); }, rare: function (a, b) { return (a.fleet || 0) - (b.fleet || 0) || SV(b) - SV(a); }, low: function (a, b) { return a.total.mid - b.total.mid; }, high: function (a, b) { return b.total.mid - a.total.mid; }, new: function (a, b) { return b.year - a.year || a.km - b.km; }, old: function (a, b) { return a.year - b.year || a.km - b.km; }, km: function (a, b) { return a.km - b.km; } };
   var SORTOPTS = '<option value="save">Pienin heitto ensin</option><option value="saveonly">Suurin säästö</option><option value="rare">Harvinaisin Suomessa</option><option value="low">Halvin ensin</option><option value="high">Kallein ensin</option><option value="new">Uusin ensin</option><option value="old">Vanhin ensin</option><option value="km">Vähiten ajettu</option>';
+  /* Autolista sivuttain: piirretään 24 korttia kerrallaan, loput "Näytä lisää" -napista tai automaattisesti alas vieritettäessä.
+     Hitaat puhelimet eivät jaksa satoja kortteja kerralla. Näytettyjen määrä muistetaan, jotta paluu listaan palaa samaan kohtaan. */
+  var PAGE = 24, SHOWN = PAGE, lastSig = "", LASTV = [], SHK = "velo-shown:" + location.pathname + location.search, moreIO = null;
+  try { var ss0 = +sessionStorage.getItem(SHK); if (ss0 > PAGE) SHOWN = ss0; } catch (e) {}
+  function moreBtn(v) { return v.length > SHOWN ? '<button type="button" class="morecars" id="xl-morecars">Näytä lisää autoja (' + (v.length - SHOWN) + ")</button>" : ""; }
+  function showMore() {
+    var g = root.querySelector(".grid"), b = root.querySelector("#xl-morecars"); if (!g || !b) return;
+    var from = SHOWN; SHOWN = Math.min(LASTV.length, SHOWN + PAGE);
+    g.insertAdjacentHTML("beforeend", LASTV.slice(from, SHOWN).map(card).join(""));
+    try { sessionStorage.setItem(SHK, String(SHOWN)); } catch (e) {}
+    if (SHOWN >= LASTV.length) { if (moreIO) moreIO.disconnect(); b.remove(); } else b.textContent = "Näytä lisää autoja (" + (LASTV.length - SHOWN) + ")";
+  }
+  function bindMore() {
+    if (moreIO) { moreIO.disconnect(); moreIO = null; }
+    var b = root.querySelector("#xl-morecars"); if (!b) return;
+    b.addEventListener("click", showMore);
+    if ("IntersectionObserver" in window) { moreIO = new IntersectionObserver(function (en) { if (en[0].isIntersecting) showMore(); }, { rootMargin: "800px 0px" }); moreIO.observe(b); }
+  }
   function list() {
     var cars = DATA.cars.slice();
+    var sig = JSON.stringify(F); if (lastSig) { if (sig !== lastSig) { SHOWN = PAGE; try { sessionStorage.setItem(SHK, String(PAGE)); } catch (e) {} } } lastSig = sig;
     // vaihtoehdot rajautuvat muiden valintojen mukaan (esim. merkki → mallit)
     var O = {}; ["make", "model", "trim", "body", "fuel", "gear", "drive", "loc", "color", "doors", "steer"].forEach(function (k) { O[k] = {}; });
     var val = { make: function (c) { return c.make; }, model: modelName, trim: function (c) { return c.trim; }, body: function (c) { return c.body; }, fuel: function (c) { return c.fuel; }, gear: function (c) { return gear(c.transmission); }, drive: function (c) { return driveFi(c.drivetrain); }, loc: locFi, color: function (c) { return colorFi(c.color); }, doors: doorsOf, steer: steerOf };
@@ -193,7 +212,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       "</div>" +
       '<div class="sortbox"><label for="xl-sort">Järjestys</label><select id="xl-sort" aria-label="Järjestys">' + SORTOPTS + '</select>' + "</div>" +
       '<p class="cnt">' + (v.length < cars.length ? "Näytetään " + v.length + " / " + cars.length + ' autoa · <button type="button" id="xl-clear" class="clr">Tyhjennä suodattimet</button>' : v.length + " autoa") + " · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + "</p>" +
-      (v.length ? '<div class="grid">' + v.map(card).join("") + "</div>" : '<div class="empty">' + (F.fav ? (FAV.length ? "Suosikeistasi yksikään ei vastaa valittuja ehtoja." : "Sinulla ei ole vielä suosikkeja. Tallenna auto suosikiksi painamalla autokortin tähteä.") : "Valituilla ehdoilla ei löytynyt autoja.") + "</div>");
+      (v.length ? '<div class="grid">' + v.slice(0, SHOWN).map(card).join("") + "</div>" + moreBtn(v) : '<div class="empty">' + (F.fav ? (FAV.length ? "Suosikeistasi yksikään ei vastaa valittuja ehtoja." : "Sinulla ei ole vielä suosikkeja. Tallenna auto suosikiksi painamalla autokortin tähteä.") : "Valituilla ehdoilla ei löytynyt autoja.") + "</div>");
+    LASTV = v; bindMore();
     root.querySelector("#xl-sort").value = F.sort;
     root.querySelector("#xl-sort").addEventListener("change", function (e) { F.sort = e.target.value; keep(); list(); });
     Array.prototype.forEach.call(root.querySelectorAll("input[data-f]"), function (el) {
@@ -552,9 +572,12 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     // Kuvalista ja myyjän ilmoittamat varusteet ladataan ilmoituskohtaisesta tiedostosta vasta tässä (lista pysyy kevyenä)
     if (c.px && !c._x) {
       root.innerHTML = '<p class="lead" style="padding:40px 0;text-align:center">Ladataan…</p>';
-      fetch(base + "data/x/" + encodeURIComponent(c.vin) + ".json").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (x) {
+      fetch(base + "data/x/" + encodeURIComponent(c.vin) + ".json").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (x) {
         c._x = 1; if (x.p) c.photoList = x.p; if (x.e) c.extra = x.e;
+        if (x.a) c.autovero = x.a; if (x.r) c.rows = x.r; c.warnings = x.w || []; c.equip = x.q || [];
         if (decodeURIComponent(location.hash.slice(1)) === c.id) detail(c);
+      }).catch(function () {
+        root.innerHTML = '<a class="back" href="#">← Kaikki autot</a><p class="lead" style="padding:40px 0;text-align:center">Ilmoituksen lataus epäonnistui. <a href="javascript:location.reload()">Yritä uudelleen</a></p>';
       });
       return;
     }
