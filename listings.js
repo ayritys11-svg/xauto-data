@@ -32,6 +32,59 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     return '<div class="ph">' + img + (tag ? '<span class="tag">' + esc(tag) + "</span>" : "") + "</div>";
   }
   window.__xlCar = CAR;
+  /* Korttikuvat, joissa auto on pieni keskellä valkoista/tasaista reunusta: rajataan reunus pois niin, että auto täyttää kortin.
+     Toimii vain jos kuvapalvelin sallii pikselien lukemisen (CORS); muuten kuva näytetään kuten ennenkin. Rajaus muistetaan selaimessa. */
+  var CROPK = "velo-crop-v1", CROP = {};
+  try { CROP = JSON.parse(localStorage.getItem(CROPK) || "{}") || {}; } catch (e) { CROP = {}; }
+  function applyCrop(img, b) {
+    if (!b) return;
+    var ph = img.parentNode; if (!ph) return;
+    var W = ph.clientWidth, H = ph.clientHeight; if (!W) return;
+    var bw = b[2] - b[0], bh = b[3] - b[1];
+    /* koko auto näkyy (ei leikata), pieni marginaali reunoille */
+    var k = Math.min(W / bw, H / bh) * 0.96;
+    img.style.cssText = "position:absolute;max-width:none;object-fit:fill;width:" + (b[4] * k / W * 100) + "%;height:" + (b[5] * k / H * 100) + "%;left:" + ((-(b[0] * k) + (W - bw * k) / 2) / W * 100) + "%;top:" + ((-(b[1] * k) + (H - bh * k) / 2) / H * 100) + "%";
+  }
+  function measure(u, done) {
+    var t = new Image(); t.crossOrigin = "anonymous"; t.referrerPolicy = "no-referrer";
+    t.onload = function () {
+      try {
+        var nw = t.naturalWidth, nh = t.naturalHeight, S = 96, sw = S, sh = Math.max(1, Math.round(S * nh / nw));
+        var cv = document.createElement("canvas"); cv.width = sw; cv.height = sh;
+        var cx = cv.getContext("2d"); cx.drawImage(t, 0, 0, sw, sh);
+        var d = cx.getImageData(0, 0, sw, sh).data;
+        function px(x, y) { var i = (y * sw + x) * 4; return [d[i], d[i + 1], d[i + 2]]; }
+        var c0 = px(0, 0), cs = [px(sw - 1, 0), px(0, sh - 1), px(sw - 1, sh - 1)], same = true;
+        cs.forEach(function (c) { if (Math.abs(c[0] - c0[0]) + Math.abs(c[1] - c0[1]) + Math.abs(c[2] - c0[2]) > 30) same = false; });
+        if (!same) { done(0); return; }
+        var x0 = sw, y0 = sh, x1 = -1, y1 = -1;
+        for (var y = 0; y < sh; y++) for (var x = 0; x < sw; x++) {
+          var p = px(x, y);
+          if (Math.abs(p[0] - c0[0]) + Math.abs(p[1] - c0[1]) + Math.abs(p[2] - c0[2]) > 36) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        }
+        if (x1 < 0) { done(0); return; }
+        var f = nw / sw, bx0 = Math.max(0, x0 - 1) * f, by0 = Math.max(0, y0 - 1) * f, bx1 = Math.min(sw, x1 + 2) * f, by1 = Math.min(sh, y1 + 2) * f;
+        /* rajataan vain jos reunusta on selvästi (auto alle 85 % kuvasta) */
+        if ((bx1 - bx0) * (by1 - by0) > 0.85 * nw * nh) { done(0); return; }
+        done([bx0, by0, bx1, by1, nw, nh]);
+      } catch (e) { done(0); }
+    };
+    t.onerror = function () { done(0); };
+    t.src = u;
+  }
+  document.addEventListener("load", function (e) {
+    var img = e.target;
+    if (!img || img.tagName !== "IMG") return;
+    if (!img.closest) return;
+    if (!img.closest(".car .ph")) return;
+    var u = img.getAttribute("src");
+    if (u in CROP) { applyCrop(img, CROP[u]); return; }
+    measure(u, function (b) {
+      CROP[u] = b;
+      try { var ks = Object.keys(CROP); if (ks.length > 400) delete CROP[ks[0]]; localStorage.setItem(CROPK, JSON.stringify(CROP)); } catch (x) {}
+      applyCrop(img, b);
+    });
+  }, true);
   var CONFP = { korkea: "Tarkka hinta-arvio", keskitaso: "Kohtalaisen tarkka hinta-arvio", matala: "Epätarkka hinta-arvio" };
   var CONF = { korkea: "Tarkka arvio", keskitaso: "Kohtalainen tarkkuus", matala: "Epävarma arvio" };
   // Tarkkuus = kuinka tarkasti lopullinen autovero tiedetään: autoveron vaihteluväli prosentteina autoveroarviosta
