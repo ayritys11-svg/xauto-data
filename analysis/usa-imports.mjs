@@ -18,12 +18,11 @@ for await (const line of rl) {
   const g = (k) => (H[k] != null ? (f[H[k]] || "").replace(/"/g, "").trim() : "");
   if (shown < 3) { shown++; console.error("ESIMERKKI:", ["ajoneuvoluokka","ensirekisterointipvm","kayttoonottopvm","merkkiSelvakielinen","kaupallinenNimi","valmistenumero2"].map((k) => k + "=" + g(k)).join(" | ")); }
   const cls = g("ajoneuvoluokka");
-  if (cls !== "M1" && cls !== "N1") continue;
+  if (!/^(M1|N1)/.test(cls)) continue;
   const vin = g("valmistenumero2") || g("valmistenumero");
   if (!/^[1245]/.test(vin)) continue;
   const er = day(g("ensirekisterointipvm")), ko = day(g("kayttoonottopvm"));
   if (er == null || ko == null || er - ko < 180) continue;
-  n++;
   let make = g("merkkiSelvakielinen").toUpperCase().replace("TESLA MOTORS", "TESLA").replace("DAIMLERCHRYSLER", "CHRYSLER");
   // Euroopassa uutena myydyt / Euroopasta tuodut merkit pois: tavoitteena puhdas USA-tuonti
   if (/^(TESLA|OPEL|LANCIA|BMW|MERCEDES|VOLKSWAGEN|VOLVO|AUDI|PORSCHE|HYUNDAI|KIA|MAZDA|SUBARU|MITSUBISHI|NISSAN|SMART|FIAT|ALFA)/.test(make)) continue;
@@ -31,7 +30,8 @@ for await (const line of rl) {
   let model = toks[0] || "?";
   if (/^(GRAND|TOWN|CROWN|RANGE|SANTA)$/.test(model)) model += " " + (toks[1] || "");
   if (/^RAM$/.test(make)) model = "RAM " + model;
-  model += cls === "N1" ? " (N1)" : "";
+  model += /^N1/.test(cls) ? " (paku/avolava)" : "";
+  n++;
   const y = new Date(er * 864e5).getUTCFullYear();
   byYear[y] = (byYear[y] || 0) + 1;
   byMake[make] = (byMake[make] || 0) + 1;
