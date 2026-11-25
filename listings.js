@@ -321,6 +321,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   }
   // Kuvagalleria: myyjän kuvat nimetään VIN-1.jpg, VIN-2.jpg, ...
   function urls(c) {
+    if (c.photoList && c.photoList.length) return c.photoList;
     if (!c.img) return [];
     var m = c.img.match(/^(.*-)(\d+)(\.\w+)$/), n = Math.min(c.photos || 1, 40), out = [];
     if (!m) return [c.img];

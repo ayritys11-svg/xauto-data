@@ -129,6 +129,9 @@ async function usdEur() {
 }
 
 let LIMIT = S.hakuKoko || 20;
+// auto.dev: ilmaistaso 1 000 hakua/kk ja ajoja ~10/kk -> enintään ~95 hakua ajoa kohden, ettei kiintiö lopu kesken kuun
+const AD_MAX = S.autodevMaxPerRun || 95;
+let adCalls = 0;
 const FAILED = new Set();
 async function search(q, state) {
   const out = [];
@@ -137,6 +140,8 @@ async function search(q, state) {
     if (state) p.set("retailListing.state", state);
     if (q.price) p.set("retailListing.price", q.price);
     p.set("retailListing.miles", "1-" + S.maxMailit);
+    if (adCalls >= AD_MAX) { FAILED.add(q.make + "|" + q.model); console.error("auto.dev: ajon hakuraja", AD_MAX, "täynnä"); break; }
+    adCalls++;
     const url = "https://api.auto.dev/listings?" + p.toString();
     const res = await fetch(url, { headers: { Authorization: "Bearer " + KEY } });
     if (!res.ok) {
@@ -152,6 +157,47 @@ async function search(q, state) {
     if (d.length < LIMIT) break;
   }
   return out;
+}
+
+// MarketCheck: toinen autolähde (ilmaistaso 500 hakua/kk, haku postinumeron ympäriltä enintään 100 mailia).
+// Muunnetaan ilmoitukset samaan muotoon kuin auto.devin, jolloin laskenta on sama. Kuukausikäyttö kirjataan data/mc_usage.json.
+const MCKEY = process.env.MARKETCHECK_KEY || "";
+const MC_MONTH_MAX = S.marketcheckMaxPerMonth || 450;
+const mcUsagePath = path.join(ROOT, "data/mc_usage.json");
+let mcUsage = { month: today.toISOString().slice(0, 7), calls: 0 };
+try { const u = JSON.parse(fs.readFileSync(mcUsagePath, "utf8")); if (u.month === mcUsage.month) mcUsage = u; } catch (e) {}
+// MarketCheckin polttoaine auto.devin muotoon (hybridin "Electric / Premium Unleaded" ei saa näyttää täyssähköltä)
+function mcFuel(b) {
+  const pt = String(b.powertrain_type || "").toUpperCase(), f = String(b.fuel_type || "");
+  if (pt === "BEV") return "Electric";
+  if (pt === "PHEV") return "Plug-In Hybrid";
+  if (/HEV/.test(pt)) return "Hybrid";
+  if (/electric/i.test(f) && /unleaded|gas|petrol/i.test(f)) return "Hybrid";
+  if (/^electric$/i.test(f.trim())) return "Electric";
+  if (/diesel/i.test(f)) return "Diesel";
+  return "Gasoline";
+}
+async function searchMC(q) {
+  if (!MCKEY) return [];
+  if (mcUsage.calls >= MC_MONTH_MAX) { console.error("MarketCheck: kuukauden raja", MC_MONTH_MAX, "täynnä"); return []; }
+  const p = new URLSearchParams({ api_key: MCKEY, make: q.make, model: q.model, zip: S.marketcheckZip || "10001", radius: String(S.marketcheckRadius || 100), car_type: "used", rows: "50", start: "0" });
+  if (q.year) { const [a, b] = String(q.year).split("-").map(Number); const ys = []; for (let y = a; y <= (b || a); y++) ys.push(y); p.set("year", ys.join(",")); }
+  if (q.price) p.set("price_range", q.price);
+  p.set("miles_range", "1-" + S.maxMailit);
+  mcUsage.calls++;
+  try {
+    const res = await fetch("https://api.marketcheck.com/v2/search/car/active?" + p.toString());
+    if (!res.ok) { console.error("MarketCheck HTTP", res.status, q.make, q.model, (await res.text()).slice(0, 200).replace(MCKEY, "***")); return []; }
+    const j = await res.json();
+    const sts = (S.osavaltiot && S.osavaltiot.length) ? S.osavaltiot : null;
+    return (j.listings || []).filter((x) => x.vin && x.price > 0 && x.dealer && (!sts || sts.includes(x.dealer.state))).map((x) => {
+      const b = x.build || {}, ph = (x.media && x.media.photo_links) || [];
+      return { vin: x.vin, src: "mc", createdAt: x.first_seen_at_date || x.scraped_at_date || null,
+        vehicle: { vin: x.vin, year: b.year, make: b.make || q.make, model: b.model || q.model, trim: b.trim || "", engine: b.engine || "", fuel: mcFuel(b),
+          drivetrain: b.drivetrain || "", transmission: b.transmission || "", exteriorColor: x.exterior_color || "", interiorColor: x.interior_color || "" },
+        retailListing: { price: x.price, miles: x.miles, city: x.dealer.city || "", state: x.dealer.state || "", primaryImage: ph[0] || "", photoCount: ph.length, photoList: ph } };
+    });
+  } catch (e) { console.error("MarketCheck", e.message); return []; }
 }
 
 // Polttoaine: auto.dev -> Veron käyttövoima ja Traficomin tyyppikoodi
@@ -427,7 +473,7 @@ function calc(L, fx) {
     id: vin, vin, year, make: v.make, model: v.model, trim: v.trim || "",
     title: [year, v.make, v.model, v.trim].filter(Boolean).join(" "),
     miles, km, engine: v.engine || "", fuel: F.fi, drivetrain: v.drivetrain || "", transmission: v.transmission || "",
-    img: rl.primaryImage || "", photos: rl.photoCount || 0,
+    img: rl.primaryImage || "", photos: rl.photoCount || 0, ...(rl.photoList && rl.photoList.length ? { photoList: rl.photoList.slice(0, 40) } : {}), ...(L.src ? { src: L.src } : {}),
     color: v.exteriorColor || v.color || "", interior: v.interiorColor || "", cpo: !!(rl.cpo || rl.certified), oneOwner: !!(L.history && L.history.oneOwner),
     country: /^(ON|QC|BC|AB|MB|SK|NS|NB|NL|PE)$/.test(st) ? "CA" : "US", city: rl.city || "", state: st, // myyjän nimeä ja linkkiä ei julkaista
     priceUsd, fx: fx.rate, fxDate: fx.date,
@@ -466,9 +512,14 @@ let raw = [];
 const counts = {};
 if (MOCK) raw = MOCK_DATA;
 else {
-  if (!KEY && !RECOMPUTE) { console.error("AUTODEV_KEY puuttuu"); process.exit(1); }
+  if (!KEY && !MCKEY && !RECOMPUTE) { console.error("AUTODEV_KEY ja MARKETCHECK_KEY puuttuvat"); process.exit(1); }
   const STATES = (S.osavaltiot && S.osavaltiot.length) ? S.osavaltiot : [null];
   if (!RECOMPUTE) for (const q of Q) for (const st of STATES) { const r = await search(q, st); console.log(q.make, q.model, st || "kaikki", r.length); counts[q.make + " " + q.model + " " + (st || "")] = r.length; raw.push(...r); }
+  if (!RECOMPUTE && MCKEY && !DISCOVER) {
+    for (const q of Q) { const r = await searchMC(q); console.log("MC", q.make, q.model, r.length); counts["MC " + q.make + " " + q.model] = r.length; raw.push(...r); }
+    fs.writeFileSync(mcUsagePath, JSON.stringify(mcUsage));
+    console.log("MarketCheck haut tässä kuussa:", mcUsage.calls, "/", MC_MONTH_MAX, "· auto.dev tässä ajossa:", adCalls, "/", AD_MAX);
+  }
 }
 const seen = new Set(), cars = [];
 // Käsin poistetut ilmoitukset (esim. vain myyjän mainoskuvia, ei kuvia itse autosta): VIN-lista data/blocked.json
@@ -486,7 +537,7 @@ if (!MOCK && !DISCOVER && FAILED.size) {
     for (const c of prev) if (want.has((c.make + "|" + c.model).toUpperCase()) && !have.has(c.vin)) {
       have.add(c.vin); kept++;
       raw.push({ vin: c.vin, createdAt: c.listedAt, vehicle: { vin: c.vin, year: c.year, make: c.make, model: c.model, trim: c.trim, engine: c.engine, fuel: c.fuel === "Sähkö" ? "Electric" : c.fuel === "Hybridi" ? "Hybrid" : c.fuel === "Lataushybridi" ? "Plug-In Hybrid" : c.fuel === "Diesel" ? "Diesel" : "Gasoline", drivetrain: c.drivetrain, transmission: c.transmission, exteriorColor: c.color, interiorColor: c.interior },
-        retailListing: { price: c.priceUsd, miles: c.miles, state: c.state, city: c.city, primaryImage: c.img, photoCount: c.photos } });
+        retailListing: { price: c.priceUsd, miles: c.miles, state: c.state, city: c.city, primaryImage: c.img, photoCount: c.photos, photoList: c.photoList } , src: c.src });
     }
   } catch (e) {}
 }
