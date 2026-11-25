@@ -42,6 +42,31 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       return "<div><h3>" + esc(g[0]) + "</h3><ul>" + g[1].map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>";
     }).join("") + '<p class="eqn">Varusteet valmistajan VIN-tietojen mukaan (vakiovarusteet). Lisävarusteet ja tarkka varustelu varmistetaan tarjousvaiheessa.</p></div>';
   }
+  /* Myyjän ilmoittamat varusteet, lisävarusteet ja paketit (MarketCheck). Yleisimmät termit suomeksi, muut alkuperäisinä. */
+  var FI_EQ = [[/heated (front )?seats?/i, "Istuinlämmitys"], [/ventilated|cooled seats?/i, "Tuuletetut istuimet"], [/heated steering/i, "Ohjauspyörän lämmitys"],
+    [/navigation/i, "Navigointijärjestelmä"], [/(moon|sun)roof|panoramic/i, "Kattoluukku / panoraamakatto"], [/leather/i, "Nahkaverhoilu"],
+    [/apple carplay/i, "Apple CarPlay"], [/android auto/i, "Android Auto"], [/bluetooth/i, "Bluetooth"], [/backup camera|rear.?view camera/i, "Peruutuskamera"],
+    [/360|surround view|bird.?s eye/i, "360°-kamera"], [/blind spot/i, "Kuolleen kulman varoitin"], [/adaptive cruise/i, "Mukautuva vakionopeudensäädin"],
+    [/lane (keep|depart)/i, "Kaistavahti"], [/keyless|push.?button start|smart key/i, "Avaimeton käynnistys"], [/remote start/i, "Kaukokäynnistys"],
+    [/power liftgate|power tailgate|hands.?free liftgate/i, "Sähköinen takaluukku"], [/heads?.?up display|hud\b/i, "Tuulilasinäyttö (HUD)"],
+    [/premium (audio|sound)|bose|harman|burmester|meridian|bang|mark levinson|jbl/i, "Premium-äänentoisto"], [/third row|3rd row/i, "Kolmas istuinrivi"],
+    [/tow(ing)? (package|hitch)|trailer hitch/i, "Vetokoukku / hinauspaketti"], [/memory seat/i, "Muistilla varustetut istuimet"],
+    [/power (front )?seats?|power driver seat/i, "Sähkösäätöiset istuimet"], [/wireless (phone )?charg/i, "Langaton puhelimen lataus"],
+    [/parking (sensor|assist)|park assist/i, "Pysäköintitutkat"], [/xenon|led headl/i, "LED-/Xenon-ajovalot"], [/alloy wheels/i, "Kevytmetallivanteet"],
+    [/all.?wheel drive|\bawd\b|4wd|four.?wheel/i, "Neliveto"], [/climate control|dual.?zone|tri.?zone|automatic climate/i, "Automaattinen ilmastointi"],
+    [/rain.?sensing/i, "Sadetunnistin"], [/air suspension/i, "Ilmajousitus"], [/magnetic ride|adaptive suspension/i, "Säätyvä alusta"],
+    [/performance exhaust/i, "Urheilupakoputkisto"], [/z51/i, "Z51-suorituskykypaketti"]];
+  function fiEq(t) { for (var i = 0; i < FI_EQ.length; i++) if (FI_EQ[i][0].test(t)) return FI_EQ[i][1]; return t; }
+  function uniq(a) { var seen = {}, out = []; a.forEach(function (t) { var k = t.toLowerCase(); if (!seen[k]) { seen[k] = 1; out.push(t); } }); return out; }
+  function extraHtml(c) {
+    var e = c.extra; if (!e) return "";
+    var G = [["Lisävarusteet ja paketit", uniq((e.p || []).concat(e.h || []).map(fiEq))], ["Lisävarusteet (myyjän ilmoitus)", uniq((e.o || []).map(fiEq))], ["Varusteet (myyjän ilmoitus)", uniq((e.f || []).map(fiEq))]]
+      .filter(function (g) { return g[1].length; });
+    if (!G.length && !e.msrp) return "";
+    return '<div class="eq eqx">' + (e.msrp ? '<p class="msrp">Uushinta USA:ssa (MSRP): <b>' + fmt(e.msrp) + " $</b></p>" : "") + G.map(function (g) {
+      return "<div><h3>" + esc(g[0]) + "</h3><ul>" + g[1].map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>";
+    }).join("") + '<p class="eqn">Lisävarusteet myyjän ilmoituksesta. Varmistetaan ennen ostoa.</p></div>';
+  }
   function cardImg(u) { return "https://images.weserv.nl/?url=" + encodeURIComponent(u) + "&trim=12&w=640&h=480&fit=contain&cbg=ffffff&output=jpg&q=80"; }
   window.xlImgErr = function (im) {
     var o = im.getAttribute("data-o");
@@ -285,7 +310,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       ('<ul class="warn"><li>Tarkka autovero lasketaan tarjousvaiheessa auton VIN-numeron ja tarkkojen tietojen perusteella. Lopullisen autoveron määrää Verohallinto.</li>' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>") + "</section>") +
       '<section class="sec"><h2><b>2</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></b></div>" + (isRare(c) ? "" : "<div><small>Arvo Suomessa</small><b>" + fiR(c) + "</b></div>") + (isRare(c) ? '<div class="rare"><small>Sama malli Suomessa (Traficom 9/2026)</small><b>' + (c.fleet === 0 ? "Ei yhtään" : fmt(c.fleet) + " kpl") + "</b>" : c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Ero keskiarvolla</small><b style=\"color:" + (c.saving > 0 ? "var(--good)" : "var(--bad)") + '">' + (c.saving > 0 ? "−" : "+") + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
       (EVC ? '<p class="lead" style="margin-top:12px">Yläraja: kuljetus 15 % arvioitua kalliimpi. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p>' + (c.warnings.length ? '<ul class="warn">' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>" : "") : '<p class="lead" style="margin-top:12px">Alaraja: tulli 0 % (jos mahdollista) ja autovero alarajalla. Yläraja: tulli 10 %, autovero ylärajalla ja kuljetus 15 % arvioitua kalliimpi. Verohallinto päättää lopullisen autoveron. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p>') + '</section>' +
-      '<section class="sec sec-info"><h2>Tiedot ja varusteet</h2><div class="facts">' + facts + "</div>" + equipHtml(c) + "</section>";
+      '<section class="sec sec-info"><h2>Tiedot ja varusteet</h2><div class="facts">' + facts + "</div>" + extraHtml(c) + equipHtml(c) + "</section>";
     bindGallery(c);
     var single = root.querySelector(".gal .ph img:not(#xl-main)");
     if (single) { single.style.cursor = "zoom-in"; single.addEventListener("click", function () { openLB([c.img], 0, c.title); }); }
@@ -506,7 +531,17 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (MODE === "featured") { featured(); return; }
     var id = decodeURIComponent(location.hash.slice(1));
     var c = id && DATA.cars.filter(function (x) { return x.id === id; })[0];
-    if (c) detail(c); else list();
+    if (!c) { list(); return; }
+    // Kuvalista ja myyjän ilmoittamat varusteet ladataan ilmoituskohtaisesta tiedostosta vasta tässä (lista pysyy kevyenä)
+    if (c.px && !c._x) {
+      root.innerHTML = '<p class="lead" style="padding:40px 0;text-align:center">Ladataan…</p>';
+      fetch(base + "data/x/" + encodeURIComponent(c.vin) + ".json").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (x) {
+        c._x = 1; if (x.p) c.photoList = x.p; if (x.e) c.extra = x.e;
+        if (decodeURIComponent(location.hash.slice(1)) === c.id) detail(c);
+      });
+      return;
+    }
+    detail(c);
   }
   // Vierityskohta säilyy: sivun päivitys tai paluu ilmoituksesta listaan palauttaa samaan kohtaan.
   // Sisältö piirretään vasta datan tultua, joten selaimen oma palautus ei toimi: tallennetaan kohta itse.

@@ -17,7 +17,7 @@ jobs:
         run: |
           git config user.name "xauto-bot"
           git config user.email "xauto-bot@users.noreply.github.com"
-          git add data/listings.json data/vin_cache.json
+          git add -A data/listings.json data/vin_cache.json data/x
           git diff --cached --quiet || git commit -m "VIN-tiedot ja varusteet päivitetty $(date -u +%F) [skip ci]"
           git pull --rebase -q origin main || true
           git push

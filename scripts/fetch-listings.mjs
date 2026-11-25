@@ -17,6 +17,9 @@ const KEY = process.env.AUTODEV_KEY || "";
 const MOCK = process.argv.includes("--mock");
 const DBG = process.argv.includes("--debug");
 const today = new Date();
+// Ilmoituskohtaiset lisätiedot (kuvalista ja myyjän ilmoittamat varusteet) omiin tiedostoihinsa data/x/VIN.json,
+// jotta autolista pysyy kevyenä ja lisätiedot ladataan vasta ilmoitusta avattaessa.
+function readX(vin) { try { return JSON.parse(fs.readFileSync(path.join(ROOT, "data/x", vin + ".json"), "utf8")); } catch (e) { return {}; } }
 
 const X = loadEngine(ROOT);
 const M = X.M();
@@ -201,7 +204,7 @@ async function searchMC(q) {
     const got = (j.listings || []);
     all.push(...got.filter((x) => x.vin && x.price > 0 && x.dealer && (!sts || sts.includes(x.dealer.state))).map((x) => {
       const b = x.build || {}, ph = (x.media && x.media.photo_links) || [];
-      return { vin: x.vin, src: "mc", createdAt: x.first_seen_at_date || x.scraped_at_date || null,
+      return { vin: x.vin, src: "mc", mcId: x.id, createdAt: x.first_seen_at_date || x.scraped_at_date || null,
         vehicle: { vin: x.vin, year: b.year, make: b.make || q.make, model: b.model || q.model, trim: b.trim || "", engine: b.engine || "", fuel: mcFuel(b),
           drivetrain: b.drivetrain || "", transmission: b.transmission || "", exteriorColor: x.exterior_color || "", interiorColor: x.interior_color || "" },
         retailListing: { price: x.price, miles: x.miles, city: x.dealer.city || "", state: x.dealer.state || "", primaryImage: ph[0] || "", photoCount: ph.length, photoList: ph } };
@@ -485,7 +488,7 @@ function calc(L, fx) {
     id: vin, vin, year, make: v.make, model: v.model, trim: v.trim || "",
     title: [year, v.make, v.model, v.trim].filter(Boolean).join(" "),
     miles, km, engine: v.engine || "", fuel: F.fi, drivetrain: v.drivetrain || "", transmission: v.transmission || "",
-    img: rl.primaryImage || "", photos: rl.photoCount || 0, ...(rl.photoList && rl.photoList.length ? { photoList: rl.photoList.slice(0, 40) } : {}), ...(L.src ? { src: L.src } : {}),
+    img: rl.primaryImage || "", photos: rl.photoCount || 0, ...(rl.photoList && rl.photoList.length ? { photoList: rl.photoList.slice(0, 40) } : {}), ...(L.src ? { src: L.src } : {}), ...(L.mcId ? { mcId: L.mcId } : {}),
     color: v.exteriorColor || v.color || "", interior: v.interiorColor || "", cpo: !!(rl.cpo || rl.certified), oneOwner: !!(L.history && L.history.oneOwner),
     country: /^(ON|QC|BC|AB|MB|SK|NS|NB|NL|PE)$/.test(st) ? "CA" : "US", city: rl.city || "", state: st, // myyjän nimeä ja linkkiä ei julkaista
     priceUsd, fx: fx.rate, fxDate: fx.date,
@@ -549,7 +552,7 @@ if (!MOCK && !DISCOVER && FAILED.size) {
     for (const c of prev) if (want.has((c.make + "|" + c.model).toUpperCase()) && !have.has(c.vin)) {
       have.add(c.vin); kept++;
       raw.push({ vin: c.vin, createdAt: c.listedAt, vehicle: { vin: c.vin, year: c.year, make: c.make, model: c.model, trim: c.trim, engine: c.engine, fuel: c.fuel === "Sähkö" ? "Electric" : c.fuel === "Hybridi" ? "Hybrid" : c.fuel === "Lataushybridi" ? "Plug-In Hybrid" : c.fuel === "Diesel" ? "Diesel" : "Gasoline", drivetrain: c.drivetrain, transmission: c.transmission, exteriorColor: c.color, interiorColor: c.interior },
-        retailListing: { price: c.priceUsd, miles: c.miles, state: c.state, city: c.city, primaryImage: c.img, photoCount: c.photos, photoList: c.photoList } , src: c.src });
+        retailListing: { price: c.priceUsd, miles: c.miles, state: c.state, city: c.city, primaryImage: c.img, photoCount: c.photos, photoList: c.photoList || readX(c.vin).p } , src: c.src, mcId: c.mcId });
     }
   } catch (e) {}
 }
@@ -612,6 +615,44 @@ if (DISCOVER) {
   }).sort((a, b) => (b.osuusHalvempia ?? -1) - (a.osuusHalvempia ?? -1));
   fs.writeFileSync(path.join(ROOT, "data/discover.json"), JSON.stringify({ updated: today.toISOString(), state: DQ.state, rows }, null, 1));
   console.log("Kartoitus valmis"); process.exit(0);
+}
+// MarketCheckin ilmoituksen lisätiedot (varusteet, lisävarusteet, paketit, uushinta). Yksi haku per auto, joten haetaan
+// ensin Suomea halvimmat autot ja muistetaan tulos (data/mc_extra.json), ettei samaa autoa haeta uudestaan.
+const extraPath = path.join(ROOT, "data/mc_extra.json");
+let EX = {}; try { EX = JSON.parse(fs.readFileSync(extraPath, "utf8")); } catch (e) {}
+if (!MOCK && !DISCOVER && !RECOMPUTE && MCKEY) {
+  const per = S.marketcheckExtraPerRun || 20;
+  const todo = cars.filter((c) => c.mcId && !EX[c.vin]).sort((a, b) => (b.saving ?? -1e9) - (a.saving ?? -1e9)).slice(0, per);
+  let got = 0;
+  for (const c of todo) {
+    if (mcUsage.calls >= MC_MONTH_MAX) break;
+    await new Promise((r) => setTimeout(r, 400));
+    mcUsage.calls++;
+    try {
+      const res = await fetch("https://api.marketcheck.com/v2/listing/car/" + encodeURIComponent(c.mcId) + "?api_key=" + MCKEY);
+      if (!res.ok) { console.error("MC extra HTTP", res.status, c.vin); continue; }
+      const j = await res.json(), e = j.extra || {}, b = j.build || {};
+      const arr = (a) => (Array.isArray(a) ? a.map((x) => String(x).trim()).filter(Boolean) : []);
+      EX[c.vin] = { o: arr(e.options), f: arr(e.features), p: arr(e.options_packages), h: arr(e.high_value_features), msrp: j.msrp || null,
+        mpg: b.city_mpg || b.highway_mpg ? [b.city_mpg || null, b.highway_mpg || null] : null, t: today.toISOString().slice(0, 10) };
+      got++;
+    } catch (err) { console.error("MC extra", c.vin, err.message); }
+  }
+  fs.writeFileSync(mcUsagePath, JSON.stringify(mcUsage));
+  console.log("MarketCheck lisätiedot haettu", got, "autolle; muistissa", Object.keys(EX).length, "· haut kuussa", mcUsage.calls);
+}
+fs.writeFileSync(extraPath, JSON.stringify(EX));
+// Kuvalista ja lisätiedot omiin tiedostoihin; listaan vain merkintä niiden olemassaolosta
+if (!DISCOVER) {
+  const xd = path.join(ROOT, "data/x");
+  fs.rmSync(xd, { recursive: true, force: true }); fs.mkdirSync(xd, { recursive: true });
+  for (const c of cars) {
+    const x = {};
+    if (c.photoList && c.photoList.length) x.p = c.photoList;
+    if (EX[c.vin]) x.e = EX[c.vin];
+    delete c.photoList;
+    if (Object.keys(x).length) { fs.writeFileSync(path.join(xd, c.vin + ".json"), JSON.stringify(x)); c.px = 1; if (x.e) c.hx = 1; }
+  }
 }
 fs.writeFileSync(path.join(ROOT, "data/listings.json"), JSON.stringify(out));
 console.log("Valmis:", cars.length, "autoa,", skipped, "ohitettu,", common, "yleistä ei-kannattavaa pois");
