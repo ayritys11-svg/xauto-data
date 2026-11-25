@@ -14,7 +14,7 @@ var AN=null;
 function anResolve(mk,md,kw){if(!AN)return null;var kb=kw?Math.floor(kw/10):-1,best=null,bs=-1;
   Object.keys(AN.d).forEach(function(k){var p=k.split("|");if(p[0]!==mk)return;var m=p[1],e=AN.d[k];
     if(!(m===md||md.indexOf(m+" ")===0||m.indexOf(md+" ")===0||md.replace(/[\s-]/g,"")===m.replace(/[\s-]/g,"")))return;
-    var sc=(kw&&e.kw[kw]?2e6:0)+(kb>=0&&e.kb[kb]?1e6:0)+e.m[0];if(sc>bs){bs=sc;best=m;}});return best;}
+    var sc=(m===md&&e.m[0]>=5?3.5e6:0)+(kw&&e.kw[kw]?2e6:0)+(kb>=0&&e.kb[kb]?1e6:0)+e.m[0];if(sc>bs){bs=sc;best=m;}});return best;}
 function anP(make,model,kw,reg){
   if(!AN||!kw)return null;var mk=String(make).trim().toUpperCase().replace(/\s+/g," "),md=String(model).trim().toUpperCase().replace(/\s+/g," ");
   md=anResolve(mk,md,kw)||md;var e=AN.d[mk+"|"+md];if(!e||!e.x)return null;var kb=Math.floor(kw/10),y=+reg.slice(0,4)+(+reg.slice(5,7)-1)/12,R=[];
@@ -50,6 +50,19 @@ function epaLookup(make,model,reg,cc){
     opts.push(Object.assign({},base,{v:r[2],lo:r[2],hi:r[2],n:1,name:r[3]+", "+r[1].toFixed(1).replace(".",",")+" l, "+r[4]+", "+r[5]+" (EPA "+r[0]+")",cc:Math.round(r[1]*1000),y0:r[0],y1:r[0]}));});
   return{choose:opts.slice(0,12),epa:true};
 }
+function anReg(e,kw,age,k,t){
+  if(!e.x)return null;var Y=function(s){return +s.slice(0,4)+(+s.slice(5,7)-1)/12},c=AN.co[e.s],rows=[],kws={};
+  Object.keys(e.x).forEach(function(b){e.x[b].forEach(function(x){if(x[4]>0&&x[0]>20){rows.push(x);kws[x[0]]=1;}});});
+  if(rows.length<8||Object.keys(kws).length<2)return null;
+  var P=[0,0.6,0,0],L=[0,0.5,80,80],M=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],B=[0,0,0,0],i,j,q;
+  rows.forEach(function(x){var ag=Math.max(0,Y(x[2])-Y(x[1])),kk=x[3]/10,tt=Y(x[2])-2020,y=Math.log(x[4])-(c[0]*ag+c[1]*ag*ag+c[2]*kk+c[3]*kk*kk/10+c[4]*tt),v=[1,Math.log(x[0]),ag,kk];
+    for(i=0;i<4;i++){B[i]+=v[i]*y;for(j=0;j<4;j++)M[i][j]+=v[i]*v[j];}});
+  for(i=0;i<4;i++){M[i][i]+=L[i];B[i]+=L[i]*P[i];M[i].push(B[i]);}
+  for(i=0;i<4;i++){var p=i;for(q=i+1;q<4;q++)if(Math.abs(M[q][i])>Math.abs(M[p][i]))p=q;var tmp=M[i];M[i]=M[p];M[p]=tmp;if(Math.abs(M[i][i])<1e-12)return null;
+    for(q=0;q<4;q++){if(q===i)continue;var fq=M[q][i]/M[i][i];for(j=i;j<=4;j++)M[q][j]-=fq*M[i][j];}}
+  var w=M.map(function(r,ii){return r[4]/r[ii];});
+  return{y:w[0]+w[1]*Math.log(kw)+w[2]*age+w[3]*k,n:rows.length};
+}
 function anEst(mk,md,kw,age,kmK,today){
   if(!AN)return null;var e=AN.d[mk+"|"+md];if(!e)return null;
   var kb=kw?Math.floor(kw/10):-1,v,lvl,b;
@@ -58,6 +71,11 @@ function anEst(mk,md,kw,age,kmK,today){
   else{v=e.m;lvl="sama malli, eri tehot";b="m";}
   var c=AN.co[e.s],k=kmK/10,t=(today-new Date("2020-01-01T00:00:00Z"))/(365.25*86400000);
   var f=c[0]*age+c[1]*age*age+c[2]*k+c[3]*k*k/10+c[4]*t;
+  /* Ei päätöksiä tällä teholla eikä tehoryhmällä: sovitetaan mallin kaikista päätöksistä teho, ikä ja ajomäärä
+     (ridge-regressio). Takaisintesti eteenpäin ajassa: mediaanivirhe 28 % -> 25 %, systemaattinen aliarvio 22 %. */
+  if(b==="m"&&kw){var rg=anReg(e,kw,age,k,t);if(rg){
+    var ext2=Math.max(0,kmK-v[3])/10+Math.max(0,age-v[5]),ex2=Math.min(ext2,6);
+    return{V:Math.exp(rg.y+f+0.217+AN.cal.bias.ext*ex2),s:Math.sqrt(0.28*0.28+Math.pow(0.03*ex2,2)),lvl:"sama malli, teho sovitettu "+rg.n+" päätöksestä",b:"reg",n:rg.n,ext:ext2,kmMin:v[2],kmMax:v[3],ageMin:v[4],ageMax:v[5],med:0.21,rows:null,seg:e.s};}}
   var ext=Math.max(0,kmK-v[3])/10+Math.max(0,age-v[5]),ex=Math.min(ext,6);
   var lnV=v[1]+f+AN.cal.bias[b]+AN.cal.bias.ext*ex;
   var s=Math.sqrt(Math.pow(AN.cal.s[b],2)+Math.pow(0.03*ex,2));

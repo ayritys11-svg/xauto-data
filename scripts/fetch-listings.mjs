@@ -308,6 +308,10 @@ function epaMatch(mk, v, F, cc, year) {
   const md = up(v.model), words = new Set((md + " " + up(v.trim) + " " + up(v.drivetrain)).split(/[\s\/-]+/));
   const bases = Object.keys(D).filter((b) => md === b || md.indexOf(b + " ") === 0 || b.indexOf(md + " ") === 0 || md.replace(/[\s-]/g, "") === b.replace(/[\s-]/g, ""));
   if (!bases.length) return null;
+  // Tarkin nimi voittaa: "RANGE ROVER VELAR" ei saa sekoittua "RANGE ROVER" -malliin
+  const exact = bases.filter((b) => b === md || NZ(b) === NZ(md));
+  if (exact.length) bases.splice(0, bases.length, ...exact);
+  else { const pre = bases.filter((b) => md.indexOf(b + " ") === 0); if (pre.length) { const ml = Math.max(...pre.map((b) => b.length)); bases.splice(0, bases.length, ...pre.filter((b) => b.length === ml)); } }
   const awd = /AWD|4WD|4X4/i.test(v.drivetrain || "") || /AWD|4WD|4X4/.test(md + " " + up(v.trim));
   const man = /MANUAL/i.test(v.transmission || "");
   let R = [];
@@ -320,9 +324,13 @@ function epaMatch(mk, v, F, cc, year) {
     if ((r[5] === "4WD") !== awd && (r[5] === "4WD" || r[5] === "FWD" || r[5] === "RWD")) continue;
     if (/^M/.test(r[4]) !== man) continue;
     const extra = nm.split(/[\s\/-]+/).filter((w) => w && !words.has(w) && !["AWD","FWD","RWD","4WD","2WD"].includes(w) && !md.includes(w));
-    R.push({ v: r[2], ex: extra.length, nm: r[3], mpg: [r[8] || 0, r[9] || 0, r[10] || 0] });
+    const nmW = new Set(nm.split(/[\s\/-]+/)), miss = md.split(/\s+/).filter((w) => w.length > 1 && !nmW.has(w)).length;
+    R.push({ v: r[2], ex: extra.length, miss, nm: r[3], mpg: [r[8] || 0, r[9] || 0, r[10] || 0] });
   }
   if (!R.length) return null;
+  // Ensin versiot, joiden nimessä on mallin kaikki sanat (Velar ei saa saada tavallisen Range Roverin arvoa), sitten vähiten ylimääräisiä sanoja
+  const minMiss = Math.min(...R.map((r) => r.miss));
+  R = R.filter((r) => r.miss === minMiss);
   const minEx = Math.min(...R.map((r) => r.ex));
   R = R.filter((r) => r.ex === minEx);
   const vs = R.map((r) => r.v).sort((a, b) => a - b);
@@ -425,16 +433,20 @@ function calc(L, fx) {
       if (e && !e.error && e.V && (e.n || 0) >= 10) { best = Object.assign(e, { md: best.md }); warn.push(F.ev && p === 0 ? "Vertailuhinta Suomessa on laskettu lähimmästä yleisestä versiosta (" + w + " kW), koska tästä tehoversiosta (" + kw + " kW) on vähän tietoa." : "Tästä tehoversiosta (" + kw + " kW) on vähän verotuspäätöksiä, joten auton arvo Suomessa on laskettu lähimmästä yleisestä versiosta (" + w + " kW)."); break; }
     }
   }
+  // Tuontihinta-arvion kalibrointi (11/2026): luotettavilla arvioilla (s < 0,13, 428 autoa) ln(V / Vfb) keskimäärin -0,326, hajonta 0,284
+  const VI = Vfb * Math.exp(-0.326), SI = 0.284;
   if (!best) {
-    best = { V: Vfb, VLow: Vfb * 0.8, VHigh: Vfb * 1.3, s: 0.25, n: 0, md: models[0], level: "Ei Verohallinnon päätöksiä tästä mallista: arvio tuontihinnasta", warnings: [] };
+    best = { V: VI, VLow: VI * Math.exp(-1.28 * SI), VHigh: VI * Math.exp(1.28 * SI), s: SI, n: 0, md: models[0], level: "Ei Verohallinnon päätöksiä tästä mallista: arvio tuontihinnasta", warnings: [] };
     noCompare = true;
     warn.push("Verohallinnolla ei ole päätöksiä tästä mallista, joten auton arvo Suomessa on arvioitu tuontihinnasta. Suosittelemme pyytämään Verohallinnolta ennakkoratkaisun ennen ostoa.");
-  } else if ((best.n || 0) < 10 || best.V > Vfb * 2.5 || (fleetCount(mk, models) < 300 && (best.warnings || []).some((w) => /vanhempi kuin|ulkopuolelle/.test(w)))) {
+  } else if ((best.n || 0) < 10 || (best.s || 0) >= 0.2 || best.V > Vfb * 2.5 || (fleetCount(mk, models) < 300 && (best.warnings || []).some((w) => /vanhempi kuin|ulkopuolelle/.test(w)))) {
     // Vähän päätöksiä tai arvio ristiriidassa tuontihinnan kanssa (verotusarvo ei voi olla alle tuontikulujen)
     // Vähän päätöksiä: yhdistetään päätöksiin ja tuontihintaan perustuva arvio
-    const Vm = Math.sqrt(best.V * Vfb);
-    noCompare = fleetCount(mk, models) < 300;
-    best = Object.assign({}, best, { V: Vm, VLow: Math.min(best.VLow, Vfb * 0.8), VHigh: Math.max(best.VHigh, Vfb * 1.3), s: Math.max(best.s || 0, 0.25), level: ((best.n || 0) < 10 ? "Vähän päätöksiä (" + (best.n || 0) + ")" : "Päätökset koskevat eri ikäisiä tai erilaisia autoja") + ": yhdistetty arvio päätöksistä ja tuontihinnasta" });
+    // Kaksi toisistaan riippumatonta arviota painotetaan tarkkuudellaan (käänteisvarianssi)
+    const few = (best.n || 0) < 10, s1 = Math.max(best.s || 0, few ? 0.3 : 0.15), w1 = 1 / (s1 * s1), w2 = 1 / (SI * SI);
+    const Vm = Math.exp((w1 * Math.log(best.V) + w2 * Math.log(VI)) / (w1 + w2)), sm = 1 / Math.sqrt(w1 + w2);
+    if (few || best.V > Vfb * 2.5) noCompare = fleetCount(mk, models) < 300;
+    best = Object.assign({}, best, { V: Vm, VLow: Vm * Math.exp(-1.28 * sm), VHigh: Vm * Math.exp(1.28 * sm), s: sm, level: few ? "Vähän päätöksiä (" + (best.n || 0) + "): yhdistetty arvio päätöksistä ja tuontihinnasta" : best.V > Vfb * 2.5 ? "Päätökset koskevat eri ikäisiä tai erilaisia autoja: yhdistetty arvio päätöksistä ja tuontihinnasta" : best.level + ", yhdistetty tuontihintaan" });
   }
   // Varmistus: verrataan koko mallin päätöksiin. Iso ero = teho tai ryhmä luultavasti väärin.
   let clash = false;
@@ -503,7 +515,7 @@ function calc(L, fx) {
     },
     autovero: {
       V: r10(V), VLo: r10(VLo), VHi: r10(VHi), s: +sPct.toFixed(3), n: best.n, level: best.level,
-      cons, econs: F.ev ? evCons(mk, v, year) : null, kw, kwSrc: KG.src, kwSp: KG.sp == null ? 99 : KG.sp, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
+      cons, econs: F.ev ? evCons(mk, v, year) : null, kw, vfb: Math.round(Vfb), kwSrc: KG.src, kwSp: KG.sp == null ? 99 : KG.sp, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
       a: r0(taxA), same, b: taxB != null ? r0(taxB) : null, avg: r0(tax)
     },
     total: { lo: r100(totLo), hi: r100(totHi), mid: r100(totMid) },
