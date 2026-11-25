@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEngine } from "./engine.mjs";
-import { decodeVins, specFi } from "./vin-decode.mjs";
+import { decodeVins, specFi, equipFi } from "./vin-decode.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const S = JSON.parse(fs.readFileSync(path.join(ROOT, "config/settings.json"), "utf8"));
@@ -524,6 +524,7 @@ if (!MOCK && !DISCOVER) {
   for (const c of cars) {
     const d = vc[c.vin] || {};
     c.spec = specFi(d, { co2: c.autovero && c.autovero.co2, co2lo: c.autovero && c.autovero.co2lo, co2hi: c.autovero && c.autovero.co2hi, cons: c.autovero && c.autovero.cons, econs: c.autovero && c.autovero.econs, fuel: c.fuel });
+    c.equip = equipFi(d);
     if (d.EngineHP && !c.hp) c.hp = Math.round(+d.EngineHP);
     if (d.BodyClass) c.body = (c.spec.find((x) => x[0] === "Korimalli") || [])[1];
   }
