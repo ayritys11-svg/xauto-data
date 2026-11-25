@@ -572,7 +572,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     // Kuvalista ja myyjän ilmoittamat varusteet ladataan ilmoituskohtaisesta tiedostosta vasta tässä (lista pysyy kevyenä)
     if (c.px && !c._x) {
       root.innerHTML = '<p class="lead" style="padding:40px 0;text-align:center">Ladataan…</p>';
-      fetch(base + "data/x/" + encodeURIComponent(c.vin) + ".json").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (x) {
+      fetch(base + "data/x/" + encodeURIComponent(c.vin) + ".json?v=" + encodeURIComponent((DATA && DATA.updated) || "")).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (x) {
         c._x = 1; if (x.p) c.photoList = x.p; if (x.e) c.extra = x.e;
         if (x.a) c.autovero = x.a; if (x.r) c.rows = x.r; c.warnings = x.w || []; c.equip = x.q || [];
         if (decodeURIComponent(location.hash.slice(1)) === c.id) detail(c);
