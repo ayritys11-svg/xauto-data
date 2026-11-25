@@ -55,7 +55,11 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     [/parking (sensor|assist)|park assist/i, "Pysäköintitutkat"], [/xenon|led headl/i, "LED-/Xenon-ajovalot"], [/alloy wheels/i, "Kevytmetallivanteet"],
     [/all.?wheel drive|\bawd\b|4wd|four.?wheel/i, "Neliveto"], [/climate control|dual.?zone|tri.?zone|automatic climate/i, "Automaattinen ilmastointi"],
     [/rain.?sensing/i, "Sadetunnistin"], [/air suspension/i, "Ilmajousitus"], [/magnetic ride|adaptive suspension/i, "Säätyvä alusta"],
-    [/performance exhaust/i, "Urheilupakoputkisto"], [/z51/i, "Z51-suorituskykypaketti"]];
+    [/performance exhaust/i, "Urheilupakoputkisto"], [/z51/i, "Z51-suorituskykypaketti"], [/premium speakers/i, "Premium-kaiuttimet"],
+    [/satellite radio/i, "Satelliittiradio (USA)"], [/touch ?screen/i, "Kosketusnäyttö"], [/steering wheel controls/i, "Ohjauspyörän säätimet"],
+    [/upgraded tire/i, "Paremmat renkaat"], [/upgrade(d)? paint|premium paint|metallic paint/i, "Erikoismaali"], [/advanced headlight|adaptive headl/i, "Mukautuvat ajovalot"],
+    [/sport seats?/i, "Urheiluistuimet"], [/sport package/i, "Urheilupaketti"], [/cold weather/i, "Talvipaketti"], [/power folding mirrors?/i, "Sähkötaittuvat peilit"],
+    [/ambient lighting/i, "Tunnelmavalaistus"], [/rear entertainment/i, "Takamatkustajien viihdejärjestelmä"], [/carbon fiber/i, "Hiilikuituosat"]];
   function fiEq(t) { for (var i = 0; i < FI_EQ.length; i++) if (FI_EQ[i][0].test(t)) return FI_EQ[i][1]; return t; }
   /* Myyjien varustelistat ovat pitkiä mainostekstejä: lyhennetään ensimmäiseen lauseeseen ja pudotetaan sulkeissa olevat ehdot */
   function shortEq(t) {
