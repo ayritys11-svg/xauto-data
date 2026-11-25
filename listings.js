@@ -262,7 +262,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   /* Teho: valmistajan hv ensisijaisesti; kW:sta laskettu hv vain, jos arvion heitto on enintään noin 10 hv (7 kW), muuten pelkkä kW */
   /* Valmistajan amerikkalainen hp suomalaisiksi hevosvoimiksi (hv, 735,5 W) */
   function hvHp(hp) { return Math.round(hp * 1.01387); }
-  /* Kortin otsikko: ilman vuosimallia, moottorin koko suluissa mallin jälkeen (ei sähköautoille), esim. "Dodge Challenger (5.7) GT" */
+  /* Kortin otsikko: ilman vuosimallia, moottorin koko suluissa viimeisenä (ei sähköautoille), esim. "Chevrolet Corvette 2LT (6.2)" */
   function cardTitle(c) {
     var t = String(c.title || "").replace(/^\s*(19|20)\d\d\s+/, "");
     if (c.fuel === "Sähkö") return t;
@@ -270,9 +270,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (sp) m = String(sp[1]).match(/(\d+)[,.](\d)\s*l/i);
     if (!m) m = String(c.engine || "").match(/(\d+)\.(\d)\s*L/i);
     if (!m) return t;
-    var L = "(" + m[1] + "." + m[2] + ")", mm = ((c.make || "") + " " + (c.model || "")).trim();
-    if (mm) { if (t.toLowerCase().indexOf(mm.toLowerCase()) === 0) return t.slice(0, mm.length) + " " + L + t.slice(mm.length); }
-    return t + " " + L;
+    return t + " (" + m[1] + "." + m[2] + ")";
   }
   function kwHvOk(c, A) { if (c.hp) return true; if (/ZL1|HELLCAT|GT500|SHELBY|Z06|ZR1|E-RAY|SRT|TRACKHAWK|DEMON|REDEYE|SCAT|RAPTOR|BLACKWING|\bV\b/i.test((c.title || "") + " " + (c.trim || ""))) return false; return !!(A && A.kw && A.kwSp != null && A.kwSp <= 7); }
   function tehoTxt(c, A, both) {
