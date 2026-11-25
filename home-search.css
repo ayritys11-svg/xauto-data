@@ -38,3 +38,6 @@
 
 /* Palvelumme-laatikoiden tekstit keskelle (kuvake ja otsikko ovat jo keskellä) */
 .xh .svcg p{text-align:center!important;margin-left:auto!important;margin-right:auto!important}
+/* Korimallien valokuvat */
+.xh .type img.tyimg{width:96px;height:48px;object-fit:contain;mix-blend-mode:multiply;display:block}
+.xh .type[aria-pressed="true"] img.tyimg{filter:drop-shadow(0 0 0 var(--accent))}
