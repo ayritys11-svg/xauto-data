@@ -354,7 +354,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       .concat([["Teho autoverolaskennassa", A.kw ? (kwHvOk(c, A) ? Math.round(A.kw / 0.7355) + " hv / " : "") + A.kw + " kW" : ""], ["Sama malli Suomessa" + ((function () { var AB = { "bensiini": "bens.", "diesel": "dies.", "hybridi": "hybr.", "avoauto": "avo", "farmari": "farm.", "viistoperä": "viistop.", "sedan": "sedan" }; var w = (c.gen ? ["kori " + c.gen[0] + (c.gen[1] < 2090 ? " – " + c.gen[1] : " –")] : []).concat((c.fleetWhy || []).map(function (x) { return AB[x] || x; })).slice(0, 3); return w.length ? " (" + w.join(", ") + ")" : ""; })()), c.fleet != null ? fleetTxt(c) : ""], ["Koko malli Suomessa", c.fleetModel != null ? (c.fleetModel === 0 ? "ei yhtään" : fmt(c.fleetModel) + " kpl") : ""], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["VIN", c.vin]])
       .filter(function (f) { return f[1]; });
     /* Tärkeysjärjestys: ostajan tärkeimmät tiedot ensin */
-    var ORD = [/^Vuosimalli/, /^Ajettu/, /^(Polttoaine|Käyttövoima)/, /^Teho/, /^Moottori$/, /^Vaihteisto/, /^Veto/, /^Varustelu/, /^Korimalli/, /^CO/, /^Keskikulutus/, /ulutus/, /^Toimintamatka|^Akku|^Latausteho/, /^Väri/, /^Sisustus/, /^Ovet/, /^Istuma/, /^Omamassa/, /^Vanteet/, /^Huippunopeus/, /^Akseliväli/, /^Valmistusmaa/, /^Moottorikoodi/, /^Sama malli/, /^Koko malli/, /^Sijainti/, /^VIN/];
+    var ORD = [/^Vuosimalli/, /^Ajettu/, /^(Polttoaine|Käyttövoima)/, /^Sähköistys/, /^Teho/, /^Moottori$/, /^Vaihteisto/, /^Veto/, /^Varustelu/, /^Korimalli/, /^CO/, /^Keskikulutus/, /ulutus/, /^Toimintamatka|^Akku|^Latausteho/, /^Väri/, /^Sisustus/, /^Ovet/, /^Istuma/, /^Omamassa/, /^Vanteet/, /^Huippunopeus/, /^Akseliväli/, /^Valmistusmaa/, /^Moottorikoodi/, /^Sama malli/, /^Koko malli/, /^Sijainti/, /^VIN/];
     var rk = function (f) { for (var i = 0; i < ORD.length; i++) if (ORD[i].test(f[0])) return i; return 50; };
     facts = facts.map(function (f, i) { return [f, i]; }).sort(function (x, y) { return rk(x[0]) - rk(y[0]) || x[1] - y[1]; }).map(function (x) { return x[0]; });
     var isCons = function (f) { return /ulutus/.test(f[0]); }, cons = facts.filter(isCons), firstCons = facts.findIndex(isCons);
@@ -362,7 +362,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var box = function (f) { var k = /Sama malli/.test(f[0]) ? ' class="k-fleet"' : f[0] === "VIN" ? ' class="k-vin"' : ""; return "<div" + k + "><span>" + f[0] + "</span><b>" + esc(f[1]) + "</b>" + (f[0] === "VIN" ? '<button type="button" class="copy" data-copy="' + esc(f[1]) + '" aria-label="Kopioi VIN-koodi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Kopioi</span></button>' : "") + "</div>"; };
     /* Lyhyet otsikot: "Teho" ja "Omamassa"; vain yksi teho-rivi */
     var hasTeho = facts.some(function (f) { return f[0] === "Teho (valmistaja)" || f[0] === "Teho"; });
-    facts = facts.filter(function (f) { return !(hasTeho && f[0] === "Teho autoverolaskennassa"); }).map(function (f) {
+    facts = facts.filter(function (f) { return f[0] !== "Sijainti"; }).filter(function (f) { return !(hasTeho && f[0] === "Teho autoverolaskennassa"); }).map(function (f) {
       var L = { "Teho (valmistaja)": "Teho", "Teho autoverolaskennassa": "Teho", "Omamassa (valmistaja)": "Omamassa" }[f[0]];
       return L ? [L].concat(f.slice(1)) : f;
     });
