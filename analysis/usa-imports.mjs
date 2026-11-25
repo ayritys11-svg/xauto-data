@@ -5,11 +5,13 @@ import readline from "node:readline";
 const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
 let H = null, n = 0;
 const by = {}, byMake = {}, byYear = {};
-const day = (s) => { const t = Date.parse(s); return Number.isNaN(t) ? null : t / 864e5; };
+const day = (s) => { const m = String(s).match(/^(\d{4})-?(\d{2})-?(\d{2})/); if (!m) return null; return Date.UTC(+m[1], +m[2] - 1, +m[3]) / 864e5; };
+let shown = 0;
 for await (const line of rl) {
   const f = line.split(";");
   if (!H) { H = {}; f.forEach((k, i) => (H[k.replace(/"/g, "").trim()] = i)); console.error("KENTÄT:", Object.keys(H).join(",")); continue; }
   const g = (k) => (H[k] != null ? (f[H[k]] || "").replace(/"/g, "").trim() : "");
+  if (shown < 3) { shown++; console.error("ESIMERKKI:", ["ajoneuvoluokka","ensirekisterointipvm","kayttoonottopvm","merkkiSelvakielinen","kaupallinenNimi","valmistenumero2"].map((k) => k + "=" + g(k)).join(" | ")); }
   if (g("ajoneuvoluokka") !== "M1") continue;
   const vin = g("valmistenumero2") || g("valmistenumero");
   if (!/^[1245]/.test(vin)) continue;
