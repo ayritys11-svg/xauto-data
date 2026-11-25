@@ -352,3 +352,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl :focus,.xl :focus-visible{outline:none!important}
 .xl .regsel:focus,.xl .bar .cb input:focus,.xl .bar select:focus,.xl .bar input:focus,.xl .sortbox select:focus{border-color:var(--line)!important;box-shadow:none!important}
 .xl .regw:focus-within .regshow{border-color:var(--line)!important}
+/* Korttien hinta isommaksi (yksi luku mahtuu hyvin) */
+.xl .car .price b{font-size:26px!important;font-weight:700!important;letter-spacing:-.01em}
+@media (max-width:640px){.xl .car .price b{font-size:20px!important;white-space:nowrap!important}}
