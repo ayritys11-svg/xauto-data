@@ -355,7 +355,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       .filter(function (f) { return f[1]; });
     /* Tärkeysjärjestys: ostajan tärkeimmät tiedot ensin */
     var ORD = [/^Vuosimalli/, /^Ajettu/, /^(Polttoaine|Käyttövoima)/, /^Sähköistys/, /^Teho/, /^Moottori$/, /^Vaihteisto/, /^Veto/, /^Varustelu/, /^Korimalli/, /^CO/, /^Keskikulutus/, /ulutus/, /^Toimintamatka|^Akku|^Latausteho/, /^Väri/, /^Sisustus/, /^Ovet/, /^Istuma/, /^Omamassa/, /^Vanteet/, /^Huippunopeus/, /^Akseliväli/, /^Valmistusmaa/, /^Moottorikoodi/, /^Sama malli/, /^Koko malli/, /^Sijainti/, /^VIN/];
-    var rk = function (f) { for (var i = 0; i < ORD.length; i++) if (ORD[i].test(f[0])) return i; return 50; };
+    var rk = function (f) { if (f[0] === "VIN") return 999; for (var i = 0; i < ORD.length; i++) if (ORD[i].test(f[0])) return i; return 50; };
     facts = facts.map(function (f, i) { return [f, i]; }).sort(function (x, y) { return rk(x[0]) - rk(y[0]) || x[1] - y[1]; }).map(function (x) { return x[0]; });
     var isCons = function (f) { return /ulutus/.test(f[0]); }, cons = facts.filter(isCons), firstCons = facts.findIndex(isCons);
     if (cons.length) { facts = facts.filter(function (f) { return !isCons(f); }); facts.splice(firstCons, 0, ["__CONS__", cons]); }
