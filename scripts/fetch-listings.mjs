@@ -180,7 +180,9 @@ function mcFuel(b) {
 async function searchMC(q) {
   if (!MCKEY) return [];
   if (mcUsage.calls >= MC_MONTH_MAX) { console.error("MarketCheck: kuukauden raja", MC_MONTH_MAX, "täynnä"); return []; }
-  const p = new URLSearchParams({ api_key: MCKEY, make: q.make, model: q.model, zip: S.marketcheckZip || "10001", radius: String(S.marketcheckRadius || 100), car_type: "used", rows: "50", start: "0" });
+  const all = [];
+  for (let pg = 0; pg < Math.min(q.pages || 1, 2); pg++) {
+  const p = new URLSearchParams({ api_key: MCKEY, make: q.make, model: q.model, zip: S.marketcheckZip || "10001", radius: String(S.marketcheckRadius || 100), car_type: "used", rows: "50", start: String(pg * 50) });
   if (q.year) { const [a, b] = String(q.year).split("-").map(Number); const ys = []; for (let y = a; y <= (b || a); y++) ys.push(y); p.set("year", ys.join(",")); }
   if (q.price) p.set("price_range", q.price);
   p.set("miles_range", "1-" + S.maxMailit);
@@ -193,17 +195,21 @@ async function searchMC(q) {
       res = await fetch("https://api.marketcheck.com/v2/search/car/active?" + p.toString());
       if (res.status !== 429) break;
     }
-    if (!res.ok) { console.error("MarketCheck HTTP", res.status, q.make, q.model, (await res.text()).slice(0, 200).replace(MCKEY, "***")); return []; }
+    if (!res.ok) { console.error("MarketCheck HTTP", res.status, q.make, q.model, (await res.text()).slice(0, 200).replace(MCKEY, "***")); break; }
     const j = await res.json();
     const sts = (S.osavaltiot && S.osavaltiot.length) ? S.osavaltiot : null;
-    return (j.listings || []).filter((x) => x.vin && x.price > 0 && x.dealer && (!sts || sts.includes(x.dealer.state))).map((x) => {
+    const got = (j.listings || []);
+    all.push(...got.filter((x) => x.vin && x.price > 0 && x.dealer && (!sts || sts.includes(x.dealer.state))).map((x) => {
       const b = x.build || {}, ph = (x.media && x.media.photo_links) || [];
       return { vin: x.vin, src: "mc", createdAt: x.first_seen_at_date || x.scraped_at_date || null,
         vehicle: { vin: x.vin, year: b.year, make: b.make || q.make, model: b.model || q.model, trim: b.trim || "", engine: b.engine || "", fuel: mcFuel(b),
           drivetrain: b.drivetrain || "", transmission: b.transmission || "", exteriorColor: x.exterior_color || "", interiorColor: x.interior_color || "" },
         retailListing: { price: x.price, miles: x.miles, city: x.dealer.city || "", state: x.dealer.state || "", primaryImage: ph[0] || "", photoCount: ph.length, photoList: ph } };
-    });
-  } catch (e) { console.error("MarketCheck", e.message); return []; }
+    }));
+    if (got.length < 50) break;
+  } catch (e) { console.error("MarketCheck", e.message); break; }
+  }
+  return all;
 }
 
 // Polttoaine: auto.dev -> Veron käyttövoima ja Traficomin tyyppikoodi
