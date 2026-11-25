@@ -34,7 +34,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   window.__xlCar = CAR;
   /* Korttikuvat, joissa auto on pieni keskellä valkoista/tasaista reunusta: rajataan reunus pois niin, että auto täyttää kortin.
      Toimii vain jos kuvapalvelin sallii pikselien lukemisen (CORS); muuten kuva näytetään kuten ennenkin. Rajaus muistetaan selaimessa. */
-  var CROPK = "velo-crop-v1", CROP = {};
+  var CROPK = "velo-crop-v2", CROP = {};
   try { CROP = JSON.parse(localStorage.getItem(CROPK) || "{}") || {}; } catch (e) { CROP = {}; }
   function applyCrop(img, b) {
     if (!b) return;
@@ -70,7 +70,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       } catch (e) { done(0); }
     };
     t.onerror = function () { done(0); };
-    t.src = u;
+    /* kuvapalvelin ei salli pikselien lukemista suoraan, joten mitataan pieni kopio CORS-sallivan kuvaproxyn kautta; itse kuva näytetään alkuperäisestä */
+    t.src = "https://images.weserv.nl/?w=160&url=" + encodeURIComponent(u);
   }
   document.addEventListener("load", function (e) {
     var img = e.target;
