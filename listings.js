@@ -265,6 +265,19 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   /* Kortin otsikko: ilman vuosimallia, moottorin koko suluissa viimeisenä (ei sähköautoille), esim. "Chevrolet Corvette 2LT (6.2)" */
   /* Kakkososio: Arvo Suomessa ja Ero näytetään vain, kun malli on yleinen JA auto on Suomen hintaa halvempi; muuten Sama malli Suomessa (kpl) */
   function noCmp(c) { if (isRare(c)) return true; return !(c.saving > 0); }
+  /* Huomautukset selkokielelle: tekniset varoitukset yhdistetään yhdeksi lyhyeksi lauseeksi, jonka kuka tahansa ymmärtää */
+  function plainWarn(W, ev) {
+    W = W || []; var out = [], why = "";
+    W.forEach(function (w) {
+      if (/käyttöön ennen/.test(w)) { out.push(w); return; }
+      if (/verotettu harvoin|vähän verotuspäätöksiä|vähän tietoa|lähimmästä yleisestä/.test(w)) { if (!why) why = "Tästä mallista tai versiosta on Suomessa vähän vertailutietoa"; return; }
+      if (/vanhempi|ajettu|Ajokilometrit/.test(w)) { if (!why) why = "Auto on vanhempi tai enemmän ajettu kuin useimmat Suomessa verotetut"; return; }
+      if (/EPA-datassa|poikkeaa paljon/.test(w)) { if (!why) why = "Auton tarkka versio pitää vielä varmistaa"; return; }
+      out.push(w);
+    });
+    if (why) out.unshift(why + ", joten " + (ev ? "auton arvo Suomessa on" : "autoveron arvio on") + " tavallista epävarmempi. Tarkistamme tiedot ja kerromme tarkan summan tarjouksessa.");
+    return out;
+  }
   function cardTitle(c) {
     var t = String(c.title || "").replace(/^\s*(19|20)\d\d\s+/, "");
     if (c.fuel === "Sähkö") return t;
@@ -377,9 +390,9 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       "</div></div>" +
       '<section class="sec"><h2><b>1</b>Mistä hinta koostuu</h2>' + s1 + "</section>" +
       (EVC ? "" : '<section class="sec sec2" id="xl-sec2"><h2><span>Mistä autoveroarvio koostuu</span><button type="button" class="qh qr" aria-label="Näytä selitys" aria-expanded="false">?</button></h2><p class="lead qht" hidden>Autovero = auton arvo Suomessa × veroprosentti. Auton arvo Suomessa on arvioitu Verohallinnon omista päätöksistä, veroprosentti CO₂-taulukosta ja valmiista päätöksistä.</p>' + s2 +
-      ('<ul class="warn"><li>Tarkka autovero lasketaan tarjousvaiheessa auton VIN-numeron ja tarkkojen tietojen perusteella. Lopullisen autoveron määrää Verohallinto.</li>' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>") + "</section>") +
+      ('<ul class="warn"><li>Tarkka autovero lasketaan tarjousvaiheessa auton VIN-numeron ja tarkkojen tietojen perusteella. Lopullisen autoveron määrää Verohallinto.</li>' + plainWarn(c.warnings, c.fuel === "Sähkö").map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>") + "</section>") +
       '<section class="sec"><h2><b>2</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></b></div>" + (noCmp(c) ? "" : "<div><small>Arvo Suomessa</small><b>" + fiR(c) + "</b></div>") + (noCmp(c) ? '<div class="rare"><small>Sama malli Suomessa (Traficom 9/2026)</small><b>' + (c.fleet === 0 ? "Ei yhtään" : fmt(c.fleet) + " kpl") + "</b>" : c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Ero keskiarvolla</small><b style=\"color:" + (c.saving > 0 ? "var(--good)" : "var(--bad)") + '">' + (c.saving > 0 ? "−" : "+") + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
-      (EVC ? '<p class="lead" style="margin-top:12px">Yläraja: kuljetus 15 % arvioitua kalliimpi. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p>' + (c.warnings.length ? '<ul class="warn">' + c.warnings.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>" : "") : '<p class="lead" style="margin-top:12px">Alaraja: tulli 0 % (jos mahdollista) ja autovero alarajalla. Yläraja: tulli 10 %, autovero ylärajalla ja kuljetus 15 % arvioitua kalliimpi. Verohallinto päättää lopullisen autoveron. Arvio-merkityt kulut tarkentuvat tarjouksessa.</p>') + '</section>' +
+      (EVC ? '<p class="lead" style="margin-top:12px">Hinta on arvio. Kuljetuksen tarkka hinta selviää tarjouksessa, ennen kuin mitään ostetaan.</p>' + (plainWarn(c.warnings, c.fuel === "Sähkö").length ? '<ul class="warn">' + plainWarn(c.warnings, c.fuel === "Sähkö").map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>" : "") : '<p class="lead" style="margin-top:12px">Hinta on arvio. Hinta vaihtelee, koska autoveron, tullin ja kuljetuksen tarkat summat selviävät vasta tarjouksessa. Saat tarkan hinnan ennen kuin mitään ostetaan. Lopullisen autoveron päättää Verohallinto.</p>') + '</section>' +
       '<section class="sec sec-info"><h2>Tiedot ja varusteet</h2><div class="facts">' + facts + "</div>" + extraHtml(c) + equipHtml(c) + "</section>";
     bindGallery(c);
     var single = root.querySelector(".gal .ph img:not(#xl-main)");
