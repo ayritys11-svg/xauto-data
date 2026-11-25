@@ -209,6 +209,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + rareN + ")</label>" +
       '<label class="tg" id="xl-favl"' + (FAV.length || F.fav ? "" : " hidden") + '><input type="checkbox" id="xl-fav"' + (F.fav ? " checked" : "") + '><span id="xl-favn"> Vain suosikit (' + favN + ")</span></label>" +
       '<button type="button" class="moref" id="xl-more" aria-expanded="' + OPEN + '">' + (OPEN ? "Näytä vähemmän suodattimia" : "Näytä lisää suodattimia") + (nExtra ? " (" + nExtra + " valittu)" : "") + "</button>" +
+      '<button type="button" class="hae" id="xl-hae">Hae (' + v.length + (v.length === 1 ? " auto" : " autoa") + ")</button>" +
       "</div>" +
       '<div class="sortbox"><label for="xl-sort">Järjestys</label><select id="xl-sort" aria-label="Järjestys">' + SORTOPTS + '</select>' + "</div>" +
       '<p class="cnt">' + (v.length < cars.length ? "Näytetään " + v.length + " / " + cars.length + ' autoa · <button type="button" id="xl-clear" class="clr">Tyhjennä suodattimet</button>' : v.length + " autoa") + " · päivitetty " + new Date(DATA.updated).toLocaleDateString("fi-FI") + "</p>" +
@@ -222,6 +223,12 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     });
     Array.prototype.forEach.call(root.querySelectorAll(".cb .x"), function (b) { b.addEventListener("click", function () { F[b.dataset.k] = ""; list(); }); });
     root.querySelector("#xl-more").addEventListener("click", function () { OPEN = !OPEN; list(); });
+    /* Hae: vie suoraan tuloksiin (suodattimet päivittyvät jo valittaessa, painike tekee sen selväksi) */
+    root.querySelector("#xl-hae").addEventListener("click", function () {
+      var t = root.querySelector(".cnt"); if (!t) return;
+      var hd = document.querySelector("header.wp-block-template-part"), off = hd ? hd.getBoundingClientRect().height : 0;
+      window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - off - 12, behavior: "smooth" });
+    });
     Array.prototype.forEach.call(root.querySelectorAll(".vrf[data-r]"), function (b) {
       b.addEventListener("click", function () {
         var r = b.getAttribute("data-r").split(",");
