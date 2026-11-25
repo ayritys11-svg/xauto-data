@@ -259,6 +259,14 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       '<div class="row arvo"><span>Arvo Suomessa</span><b>' + arvoFi(c) + "</b></div>" + conf(c) + "</a>";
   }
 
+  /* Teho: valmistajan hv ensisijaisesti; kW:sta laskettu hv vain, jos arvion heitto on enintään noin 10 hv (7 kW), muuten pelkkä kW */
+  function kwHvOk(c, A) { if (c.hp) return true; if (/ZL1|HELLCAT|GT500|SHELBY|Z06|ZR1|E-RAY|SRT|TRACKHAWK|DEMON|REDEYE|SCAT|RAPTOR|BLACKWING|\bV\b/i.test((c.title || "") + " " + (c.trim || ""))) return false; return !!(A && A.kw && A.kwSp != null && A.kwSp <= 7); }
+  function tehoTxt(c, A, both) {
+    if (c.hp) return c.hp + " hv" + (both ? " / " + Math.round(c.hp * 0.7457) + " kW" : "");
+    if (!A || !A.kw) return "";
+    if (kwHvOk(c, A)) { var hv = Math.round(A.kw / 0.7457); return hv + " hv" + (both ? " / " + A.kw + " kW" : ""); }
+    return A.kw + " kW";
+  }
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
   var REG_FAST = 200; /* pikarekisteröinnin (48 h) lisähinta perusrekisteröintiin */
   /* täysvakuutus kuljetukselle: 1,5 % auton hinnasta, vähintään 150 € */
@@ -330,8 +338,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       .concat(has("Vaihteisto") ? [] : [["Vaihteisto", gear(c.transmission)]])
       .concat(has("Veto") ? [] : [["Veto", ({ AWD: "Neliveto (AWD)", "4WD": "Neliveto (4WD)", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || c.drivetrain]])
       .concat(SP)
-      .concat(has("Teho (valmistaja)") || !(c.hp || A.kw) ? [] : [["Teho", c.hp ? c.hp + " hv / " + Math.round(c.hp * 0.7457) + " kW" : A.kw + " kW" + (A.kwSrc === "vin" ? "" : " (arvio)")]])
-      .concat([["Teho autoverolaskennassa", A.kw ? (c.hp ? Math.round(A.kw / 0.7457) + " hv / " : "") + A.kw + " kW" + (A.kwSrc === "vin" ? " (VIN)" : " (arvio)") : ""], ["Sama malli Suomessa" + ((function () { var AB = { "bensiini": "bens.", "diesel": "dies.", "hybridi": "hybr.", "avoauto": "avo", "farmari": "farm.", "viistoperä": "viistop.", "sedan": "sedan" }; var w = (c.gen ? ["kori " + c.gen[0] + (c.gen[1] < 2090 ? " – " + c.gen[1] : " –")] : []).concat((c.fleetWhy || []).map(function (x) { return AB[x] || x; })).slice(0, 3); return w.length ? " (" + w.join(", ") + ")" : ""; })()), c.fleet != null ? fleetTxt(c) : ""], ["Koko malli Suomessa", c.fleetModel != null ? (c.fleetModel === 0 ? "ei yhtään" : fmt(c.fleetModel) + " kpl") : ""], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["VIN", c.vin]])
+      .concat(has("Teho (valmistaja)") || !(c.hp || A.kw) ? [] : [["Teho", tehoTxt(c, A, 1)]])
+      .concat([["Teho autoverolaskennassa", A.kw ? (kwHvOk(c, A) ? Math.round(A.kw / 0.7457) + " hv / " : "") + A.kw + " kW" : ""], ["Sama malli Suomessa" + ((function () { var AB = { "bensiini": "bens.", "diesel": "dies.", "hybridi": "hybr.", "avoauto": "avo", "farmari": "farm.", "viistoperä": "viistop.", "sedan": "sedan" }; var w = (c.gen ? ["kori " + c.gen[0] + (c.gen[1] < 2090 ? " – " + c.gen[1] : " –")] : []).concat((c.fleetWhy || []).map(function (x) { return AB[x] || x; })).slice(0, 3); return w.length ? " (" + w.join(", ") + ")" : ""; })()), c.fleet != null ? fleetTxt(c) : ""], ["Koko malli Suomessa", c.fleetModel != null ? (c.fleetModel === 0 ? "ei yhtään" : fmt(c.fleetModel) + " kpl") : ""], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["VIN", c.vin]])
       .filter(function (f) { return f[1]; });
     var isCons = function (f) { return /ulutus/.test(f[0]); }, cons = facts.filter(isCons), firstCons = facts.findIndex(isCons);
     if (cons.length) { facts = facts.filter(function (f) { return !isCons(f); }); facts.splice(firstCons, 0, ["__CONS__", cons]); }
@@ -339,7 +347,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     facts = facts.map(function (f) { return f[0] === "__CONS__" ? '<span class="frow">' + f[1].map(box).join("") + "</span>" : box(f); }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
-      '<div class="hd">' + gallery(c) + '<div class="info"><div class="ttl"><h1>' + esc(c.title) + '</h1>' + favBtn(c) + "</div>" + '<p class="spec">' + [fmt(c.km) + " km", c.fuel, c.hp ? c.hp + " hv" : (A.kw ? A.kw + " kW" : ""), c.body || "", ({ AWD: "Neliveto", "4WD": "Neliveto", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || ""].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
+      '<div class="hd">' + gallery(c) + '<div class="info"><div class="ttl"><h1>' + esc(c.title) + '</h1>' + favBtn(c) + "</div>" + '<p class="spec">' + [fmt(c.km) + " km", c.fuel, tehoTxt(c, A, 0), c.body || "", ({ AWD: "Neliveto", "4WD": "Neliveto", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || ""].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
       '<div><small style="color:var(--muted)">Hinta Suomessa rekisteröitynä</small><div class="big"><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></div></div>" + saveBadge(c, 1) + conf(c) +
       '<a class="cta" href="' + esc(tarjous + (tarjous.indexOf("?") >= 0 ? "&" : "?") + "auto=" + encodeURIComponent(c.vin) + "&nimi=" + encodeURIComponent(c.title)) + '">Kysy lisätietoa</a>' +
       "</div></div>" +

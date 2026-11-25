@@ -259,7 +259,10 @@ function kwGuess(mk, models, t, cc, fu, year) {
     if (year >= v[4] && year <= v[5] + 1) cnt[p[3]] = (cnt[p[3]] || 0) + n;
   }
   const top = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0];
-  if (Object.keys(cnt).length) return { kw: +top(cnt)[0], src: "traficom" };
+  // sp = suurin poikkeama (kW) valitusta tehosta muihin yleisiin versioihin (vähintään 5 % osuus); kertoo arvion tarkkuuden
+  const spr = (o, k) => { const tot = Object.values(o).reduce((x, y) => x + y, 0); let m = 0; for (const [w, n] of Object.entries(o)) if (n / tot >= 0.05) m = Math.max(m, Math.abs(+w - k)); return m; };
+  const pick = (o, src) => { const k = +top(o)[0]; return { kw: k, src, sp: spr(o, k) }; };
+  if (Object.keys(cnt).length) return pick(cnt, "traficom");
   // Verohallinnon päätökset samalta vuosimallilta (±1 v), rajattuna iskutilavuuden mukaisiin tehoihin
   const cand = Object.keys(any).map(Number), yr = {};
   for (const k of Object.keys(AN.d)) {
@@ -271,16 +274,16 @@ function kwGuess(mk, models, t, cc, fu, year) {
       yr[x[0]] = (yr[x[0]] || 0) + 1;
     }
   }
-  if (Object.keys(yr).length) return { kw: +top(yr)[0], src: "vero-vuosimalli" };
+  if (Object.keys(yr).length) return pick(yr, "vero-vuosimalli");
   if (cand.length) {
     const yr2 = {};
     for (const k of Object.keys(AN.d)) {
       const p = k.split("|"); if (p[0] !== mk || !nameHit(p[1], models)) continue;
       for (const b of Object.keys(AN.d[k].x || {})) for (const x of AN.d[k].x[b]) { const ry = +x[1].slice(0, 4); if (ry >= year - 1 && ry <= year + 1 && x[0] > 20) yr2[x[0]] = (yr2[x[0]] || 0) + 1; }
     }
-    if (Object.keys(yr2).length) return { kw: +top(yr2)[0], src: "vero-vuosimalli-kaikki" };
+    if (Object.keys(yr2).length) return pick(yr2, "vero-vuosimalli-kaikki");
   }
-  if (Object.keys(any).length) return { kw: +top(any)[0], src: "traficom-muu-vuosi" };
+  if (Object.keys(any).length) return pick(any, "traficom-muu-vuosi");
   // Varalla: Veron päätösryhmät (merkki|malli|kW/10) ja harvinaisten mallien aineisto
   let bk = -1, bn = 0;
   for (const src of [CORE.wf, CORE.w, CORE.w3, CORE.g]) for (const k of Object.keys(src || {})) {
@@ -289,7 +292,7 @@ function kwGuess(mk, models, t, cc, fu, year) {
     if (src === CORE.wf && fu && p[3] !== fu) continue;
     if (src[k][0] > bn) { bn = src[k][0]; bk = +p[2]; }
   }
-  if (bk >= 0) return { kw: bk * 10 + 5, src: "vero-ryhma" };
+  if (bk >= 0) return { kw: bk * 10 + 5, src: "vero-ryhma", sp: 5 };
   for (const k of Object.keys(AN.d)) {
     const p = k.split("|"); if (p[0] !== mk || !nameHit(p[1], models)) continue;
     let bw = 0, bc = 0; for (const w of Object.keys(AN.d[k].kw || {})) if (AN.d[k].kw[w][0] > bc) { bc = AN.d[k].kw[w][0]; bw = +w; }
@@ -365,7 +368,7 @@ function calc(L, fx) {
   const W = reg >= "2018-09-01"; // WLTP-taulukko vain 1.9.2018 alkaen rekisteröidyille
   const evk = F.ev ? evKw(mk, models, v) : 0;
   const vd = VC[vin] || {}, vinKw = vd.EngineKW ? Math.round(+vd.EngineKW) : vd.EngineHP ? Math.round(+vd.EngineHP * 0.7457) : 0;
-  const KG = vinKw > 20 ? { kw: vinKw, src: "vin" } : evk ? { kw: evk, src: "ev-versio" } : kwGuess(mk, models, F.t, F.ev ? 0 : cc, F.fu, year), kw = KG.kw;
+  const KG = vinKw > 20 ? { kw: vinKw, src: "vin", sp: 0 } : evk ? { kw: evk, src: "ev-versio" } : kwGuess(mk, models, F.t, F.ev ? 0 : cc, F.fu, year), kw = KG.kw;
   const warn = [];
 
   // 1) CO2 ja veroprosentti
@@ -500,7 +503,7 @@ function calc(L, fx) {
     },
     autovero: {
       V: r10(V), VLo: r10(VLo), VHi: r10(VHi), s: +sPct.toFixed(3), n: best.n, level: best.level,
-      cons, econs: F.ev ? evCons(mk, v, year) : null, kw, kwSrc: KG.src, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
+      cons, econs: F.ev ? evCons(mk, v, year) : null, kw, kwSrc: KG.src, kwSp: KG.sp == null ? 99 : KG.sp, cc, co2, co2lo, co2hi, co2src, p, pSrc, pRange: [pA[0], pA[1]],
       a: r0(taxA), same, b: taxB != null ? r0(taxB) : null, avg: r0(tax)
     },
     total: { lo: r100(totLo), hi: r100(totHi), mid: r100(totMid) },
