@@ -5,7 +5,12 @@ import readline from "node:readline";
 const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
 let H = null, n = 0;
 const by = {}, byMake = {}, byYear = {};
-const day = (s) => { const m = String(s).match(/^(\d{4})-?(\d{2})-?(\d{2})/); if (!m) return null; return Date.UTC(+m[1], +m[2] - 1, +m[3]) / 864e5; };
+const day = (s) => {
+  s = String(s);
+  let m = s.match(/^(\d{2})\.(\d{2})\.(\d{4})/); if (m) return Date.UTC(+m[3], +m[2] - 1, +m[1]) / 864e5;
+  m = s.match(/^(\d{4})(\d{2})(\d{2})$/); if (m) return Date.UTC(+m[1], (+m[2] || 7) - 1, +m[3] || 1) / 864e5;
+  return null;
+};
 let shown = 0;
 for await (const line of rl) {
   const f = line.split(";");
