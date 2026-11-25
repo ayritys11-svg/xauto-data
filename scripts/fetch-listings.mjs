@@ -184,9 +184,15 @@ async function searchMC(q) {
   if (q.year) { const [a, b] = String(q.year).split("-").map(Number); const ys = []; for (let y = a; y <= (b || a); y++) ys.push(y); p.set("year", ys.join(",")); }
   if (q.price) p.set("price_range", q.price);
   p.set("miles_range", "1-" + S.maxMailit);
-  mcUsage.calls++;
   try {
-    const res = await fetch("https://api.marketcheck.com/v2/search/car/active?" + p.toString());
+    // ilmaistaso: enintään 5 hakua sekunnissa -> tauko jokaisen haun väliin ja yksi uusintayritys, jos raja tulee vastaan
+    let res;
+    for (let k = 0; k < 3; k++) {
+      await new Promise((r) => setTimeout(r, k ? 2500 : 400));
+      mcUsage.calls++;
+      res = await fetch("https://api.marketcheck.com/v2/search/car/active?" + p.toString());
+      if (res.status !== 429) break;
+    }
     if (!res.ok) { console.error("MarketCheck HTTP", res.status, q.make, q.model, (await res.text()).slice(0, 200).replace(MCKEY, "***")); return []; }
     const j = await res.json();
     const sts = (S.osavaltiot && S.osavaltiot.length) ? S.osavaltiot : null;
