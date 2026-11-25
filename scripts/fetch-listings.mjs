@@ -471,6 +471,9 @@ else {
   if (!RECOMPUTE) for (const q of Q) for (const st of STATES) { const r = await search(q, st); console.log(q.make, q.model, st || "kaikki", r.length); counts[q.make + " " + q.model + " " + (st || "")] = r.length; raw.push(...r); }
 }
 const seen = new Set(), cars = [];
+// Käsin poistetut ilmoitukset (esim. vain myyjän mainoskuvia, ei kuvia itse autosta): VIN-lista data/blocked.json
+let BLOCK = new Set();
+try { BLOCK = new Set(JSON.parse(fs.readFileSync(path.join(ROOT, "data/blocked.json"), "utf8")).map((v) => String(v).toUpperCase())); } catch (e) {}
 // Epäonnistuneiden hakujen autot edellisestä ajosta, ettei sivu tyhjene kiintiön loppuessa
 let kept = 0;
 // --recompute: lasketaan edellisen ajon autot uudelleen ilman API-hakuja (testaus ja laskentamuutokset)
@@ -493,6 +496,7 @@ const VC = (!MOCK && !DISCOVER) ? await decodeVins(ROOT, raw.map((L) => (L.vehic
 for (const L of raw) {
   const vin = (L.vehicle && L.vehicle.vin) || L.vin;
   if (!vin || seen.has(vin)) continue;
+  if (BLOCK.has(String(vin).toUpperCase())) continue;
   seen.add(vin);
   let c = null;
   try { c = calc(L, fx); } catch (e) { console.error(vin, e.message); }
