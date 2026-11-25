@@ -632,7 +632,9 @@ if (!MOCK && !DISCOVER && !RECOMPUTE && MCKEY) {
       const res = await fetch("https://api.marketcheck.com/v2/listing/car/" + encodeURIComponent(c.mcId) + "?api_key=" + MCKEY);
       if (!res.ok) { console.error("MC extra HTTP", res.status, c.vin); continue; }
       const j = await res.json(), e = j.extra || {}, b = j.build || {};
-      const arr = (a) => (Array.isArray(a) ? a.map((x) => String(x).trim()).filter(Boolean) : []);
+      // arvot voivat olla tekstiä tai olioita ({name, description, category...}) -> otetaan luettava teksti
+      const txt = (x) => (x && typeof x === "object" ? (x.name || x.description || x.feature || x.title || Object.values(x).filter((v) => typeof v === "string").join(" – ")) : x);
+      const arr = (a) => (Array.isArray(a) ? a.map((x) => String(txt(x) || "").trim()).filter((t) => t && t !== "[object Object]") : []);
       EX[c.vin] = { o: arr(e.options), f: arr(e.features), p: arr(e.options_packages), h: arr(e.high_value_features), msrp: j.msrp || null,
         mpg: b.city_mpg || b.highway_mpg ? [b.city_mpg || null, b.highway_mpg || null] : null, t: today.toISOString().slice(0, 10) };
       got++;

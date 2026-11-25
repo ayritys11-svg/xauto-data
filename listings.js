@@ -57,14 +57,27 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     [/rain.?sensing/i, "Sadetunnistin"], [/air suspension/i, "Ilmajousitus"], [/magnetic ride|adaptive suspension/i, "Säätyvä alusta"],
     [/performance exhaust/i, "Urheilupakoputkisto"], [/z51/i, "Z51-suorituskykypaketti"]];
   function fiEq(t) { for (var i = 0; i < FI_EQ.length; i++) if (FI_EQ[i][0].test(t)) return FI_EQ[i][1]; return t; }
+  /* Myyjien varustelistat ovat pitkiä mainostekstejä: lyhennetään ensimmäiseen lauseeseen ja pudotetaan sulkeissa olevat ehdot */
+  function shortEq(t) {
+    t = String(t).replace(/\s*\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+    t = t.split(/\.\s|;\s/)[0];
+    if (t.length > 80) t = t.split(/,\s/)[0];
+    if (t.length > 90) t = t.slice(0, 87).replace(/\s\S*$/, "") + "…";
+    return t.replace(/\.$/, "");
+  }
   function uniq(a) { var seen = {}, out = []; a.forEach(function (t) { var k = t.toLowerCase(); if (!seen[k]) { seen[k] = 1; out.push(t); } }); return out; }
   function extraHtml(c) {
     var e = c.extra; if (!e) return "";
-    var G = [["Lisävarusteet ja paketit", uniq((e.p || []).concat(e.h || []).map(fiEq))], ["Lisävarusteet (myyjän ilmoitus)", uniq((e.o || []).map(fiEq))], ["Varusteet (myyjän ilmoitus)", uniq((e.f || []).map(fiEq))]]
+    /* tehtaan lyhyet optiokoodit (esim. GM:n "J6N") eivät kerro asiakkaalle mitään: näytetään vain tunnetut */
+    var CODE = { Z51: "Z51-suorituskykypaketti", Z06: "Z06", ZR1: "ZR1", "1SS": "1SS-varustetaso", "2SS": "2SS-varustetaso", "3LT": "3LT-varustetaso", "2LT": "2LT-varustetaso" };
+    var cl = function (a) { return uniq((a || []).map(function (t) { t = String(t); return /^[A-Z0-9]{2,4}$/.test(t) ? (CODE[t] || "") : t; }).map(shortEq).filter(function (t) { return t.length > 2 && t !== "[object Object]" && !/see dealer|terms apply|subscription|trial/i.test(t); }).map(fiEq)); };
+    var G = [["Lisävarusteet ja paketit", cl((e.p || []).concat(e.h || []))], ["Lisävarusteet (myyjän ilmoitus)", cl(e.o)], ["Varusteet (myyjän ilmoitus)", cl(e.f)]]
       .filter(function (g) { return g[1].length; });
     if (!G.length && !e.msrp) return "";
     return '<div class="eq eqx">' + (e.msrp ? '<p class="msrp">Uushinta USA:ssa (MSRP): <b>' + fmt(e.msrp) + " $</b></p>" : "") + G.map(function (g) {
-      return "<div><h3>" + esc(g[0]) + "</h3><ul>" + g[1].map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>";
+      var li = function (t) { return "<li>" + esc(t) + "</li>"; }, N = 12;
+      return "<div><h3>" + esc(g[0]) + "</h3><ul>" + g[1].slice(0, N).map(li).join("") + "</ul>" +
+        (g[1].length > N ? '<details class="more"><summary>Näytä kaikki (' + g[1].length + ")</summary><ul>" + g[1].slice(N).map(li).join("") + "</ul></details>" : "") + "</div>";
     }).join("") + '<p class="eqn">Lisävarusteet myyjän ilmoituksesta. Varmistetaan ennen ostoa.</p></div>';
   }
   function cardImg(u) { return "https://images.weserv.nl/?url=" + encodeURIComponent(u) + "&trim=12&w=640&h=480&fit=contain&cbg=ffffff&output=jpg&q=80"; }
