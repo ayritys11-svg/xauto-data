@@ -142,7 +142,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var t = function (k, val) { return k === skip || !val || match(val, F[k]); }; /* puuttuva tieto ei piilota autoa */
     return words(c, F.q) && t("make", c.make) && t("model", modelName(c)) && t("trim", c.trim) && t("body", c.body) && t("fuel", c.fuel) && t("gear", gear(c.transmission)) && t("drive", driveFi(c.drivetrain)) && t("loc", locFi(c)) && t("color", colorFi(c.color)) && t("doors", doorsOf(c)) && t("steer", steerOf(c)) &&
       inR(c.total && c.total.mid, F.pmin, F.pmax) && inR(c.year, F.ymin, F.ymax) && inR(c.km, F.kmin, F.kmax) && inR(displ(c), F.dmin, F.dmax) &&
-      inR(c.hp || null, F.hpmin, F.hpmax) && inR(sv(c, "CO₂ (EPA)"), null, F.co2max) && inR(sv(c, "Istumapaikat"), F.smin, null) && inR(fuelCons(c), null, F.cmax) && inR(evCons(c), null, F.emax) && inR(sv(c, "Toimintamatka (EPA)"), F.rmin, null) &&
+      inR(c.hp ? hvHp(c.hp) : null, F.hpmin, F.hpmax) && inR(sv(c, "CO₂ (EPA)"), null, F.co2max) && inR(sv(c, "Istumapaikat"), F.smin, null) && inR(fuelCons(c), null, F.cmax) && inR(evCons(c), null, F.emax) && inR(sv(c, "Toimintamatka (EPA)"), F.rmin, null) &&
       (skip === "good" || !F.good || ok(c)) && (skip === "rare" || !F.rare || isRare(c)) && (skip === "fav" || !F.fav || isFav(c.id));
   }
   var SV = function (c) { return c.saving == null ? -1e9 : c.saving; };
@@ -260,11 +260,13 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   }
 
   /* Teho: valmistajan hv ensisijaisesti; kW:sta laskettu hv vain, jos arvion heitto on enintään noin 10 hv (7 kW), muuten pelkkä kW */
+  /* Valmistajan amerikkalainen hp suomalaisiksi hevosvoimiksi (hv, 735,5 W) */
+  function hvHp(hp) { return Math.round(hp * 1.01387); }
   function kwHvOk(c, A) { if (c.hp) return true; if (/ZL1|HELLCAT|GT500|SHELBY|Z06|ZR1|E-RAY|SRT|TRACKHAWK|DEMON|REDEYE|SCAT|RAPTOR|BLACKWING|\bV\b/i.test((c.title || "") + " " + (c.trim || ""))) return false; return !!(A && A.kw && A.kwSp != null && A.kwSp <= 7); }
   function tehoTxt(c, A, both) {
-    if (c.hp) return c.hp + " hv" + (both ? " / " + Math.round(c.hp * 0.7457) + " kW" : "");
+    if (c.hp) return hvHp(c.hp) + " hv" + (both ? " / " + Math.round(c.hp * 0.7457) + " kW" : "");
     if (!A || !A.kw) return "";
-    if (kwHvOk(c, A)) { var hv = Math.round(A.kw / 0.7457); return hv + " hv" + (both ? " / " + A.kw + " kW" : ""); }
+    if (kwHvOk(c, A)) { var hv = Math.round(A.kw / 0.7355); return hv + " hv" + (both ? " / " + A.kw + " kW" : ""); }
     return A.kw + " kW";
   }
   function line(t, d, v, chip) { return '<div class="ln"><div class="t">' + t + (chip ? '<span class="chip">' + chip + "</span>" : "") + '</div><div class="d">' + d + '</div><div class="v">' + v + "</div></div>"; }
@@ -339,7 +341,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       .concat(has("Veto") ? [] : [["Veto", ({ AWD: "Neliveto (AWD)", "4WD": "Neliveto (4WD)", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || c.drivetrain]])
       .concat(SP)
       .concat(has("Teho (valmistaja)") || !(c.hp || A.kw) ? [] : [["Teho", tehoTxt(c, A, 1)]])
-      .concat([["Teho autoverolaskennassa", A.kw ? (kwHvOk(c, A) ? Math.round(A.kw / 0.7457) + " hv / " : "") + A.kw + " kW" : ""], ["Sama malli Suomessa" + ((function () { var AB = { "bensiini": "bens.", "diesel": "dies.", "hybridi": "hybr.", "avoauto": "avo", "farmari": "farm.", "viistoperä": "viistop.", "sedan": "sedan" }; var w = (c.gen ? ["kori " + c.gen[0] + (c.gen[1] < 2090 ? " – " + c.gen[1] : " –")] : []).concat((c.fleetWhy || []).map(function (x) { return AB[x] || x; })).slice(0, 3); return w.length ? " (" + w.join(", ") + ")" : ""; })()), c.fleet != null ? fleetTxt(c) : ""], ["Koko malli Suomessa", c.fleetModel != null ? (c.fleetModel === 0 ? "ei yhtään" : fmt(c.fleetModel) + " kpl") : ""], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["VIN", c.vin]])
+      .concat([["Teho autoverolaskennassa", A.kw ? (kwHvOk(c, A) ? Math.round(A.kw / 0.7355) + " hv / " : "") + A.kw + " kW" : ""], ["Sama malli Suomessa" + ((function () { var AB = { "bensiini": "bens.", "diesel": "dies.", "hybridi": "hybr.", "avoauto": "avo", "farmari": "farm.", "viistoperä": "viistop.", "sedan": "sedan" }; var w = (c.gen ? ["kori " + c.gen[0] + (c.gen[1] < 2090 ? " – " + c.gen[1] : " –")] : []).concat((c.fleetWhy || []).map(function (x) { return AB[x] || x; })).slice(0, 3); return w.length ? " (" + w.join(", ") + ")" : ""; })()), c.fleet != null ? fleetTxt(c) : ""], ["Koko malli Suomessa", c.fleetModel != null ? (c.fleetModel === 0 ? "ei yhtään" : fmt(c.fleetModel) + " kpl") : ""], ["Sijainti", [c.city, c.state].filter(Boolean).join(", ")], ["VIN", c.vin]])
       .filter(function (f) { return f[1]; });
     var isCons = function (f) { return /ulutus/.test(f[0]); }, cons = facts.filter(isCons), firstCons = facts.findIndex(isCons);
     if (cons.length) { facts = facts.filter(function (f) { return !isCons(f); }); facts.splice(firstCons, 0, ["__CONS__", cons]); }
