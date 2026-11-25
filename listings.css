@@ -373,3 +373,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .sec-info .eq details.more[open] summary::after{content:" ▴"}
 .xl .sec-info .eq details.more ul{margin-top:6px}
 .xl .morecars{display:block;width:100%;margin:18px 0 8px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font:600 15px var(--font-head);color:var(--fg);cursor:pointer}
+/* Tietokoneella kolme ilmoitusta rivillä, tabletilla kaksi */
+@media (min-width:641px){.xl .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:900px){.xl .grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
