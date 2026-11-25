@@ -363,3 +363,4 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .sec-info .eq li::before{content:"";position:absolute;left:2px;top:.35em;width:12px;height:7px;border-left:2px solid var(--good);border-bottom:2px solid var(--good);transform:rotate(-45deg)}
 .xl .sec-info .eqn{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin:2px 0 0}
 @media (max-width:640px){.xl .sec-info .facts{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}.xl .sec-info .facts>div,.xl .sec-info .facts .frow>div{min-width:0}.xl .sec-info .facts .k-vin,.xl .sec-info .facts .k-fleet,.xl .sec-info .facts .frow{grid-column:1/-1}.xl .sec-info .facts b{font-size:14px;overflow-wrap:anywhere}}
+@media (max-width:640px){.xl .sec-info .facts span{overflow-wrap:anywhere;hyphens:auto}}
