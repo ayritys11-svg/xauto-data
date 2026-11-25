@@ -253,7 +253,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   var STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93z"/></svg>';
   function favBtn(c) { var on = isFav(c.id); return '<button type="button" class="fav" data-fav="' + esc(c.id) + '" aria-pressed="' + on + '" aria-label="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '" title="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '">' + STAR + "</button>"; }
   function card(c) {
-    return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '">' + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" + '<h3>' + esc(String(c.title || "").replace(/^\s*(19|20)\d\d\s+/, "")) + '</h3><p class="spec">' + [c.year, fmt(c.km) + " km", c.fuel].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
+    return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '">' + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" + '<h3>' + esc(cardTitle(c)) + '</h3><p class="spec">' + [c.year, fmt(c.km) + " km", c.fuel].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
       '<div class="price"><b>' + eur(Math.round((c.total.lo + c.total.hi) / 200) * 100) + "</b>" + favBtn(c) + "</div>" + (function (b) { return b ? '<div class="badges">' + b + "</div>" : ""; })(saveBadge(c)) +
       (c.fleet != null ? '<div class="row arvo"><span>Sama malli Suomessa</span><b' + (isRare(c) ? ' class="rc"' : "") + ">" + fleetTxt(c) + "</b></div>" : "") +
       '<div class="row arvo"><span>Arvo Suomessa</span><b>' + arvoFi(c) + "</b></div>" + conf(c) + "</a>";
@@ -262,6 +262,18 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   /* Teho: valmistajan hv ensisijaisesti; kW:sta laskettu hv vain, jos arvion heitto on enintään noin 10 hv (7 kW), muuten pelkkä kW */
   /* Valmistajan amerikkalainen hp suomalaisiksi hevosvoimiksi (hv, 735,5 W) */
   function hvHp(hp) { return Math.round(hp * 1.01387); }
+  /* Kortin otsikko: ilman vuosimallia, moottorin koko suluissa mallin jälkeen (ei sähköautoille), esim. "Dodge Challenger (5.7) GT" */
+  function cardTitle(c) {
+    var t = String(c.title || "").replace(/^\s*(19|20)\d\d\s+/, "");
+    if (c.fuel === "Sähkö") return t;
+    var m = null, sp = (c.spec || []).filter(function (r) { return r[0] === "Moottori"; })[0];
+    if (sp) m = String(sp[1]).match(/(\d+)[,.](\d)\s*l/i);
+    if (!m) m = String(c.engine || "").match(/(\d+)\.(\d)\s*L/i);
+    if (!m) return t;
+    var L = "(" + m[1] + "." + m[2] + ")", mm = ((c.make || "") + " " + (c.model || "")).trim();
+    if (mm) { if (t.toLowerCase().indexOf(mm.toLowerCase()) === 0) return t.slice(0, mm.length) + " " + L + t.slice(mm.length); }
+    return t + " " + L;
+  }
   function kwHvOk(c, A) { if (c.hp) return true; if (/ZL1|HELLCAT|GT500|SHELBY|Z06|ZR1|E-RAY|SRT|TRACKHAWK|DEMON|REDEYE|SCAT|RAPTOR|BLACKWING|\bV\b/i.test((c.title || "") + " " + (c.trim || ""))) return false; return !!(A && A.kw && A.kwSp != null && A.kwSp <= 7); }
   function tehoTxt(c, A, both) {
     if (c.hp) return hvHp(c.hp) + " hv" + (both ? " / " + Math.round(c.hp * 0.7457) + " kW" : "");
