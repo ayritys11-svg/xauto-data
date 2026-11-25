@@ -1,0 +1,24 @@
+name: Analyysi USA-tuonti
+on:
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Lataa Traficomin ajoneuvojen avoin data
+        run: |
+          for u in https://opendata.traficom.fi/Content/Ajoneuvorekisteri.zip https://opendata.traficom.fi/Content/ajoneuvorekisteri.zip; do
+            curl -sSL -o a.zip "$u" && unzip -l a.zip && break
+          done
+      - name: Analyysi
+        run: |
+          F=$(unzip -Z1 a.zip | grep -i csv | head -1)
+          unzip -p a.zip "$F" | iconv -f ISO-8859-1 -t UTF-8 | node analysis/usa-imports.mjs
+      - name: Tilasto USA:sta tuoduista (Traficom PXWeb)
+        run: |
+          curl -s -X POST "https://trafi2.stat.fi/PXWeb/api/v1/fi/TraFi/TraFi__Kaytettyna_maahantuodut/020_yksmaah_tau_102.px" -H "Content-Type: application/json" -d '{"query":[],"response":{"format":"json"}}' | head -c 300; echo
+          curl -s "https://trafi2.stat.fi/PXWeb/api/v1/fi/TraFi/TraFi__Kaytettyna_maahantuodut/020_yksmaah_tau_102.px" | head -c 3000
