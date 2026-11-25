@@ -34,7 +34,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     return '<div class="ph">' + img + (tag ? '<span class="tag">' + esc(tag) + "</span>" : "") + "</div>";
   }
   window.__xlCar = CAR;
-  function cardImg(u) { return "https://images.weserv.nl/?url=" + encodeURIComponent(u) + "&trim=12&w=640&h=480&fit=cover&output=jpg&q=80"; }
+  function cardImg(u) { return "https://images.weserv.nl/?url=" + encodeURIComponent(u) + "&trim=12&w=640&h=480&fit=contain&cbg=ffffff&output=jpg&q=80"; }
   window.xlImgErr = function (im) {
     var o = im.getAttribute("data-o");
     if (o) { im.removeAttribute("data-o"); im.src = o; return; }
