@@ -113,3 +113,6 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   box.addEventListener("keydown",function(e){ if(e.key==="Enter"){ if(e.target.tagName==="INPUT"){ location.href=url(); } } });
   clr.addEventListener("click",function(){ MK.clear(); MD.clear(); Object.keys(R).forEach(function(k){R[k]=""}); PR.upd(); YR.upd(); KM.upd(); Object.keys(X).forEach(function(k){X[k].clear()}); models(); setTimeout(count,0); });
 })();
+
+/* Etusivu valmis: näytetään hero vasta kun haku on rakennettu (ei vanhan asettelun välähdystä) */
+document.documentElement.classList.add("vready");
