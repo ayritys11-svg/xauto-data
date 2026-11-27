@@ -19,6 +19,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function pane(w) {
     if (!LP) { HOST.innerHTML = ""; LP = document.createElement("div"); DP = document.createElement("div"); LP.className = "xl-lp"; DP.className = "xl-dp"; HOST.appendChild(LP); HOST.appendChild(DP); }
     LP.hidden = w !== "l"; DP.hidden = w !== "d"; root = w === "l" ? LP : DP;
+    /* Etusivulla ilmoitus avautuu samalle sivulle: muu etusivun sisältö piiloon ilmoituksen ajaksi */
+    if (MODE === "featured") document.documentElement.classList.toggle("xl-hdet", w === "d");
   }
   var MODE = root.dataset.mode || "", LISTURL = root.dataset.list || "", LIMIT = +root.dataset.limit || 12;
   var base = root.dataset.base || "", tarjous = root.dataset.offer || "/kysy-lisatietoa/";
@@ -268,7 +270,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   var STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93z"/></svg>';
   function favBtn(c) { var on = isFav(c.id); return '<button type="button" class="fav" data-fav="' + esc(c.id) + '" aria-pressed="' + on + '" aria-label="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '" title="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '">' + STAR + "</button>"; }
   function card(c) {
-    return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '">' + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" + (cardEng(c) ? '<h3 data-n="' + esc(cardName(c)) + '" data-e="' + esc(cardEng(c)) + '">' : '<h3>') + esc(cardTitle(c)) + '</h3><p class="spec">' + [c.year, fmt(c.km) + " km", c.fuel].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
+    return '<a class="car" href="' + esc(MODE === "featured" ? "" : LISTURL) + '#' + esc(c.id) + '">' + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" + (cardEng(c) ? '<h3 data-n="' + esc(cardName(c)) + '" data-e="' + esc(cardEng(c)) + '">' : '<h3>') + esc(cardTitle(c)) + '</h3><p class="spec">' + [c.year, fmt(c.km) + " km", c.fuel].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
       '<div class="price"><b>' + eur(Math.round((c.total.lo + c.total.hi) / 200) * 100) + "</b>" + favBtn(c) + "</div>" + (function (b) { return b ? '<div class="badges">' + b + "</div>" : ""; })(saveBadge(c)) +
       (c.fleet != null ? '<div class="row arvo"><span>Sama malli Suomessa</span><b' + (isRare(c) ? ' class="rc"' : "") + ">" + fleetTxt(c) + "</b></div>" : "") +
       '<div class="row arvo"><span>Arvo Suomessa</span><b>' + arvoFi(c) + "</b></div>" + conf(c) + "</a>";
@@ -689,9 +691,9 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   HOST.addEventListener("mouseover", pre);
   function route() {
     if (!DATA) return;
-    if (MODE === "featured") { featured(); return; }
     var id = decodeURIComponent(location.hash.slice(1));
     var c = id && DATA.cars.filter(function (x) { return x.id === id; })[0];
+    if (MODE === "featured") { if (!c) { var fresh = !LP || LDATA !== DATA || !LP.innerHTML; pane("l"); if (fresh) { LDATA = DATA; featured(); } return; } }
     if (!c) { if (LP) { if (LDATA === DATA) { if (LSIG === JSON.stringify(F)) { if (LP.innerHTML) { pane("l"); return; } } } } list(); return; }
     // Kuvalista ja myyjän ilmoittamat varusteet ladataan ilmoituskohtaisesta tiedostosta vasta tässä (lista pysyy kevyenä)
     if (c.px && !c._x) {
@@ -720,7 +722,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     requestAnimationFrame(function () { window.scrollTo(0, y); });
     setTimeout(function () { if (Math.abs(window.scrollY - y) > 40) window.scrollTo(0, y); }, 350);
   }
-  if (MODE !== "featured") {
+  {
     try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (e) {}
     window.addEventListener("scroll", function () { clearTimeout(saveT); saveT = setTimeout(function () { saveScroll(); }, 150); }, { passive: true });
     window.addEventListener("pagehide", function () { saveScroll(); });
