@@ -115,7 +115,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     /* Harvinaiset: ei sinistä kpl-laatikkoa eikä punaista kalliimpi-merkintää (kpl-määrä näkyy rivinä kuten muillakin) */
     if (isRare(c)) return SHOW_SAVE && c.saving > 0 ? '<span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : "";
     if (c.saving == null) return '<span class="sv n">Ei vertailukohtaa Suomessa</span>';
-    return c.saving > 0 ? (SHOW_SAVE ? '<span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : "") : '<span class="sv b">' + eur(-c.saving) + " kalliimpi" + kS + "</span>";
+    return c.saving > 0 ? (SHOW_SAVE ? '<span class="sv g">' + eur(c.saving) + " halvempi" + kS + "</span>" : "") : ""; /* kalliimpi-merkintää ei näytetä */
   }
   function origin(c) { return (c.country === "CA" || /^(ON|QC|BC|AB)$/.test(c.state || "") ? "KANADA" : "USA") + (c.state ? " · " + c.state : ""); }
 
