@@ -395,7 +395,10 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var hasTeho = facts.some(function (f) { return f[0] === "Teho (valmistaja)" || f[0] === "Teho"; });
     facts = facts.filter(function (f) { if (f[0] === "Vaihteisto") { if (c.fuel === "Sähkö") return false; } return f[0] !== "Sijainti"; }).filter(function (f) { return !(hasTeho && f[0] === "Teho autoverolaskennassa"); }).map(function (f) {
       var L = { "Teho (valmistaja)": "Teho", "Teho autoverolaskennassa": "Teho", "Omamassa (valmistaja)": "Omamassa", "Ajettu": "Mittarilukema" }[f[0]];
-      return L ? [L].concat(f.slice(1)) : f;
+      var g = L ? [L].concat(f.slice(1)) : f;
+      /* Perusvärit suomeksi (Black -> Musta); nimetyt sävyt kuten "Jet Black" jäävät ennalleen */
+      if (g[0] === "Väri" || g[0] === "Sisustus") { var CF = { black: "Musta", white: "Valkoinen", red: "Punainen", blue: "Sininen", gray: "Harmaa", grey: "Harmaa", silver: "Hopea", green: "Vihreä", brown: "Ruskea", beige: "Beige", yellow: "Keltainen", orange: "Oranssi", gold: "Kulta", purple: "Violetti" }[String(g[1]).trim().toLowerCase()]; if (CF) g = [g[0], CF].concat(g.slice(2)); }
+      return g;
     });
     facts = facts.map(function (f) { return f[0] === "__CONS__" ? '<span class="frow">' + f[1].map(box).join("") + "</span>" : box(f); }).join("");
     root.innerHTML =
