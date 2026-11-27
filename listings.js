@@ -724,7 +724,18 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (e) {}
     window.addEventListener("scroll", function () { clearTimeout(saveT); saveT = setTimeout(function () { saveScroll(); }, 150); }, { passive: true });
     window.addEventListener("pagehide", function () { saveScroll(); });
+    /* Takaisin-nuoli: jos ilmoitus avattiin toiselta sivulta (esim. etusivulta), palataan sinne eikä Kaikki autot -listaan */
+    var INPAGE = false;
+    root.addEventListener("click", function (e) {
+      var a = e.target.closest ? e.target.closest("a.back") : null; if (!a || INPAGE) return;
+      var r = null; try { r = new URL(document.referrer); } catch (x) {}
+      if (!r || r.origin !== location.origin) return;
+      if (r.pathname + r.search === location.pathname + location.search) return;
+      if (history.length < 2) return;
+      e.preventDefault(); history.back();
+    });
     window.addEventListener("hashchange", function (e) {
+      INPAGE = true;
       clearTimeout(saveT);
       var oh = ""; try { oh = new URL(e.oldURL).hash; } catch (x) {}
       try { sessionStorage.setItem(skey(oh), String(Math.round(window.scrollY))); } catch (x) {}
