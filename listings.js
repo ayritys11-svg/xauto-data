@@ -787,6 +787,12 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (o) { e.preventDefault(); pick(o.getAttribute("data-v")); }
   });
   document.addEventListener("mousedown", function (e) { if (e.target.closest) { if (e.target.closest(".vdd")) e.preventDefault(); } });
+  /* Oikean reunan nuoli: napautus avoimen valikon nuoleen sulkee valikon */
+  function onArrow(e, t) { var r = t.getBoundingClientRect(); return r.right - e.clientX < 52; }
+  document.addEventListener("pointerdown", function (e) {
+    var t = e.target;
+    if (t.matches) { if (t.matches("input[data-list]")) { if (panel) { if (cur === t) { if (onArrow(e, t)) { e.preventDefault(); skipT = Date.now(); close(); t.blur(); return; } } } } }
+  }, true);
   document.addEventListener("pointerdown", function (e) {
     if (panel) { if (!panel.contains(e.target)) { if (e.target !== cur) close(); } }
   });
