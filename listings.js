@@ -93,6 +93,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     }).join("") + '<p class="eqn">Lisävarusteet myyjän ilmoituksesta. Varmistetaan ennen ostoa.</p></div>';
   }
   function cardImg(u) { return "https://images.weserv.nl/?url=" + encodeURIComponent(u) + "&trim=12&w=480&h=360&fit=contain&cbg=ffffff&output=jpg&q=80"; }
+  /* Pieni esikatselukuva (kuvapalvelu pienentää ja pakkaa): pikkukuvat ja pääkuvan heti näkyvä esiversio */
+  function thumbImg(u) { return "https://images.weserv.nl/?url=" + encodeURIComponent(u) + "&w=220&h=165&fit=cover&output=jpg&q=70"; }
   window.xlImgErr = function (im) {
     var o = im.getAttribute("data-o");
     if (o) { im.removeAttribute("data-o"); im.src = o; return; }
@@ -490,9 +492,9 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function gallery(c) {
     var U = urls(c);
     if (U.length < 2) return '<div class="gal">' + photo(c, origin(c)) + "</div>";
-    return '<div class="gal"><div class="ph main"><img id="xl-main" src="' + esc(U[0]) + '" alt="' + esc(c.title) + ' kuva 1" referrerpolicy="no-referrer"><span class="tag">' + esc(origin(c)) + '</span>' +
+    return '<div class="gal"><div class="ph main"><img id="xl-main" src="' + esc(U[0] === c.img ? cardImg(U[0]) : thumbImg(U[0])) + '" alt="' + esc(c.title) + ' kuva 1" referrerpolicy="no-referrer"><span class="tag">' + esc(origin(c)) + '</span>' +
       '<button type="button" class="nav prev" aria-label="Edellinen kuva">‹</button><button type="button" class="nav next" aria-label="Seuraava kuva">›</button><span class="num" id="xl-num">1 / ' + U.length + "</span></div>" +
-      '<div class="thumbs" id="xl-th">' + U.map(function (u, i) { return '<button type="button" data-i="' + i + '"' + (i === 0 ? ' aria-current="true"' : "") + ' aria-label="Kuva ' + (i + 1) + '"><img src="' + esc(u) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></button>'; }).join("") + "</div></div>";
+      '<div class="thumbs" id="xl-th">' + U.map(function (u, i) { return '<button type="button" data-i="' + i + '"' + (i === 0 ? ' aria-current="true"' : "") + ' aria-label="Kuva ' + (i + 1) + '"><img src="' + esc(thumbImg(u)) + '" data-o="' + esc(u) + '" alt="" loading="' + (i < 8 ? "eager" : "lazy") + '" decoding="async" referrerpolicy="no-referrer"></button>'; }).join("") + "</div></div>";
   }
   function bindGallery(c) {
     var U = urls(c), main = root.querySelector("#xl-main"); if (!main || U.length < 2) return;
@@ -501,12 +503,20 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       if (!main.isConnected) return; /* sivu vaihtui jo: myöhässä tullut kuvavirhe ei saa kaatua */
       var n = U.length, k = 0; i = ((i % n) + n) % n;
       while (!ok[i] && k++ < n) i = (i + 1) % n;
-      if (!th.isConnected) return; cur = i; main.src = U[i]; var nm = root.querySelector("#xl-num"); if (nm) nm.textContent = (i + 1) + " / " + n;
+      if (!th.isConnected) return; cur = i; lowres = true; main.src = thumbImg(U[i]); full(i); var nm = root.querySelector("#xl-num"); if (nm) nm.textContent = (i + 1) + " / " + n;
       Array.prototype.forEach.call(th.children, function (b) { b.toggleAttribute("aria-current", +b.dataset.i === i); });
       var b = th.children[i]; if (b) { var tr = th.getBoundingClientRect(), br = b.getBoundingClientRect(); if (br.left < tr.left) th.scrollLeft += br.left - tr.left; else if (br.right > tr.right) th.scrollLeft += br.right - tr.right; } /* vain pikkukuvarivi vierii sivuttain, sivu ei hyppää */
     }
-    Array.prototype.forEach.call(th.querySelectorAll("img"), function (im, i) { im.addEventListener("error", function () { ok[i] = false; im.parentNode.hidden = true; }); });
-    main.addEventListener("error", function () { ok[cur] = false; if (ok.some(Boolean)) show(cur + 1); else main.parentNode.outerHTML = photo({ title: c.title }, origin(c)); });
+    /* Pääkuva: ensin pieni esiversio heti (usein jo välimuistissa), terävä alkuperäinen vaihtuu tilalle kun se on ladattu; seuraava kuva ladataan valmiiksi */
+    var lowres = true;
+    function full(i) {
+      var im = new Image(); im.referrerPolicy = "no-referrer";
+      im.onload = function () { if (cur === i) { if (main.isConnected) { lowres = false; main.src = U[i]; } } var nx = new Image(); nx.referrerPolicy = "no-referrer"; nx.src = U[(i + 1) % U.length]; };
+      im.src = U[i];
+    }
+    full(0);
+    Array.prototype.forEach.call(th.querySelectorAll("img"), function (im, i) { im.addEventListener("error", function () { var o = im.getAttribute("data-o"); if (o) { im.removeAttribute("data-o"); im.src = o; return; } ok[i] = false; im.parentNode.hidden = true; }); });
+    main.addEventListener("error", function () { if (lowres) { lowres = false; main.src = U[cur]; return; } ok[cur] = false; if (ok.some(Boolean)) show(cur + 1); else main.parentNode.outerHTML = photo({ title: c.title }, origin(c)); });
     th.addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) show(+b.dataset.i); });
     root.querySelector(".nav.prev").addEventListener("click", function () { show(cur - 1); });
     root.querySelector(".nav.next").addEventListener("click", function () { show(cur + 1); });
@@ -685,7 +695,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var a = e.target.closest ? e.target.closest("a.car") : null; if (!a) return; if (!DATA) return;
     var id = decodeURIComponent((a.getAttribute("href") || "").split("#")[1] || ""); if (!id) return;
     var c = DATA.cars.filter(function (x) { return x.id === id; })[0]; if (!c) return; if (!c.px) return; if (c._x) return;
-    loadX(c);
+    loadX(c).then(function () { var u = urls(c)[0]; if (u) { var im = new Image(); im.referrerPolicy = "no-referrer"; im.src = u; } }, function () {});
   }
   HOST.addEventListener("touchstart", pre, { passive: true });
   HOST.addEventListener("mouseover", pre);
