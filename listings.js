@@ -701,7 +701,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     DATA = j; route();
     /* Etusivun laskuripilleri: autoilmoitusten määrä sivustolla */
     var cnt = document.querySelector(".xh .count");
-    if (cnt) { if (j.cars) cnt.innerHTML = "<small>Nyt<br>myynnissä</small><b>" + fmt(j.cars.length) + "</b><small>autoa</small>"; }
+    if (cnt) { if (j.cars) cnt.innerHTML = "<small>Valitse</small><b>" + fmt(j.cars.length) + "</b><small>autosta</small>"; }
     if (MODE === "featured") return;
     if (had) { window.scrollTo(0, y); return; } /* tuore data tuli taustalla: ei hypätä ylös */
     if (firstRoute) {
