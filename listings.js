@@ -663,8 +663,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       TXT.concat(NUM).forEach(function (k) { var x = u.get(k); if (x) F[k] = x; });
       if (u.get("open") === "1") OPEN = true;
       if (u.get("fav") === "1") F.fav = true; /* valikon Suosikit-linkki: /autot/?fav=1 */
-      var anyExtra = EXTRA.concat(TECH).some(function (k) { return F[k]; });
-      if (anyExtra) OPEN = true;
+      /* Haku etusivulta ei avaa kaikkia hakuehtoja: valittujen määrä näkyy "Näytä lisää suodattimia (1 valittu)" -painikkeessa */
     } catch (e) {}
   })();
   // Tähti: tallenna/poista suosikki. Kortti on linkki, joten painallus ei saa avata ilmoitusta.
