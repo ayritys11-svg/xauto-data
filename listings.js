@@ -559,9 +559,9 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     }
     /* alas vetäminen: kuva seuraa sormea, tausta haalenee; tarpeeksi pitkä veto sulkee */
     function pull(d, anim) {
-      var img = cur(), k = Math.min(1, d / 400), tr = anim ? "transform .15s ease, opacity .15s ease" : "none";
+      var img = cur(), k = Math.min(1, d / 400), tr = anim ? "transform .1s ease, opacity .1s ease" : "none";
       img.style.transition = tr; img.style.transform = d ? "translate3d(0," + d + "px,0) scale(" + (1 - k * 0.15) + ")" : "";
-      lb.style.transition = anim ? "background-color .15s ease" : "none"; lb.style.backgroundColor = d ? "rgba(11,13,16," + (1 - k * 0.85) + ")" : "";
+      lb.style.transition = anim ? "background-color .1s ease" : "none"; lb.style.backgroundColor = d ? "rgba(11,13,16," + (1 - k * 0.85) + ")" : "";
       Array.prototype.forEach.call(lb.querySelectorAll("button,.xl-lb-c,.xl-lb-h"), function (el) { el.style.transition = tr; el.style.opacity = d ? String(1 - k) : ""; });
     }
     function close() { document.removeEventListener("keydown", onKey); window.removeEventListener("resize", onResize); document.documentElement.style.overflow = prevOverflow; lb.remove(); }
@@ -614,7 +614,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
         if (now - lastTap < 300) { zoomAt(sc > 1 ? 1 : 2.5, t.clientX, t.clientY); apply(true); lastTap = 0; } else lastTap = now;
       } else if (sc === 1 && t0.axis === "y") {
         var dy = Math.max(0, t.clientY - t0.y);
-        if (dy > 90 || (dy / dt > 0.5 && dy > 30)) { var im = cur(); im.style.transition = "transform .12s ease-in"; im.style.transform = "translate3d(0," + (dy + 160) + "px,0) scale(.85)"; lb.style.transition = "opacity .12s ease-in"; lb.style.opacity = "0"; setTimeout(close, 120); } else pull(0, true);
+        if (dy > 70 || (dy / dt > 0.4 && dy > 25)) close(); else pull(0, true);
       } else if (sc === 1 && t0.axis === "x" && n > 1) {
         var fast = Math.abs(dx) / dt > 0.45;
         if (Math.abs(dx) > W() * 0.2 || (fast && Math.abs(dx) > 30)) go(dx < 0 ? 1 : -1); else setTrack(0, true);
