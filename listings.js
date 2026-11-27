@@ -38,7 +38,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (tag && isRare(c)) tag = tag + " · HARVINAINEN";
     /* Korttikuva valmiiksi rajattuna kuvapalvelussa: tasavärinen reunus (esim. valkoinen kehys auton ympärillä) leikataan pois
        ja kuva täyttää kortin heti ilman viivettä. Jos palvelu ei vastaa, näytetään alkuperäinen kuva. */
-    var img = c.img ? '<img src="' + esc(cardImg(c.img)) + '" data-o="' + esc(c.img) + '" alt="' + esc(c.title) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add(\'ok\')" onerror="xlImgErr(this)">' : CAR;
+    var img = c.img ? '<img src="' + esc(cardImg(c.img)) + '" data-o="' + esc(c.img) + '" alt="' + esc(c.title) + '" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add(\'ok\')" onerror="xlImgErr(this)">' : CAR;
     return '<div class="ph">' + img + (tag ? '<span class="tag">' + esc(tag) + "</span>" : "") + "</div>";
   }
   window.__xlCar = CAR;
@@ -173,7 +173,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (moreIO) { moreIO.disconnect(); moreIO = null; }
     var b = root.querySelector("#xl-morecars"); if (!b) return;
     b.addEventListener("click", showMore);
-    if ("IntersectionObserver" in window) { moreIO = new IntersectionObserver(function (en) { if (en[0].isIntersecting) showMore(); }, { rootMargin: "800px 0px" }); moreIO.observe(b); }
+    if ("IntersectionObserver" in window) { moreIO = new IntersectionObserver(function (en) { if (en[0].isIntersecting) showMore(); }, { rootMargin: "2500px 0px" }); moreIO.observe(b); }
   }
   function list() {
     if (MODE !== "featured") pane("l");

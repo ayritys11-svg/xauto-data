@@ -440,8 +440,6 @@ input[data-list].vdd-open{background-image:url("data:image/svg+xml,%3Csvg xmlns=
 .xl .car h3.fit{display:block;-webkit-line-clamp:unset;overflow:hidden}
 .xl .back{width:52px;height:52px;justify-content:center;border-radius:50%;background:#fff;border:1px solid #DADFE5;box-shadow:0 2px 8px rgba(0,0,0,.08);color:#15181C;margin-bottom:14px;padding:0}
 .xl .back:hover{border-color:var(--accent)}
-/* Nopea paluu listaan: näkymättömiä kortteja ei piirretä ennen kuin niitä tarvitaan */
-.xl .grid > .car{content-visibility:auto;contain-intrinsic-size:auto 440px}
 @media (hover:none){.xl .back:hover{border-color:#DADFE5}}
 .xl .back:active{transform:scale(.94)}
 /* Etusivulla avattu ilmoitus: muu etusivun sisältö piiloon, ilmoitus koko leveydelle */
