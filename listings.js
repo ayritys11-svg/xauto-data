@@ -760,6 +760,16 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       if (r[0] !== "Polttoaine") return;
       if (/\+ sähkö/i.test(r[1])) { r[1] = "Hybridi"; if (c.fuel === "Bensiini") c.fuel = "Hybridi"; }
       else if (/e85/i.test(r[1])) r[1] = "Bensiini / E85";
+    });
+    /* Moottorikoodi: vain itse koodi (esim. "L86"), ei valmistajan englanninkielistä tekniikkakuvausta. Jos oikeaa koodia ei ole, rivi pois. */
+    c.spec = (c.spec || []).filter(function (r) {
+      if (r[0] !== "Moottorikoodi") return true;
+      var k = String(r[1]).split(/\s+-\s*|:|,/)[0].trim().split(/\s+/)[0];
+      if (!/^[A-Z0-9][A-Z0-9\-\/]{1,11}$/.test(k)) return false; /* koodit ovat isoja kirjaimia ja numeroita (esim. L86, LGX, 2GR-FKS) */
+      if (!/\d/.test(k)) { if (k.length > 4 || /^(GTDI|SIDI|DOHC|SOHC|VVT|DI|MPI|TDI)$/.test(k)) return false; }
+      if (!/[A-Z]/.test(k)) return false;
+      if (/^\d+(\.\d)?L$/i.test(k) || /^\d+V$/i.test(k)) return false;
+      r[1] = k.toUpperCase(); return true;
     }); });
     DATA = j; route();
     /* Etusivun laskuripilleri: autoilmoitusten määrä sivustolla */
