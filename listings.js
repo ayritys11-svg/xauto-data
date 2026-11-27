@@ -742,7 +742,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var f = all.filter(function (v) { return v.toLowerCase().indexOf(q) >= 0; });
     return f.length ? f : all;
   }
-  function close() { if (panel) { panel.remove(); panel = null; } cur = null; act = -1; }
+  function close() { if (panel) { panel.remove(); panel = null; } if (cur) cur.classList.remove("vdd-open"); cur = null; act = -1; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function render() {
     if (!cur) return;
@@ -751,6 +751,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (!panel) { panel = document.createElement("div"); panel.className = "vdd"; panel.setAttribute("role", "listbox"); }
     var host = cur.parentNode;
     if (panel.parentNode !== host) host.appendChild(panel);
+    cur.classList.add("vdd-open");
     place();
     panel.innerHTML = list.map(function (v, i) { return '<button type="button" role="option" class="vdd-o' + (i === act ? " on" : "") + (v === cur.value ? " sel" : "") + '" data-v="' + esc(v) + '">' + esc(v) + "</button>"; }).join("");
   }
@@ -787,12 +788,17 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (o) { e.preventDefault(); pick(o.getAttribute("data-v")); }
   });
   document.addEventListener("mousedown", function (e) { if (e.target.closest) { if (e.target.closest(".vdd")) e.preventDefault(); } });
-  /* Oikean reunan nuoli: napautus avoimen valikon nuoleen sulkee valikon */
-  function onArrow(e, t) { var r = t.getBoundingClientRect(); return r.right - e.clientX < 52; }
-  document.addEventListener("pointerdown", function (e) {
-    var t = e.target;
-    if (t.matches) { if (t.matches("input[data-list]")) { if (panel) { if (cur === t) { if (onArrow(e, t)) { e.preventDefault(); skipT = Date.now(); close(); t.blur(); return; } } } } }
-  }, true);
+  /* Oikean reunan nuoli avaa ja sulkee valikon ilman näppäimistöä (ei näppäimistön välähdystä) */
+  function onArrow(x, t) { var r = t.getBoundingClientRect(); return r.right - x < 52; }
+  function arrowTap(e, x) {
+    var t = e.target; if (!t.matches) return; if (!t.matches("input[data-list]")) return; if (!onArrow(x, t)) return;
+    e.preventDefault(); e.stopPropagation();
+    if (panel) { if (cur === t) { skipT = Date.now(); if (document.activeElement === t) t.blur(); close(); return; } }
+    if (document.activeElement) { if (document.activeElement !== t) { if (document.activeElement.blur) document.activeElement.blur(); } }
+    skipT = 0; close(); cur = t; act = -1; render();
+  }
+  document.addEventListener("touchstart", function (e) { var p = e.touches[0]; if (p) arrowTap(e, p.clientX); }, { capture: true, passive: false });
+  document.addEventListener("mousedown", function (e) { arrowTap(e, e.clientX); }, true);
   document.addEventListener("pointerdown", function (e) {
     if (panel) { if (!panel.contains(e.target)) { if (e.target !== cur) close(); } }
   });
