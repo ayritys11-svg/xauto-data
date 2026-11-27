@@ -431,7 +431,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     }).filter(Boolean);
     facts = facts.map(function (f) { return f[0] === "__CONS__" ? '<span class="frow">' + f[1].map(box).join("") + "</span>" : box(f); }).join("");
     root.innerHTML =
-      '<a class="back" href="#">← Kaikki autot</a>' +
+      '<a class="back" href="#" aria-label="Takaisin kaikkiin autoihin"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg></a>' +
       '<div class="hd">' + gallery(c) + '<div class="info"><div class="ttl"><h1>' + esc(c.title) + '</h1>' + favBtn(c) + "</div>" + '<p class="spec">' + [fmt(c.km) + " km", c.fuel, tehoTxt(c, A, 0), c.body || "", ({ AWD: "Neliveto", "4WD": "Neliveto", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || ""].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
       '<div><small style="color:var(--muted)">Hinta Suomessa rekisteröitynä</small><div class="big"><span class="xmid" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + eur(Math.round((c.total.lo + c.total.hi) / 200) * 100) + '</span></div><div class="bigr"><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></div></div>" + saveBadge(c, 1) + conf(c) +
       '<a class="cta" href="' + esc(tarjous + (tarjous.indexOf("?") >= 0 ? "&" : "?") + "auto=" + encodeURIComponent(c.vin) + "&nimi=" + encodeURIComponent(c.title)) + '">Kysy lisätietoa</a>' +
@@ -499,7 +499,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       if (!main.isConnected) return; /* sivu vaihtui jo: myöhässä tullut kuvavirhe ei saa kaatua */
       var n = U.length, k = 0; i = ((i % n) + n) % n;
       while (!ok[i] && k++ < n) i = (i + 1) % n;
-      cur = i; main.src = U[i]; root.querySelector("#xl-num").textContent = (i + 1) + " / " + n;
+      if (!th.isConnected) return; cur = i; main.src = U[i]; var nm = root.querySelector("#xl-num"); if (nm) nm.textContent = (i + 1) + " / " + n;
       Array.prototype.forEach.call(th.children, function (b) { b.toggleAttribute("aria-current", +b.dataset.i === i); });
       var b = th.children[i]; if (b) { var tr = th.getBoundingClientRect(), br = b.getBoundingClientRect(); if (br.left < tr.left) th.scrollLeft += br.left - tr.left; else if (br.right > tr.right) th.scrollLeft += br.right - tr.right; } /* vain pikkukuvarivi vierii sivuttain, sivu ei hyppää */
     }
@@ -702,7 +702,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
         if (decodeURIComponent(location.hash.slice(1)) === c.id) detail(c);
       }).catch(function () {
         clearTimeout(lt); pane("d");
-        root.innerHTML = '<a class="back" href="#">← Kaikki autot</a><p class="lead" style="padding:40px 0;text-align:center">Ilmoituksen lataus epäonnistui. <a href="javascript:location.reload()">Yritä uudelleen</a></p>';
+        root.innerHTML = '<a class="back" href="#" aria-label="Takaisin kaikkiin autoihin"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg></a><p class="lead" style="padding:40px 0;text-align:center">Ilmoituksen lataus epäonnistui. <a href="javascript:location.reload()">Yritä uudelleen</a></p>';
       });
       return;
     }
