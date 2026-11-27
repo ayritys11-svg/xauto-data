@@ -293,6 +293,16 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (why) out.unshift(why + ", joten " + (ev ? "auton arvo Suomessa on" : "autoveron arvio on") + " tavallista epävarmempi. Tarkistamme tiedot ja kerromme tarkan summan tarjouksessa.");
     return out;
   }
+  /* Sisustus selkokielellä: myyjän englanninkielinen kuvaus väriksi ja materiaaliksi, esim. "with Ebony Premium Synthetic" -> "Musta keinonahka" */
+  function interiorFi(v) {
+    var t = String(v || "").toLowerCase(); if (!t.trim()) return null;
+    var mat = /nap+a/.test(t) ? "nappanahka" : /synthetic|leatherette|vinyl|sensatec|vegan|weavetech|artico/.test(t) ? "keinonahka" : /suede|alcantara|microfib/.test(t) ? "alcantara" : /leather|nahka|mulan|laredo/.test(t) ? "nahka" : /cloth|fabric|kangas/.test(t) ? "kangas" : "";
+    var C = [[/black|ebony|jet|onyx|charcoal|graphite|eclipse|night|obsidian/, "Musta"], [/gr[ae]y|slate|zinc|ash|titanium|pewter|platinum/, "Harmaa"], [/brown|brandy|cognac|saddle|mocha|acorn|chestnut|espresso/, "Ruskea"], [/beige|sand|tan\b|caraway|caramel|almond|natural|parchment|oyster|cream/, "Beige"], [/white|ivory/, "Valkoinen"], [/red|adrenaline|carmine|crimson|burgundy/, "Punainen"], [/blue|navy/, "Sininen"], [/orange/, "Oranssi"], [/green|cypress/, "Vihreä"]];
+    var best = null, bi = 1e9; C.forEach(function (x) { var m = t.search(x[0]); if (m >= 0) { if (m < bi) { bi = m; best = x[1]; } } });
+    if (best) return best + (mat ? " " + mat : "");
+    if (mat) return mat.charAt(0).toUpperCase() + mat.slice(1);
+    return null; /* ei tunnistettavaa tietoa (esim. "Custom Trim…"): rivi jätetään pois */
+  }
   function cardTitle(c) {
     var t = String(c.title || "").replace(/^\s*(19|20)\d\d\s+/, "");
     if (c.fuel === "Sähkö") return t;
@@ -397,9 +407,10 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       var L = { "Teho (valmistaja)": "Teho", "Teho autoverolaskennassa": "Teho", "Omamassa (valmistaja)": "Omamassa", "Ajettu": "Mittarilukema" }[f[0]];
       var g = L ? [L].concat(f.slice(1)) : f;
       /* Perusvärit suomeksi (Black -> Musta); nimetyt sävyt kuten "Jet Black" jäävät ennalleen */
-      if (g[0] === "Väri" || g[0] === "Sisustus") { var CF = { black: "Musta", white: "Valkoinen", red: "Punainen", blue: "Sininen", gray: "Harmaa", grey: "Harmaa", silver: "Hopea", green: "Vihreä", brown: "Ruskea", beige: "Beige", yellow: "Keltainen", orange: "Oranssi", gold: "Kulta", purple: "Violetti" }[String(g[1]).trim().toLowerCase()]; if (CF) g = [g[0], CF].concat(g.slice(2)); }
+      if (g[0] === "Sisustus") { var IF = interiorFi(g[1]); g = IF ? [g[0], IF].concat(g.slice(2)) : null; }
+      else if (g[0] === "Väri") { var CF = { black: "Musta", white: "Valkoinen", red: "Punainen", blue: "Sininen", gray: "Harmaa", grey: "Harmaa", silver: "Hopea", green: "Vihreä", brown: "Ruskea", beige: "Beige", yellow: "Keltainen", orange: "Oranssi", gold: "Kulta", purple: "Violetti" }[String(g[1]).trim().toLowerCase()]; if (CF) g = [g[0], CF].concat(g.slice(2)); }
       return g;
-    });
+    }).filter(Boolean);
     facts = facts.map(function (f) { return f[0] === "__CONS__" ? '<span class="frow">' + f[1].map(box).join("") + "</span>" : box(f); }).join("");
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
