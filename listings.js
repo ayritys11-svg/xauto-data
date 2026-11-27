@@ -380,6 +380,11 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     return line(t, '<span class="regw"><span class="regshow">' + o[0][0] + '</span><select class="regsel xo" data-base="' + base + '" aria-label="' + t + '">' +
       o.map(function (x) { return '<option value="' + x[2] + '" data-s="' + x[0] + '">' + (x[1] + " " + eur(base + x[2])).replace(/ /g, "\u00a0") + "</option>"; }).join("") + "</select></span>", '<span class="xov">' + eur(base + o[0][2]) + "</span>");
   }
+  /* Tullin selitys selkokielellä: valmistusmaa VIN-koodin ensimmäisestä merkistä */
+  function dutyTxt(c) {
+    var m = { "2": "Kanadassa", "3": "Meksikossa", J: "Japanissa", K: "Etelä-Koreassa", L: "Kiinassa", S: "Iso-Britanniassa", W: "Saksassa", Y: "Ruotsissa", Z: "Italiassa", V: "Ranskassa tai Espanjassa" }[String(c.vin || "").charAt(0).toUpperCase()];
+    return "Tulli on 10 % auton hinnasta ja kuljetuksesta, ja se maksetaan Suomen Tullille. USA:ssa valmistetuista autoista tullia ei makseta, mutta tämä auto on valmistettu " + (m || "USA:n ulkopuolella") + ", vaikka se ostetaan USA:sta. Valmistusmaa näkyy VIN-koodista.";
+  }
   var INSP_FULL = 250; /* laaja tarkastus paikan päällä ennen ostoa */
   function insFull(R) { return Math.max(150, Math.round(R.car * 0.015 / 10) * 10); }
   function detail(c) {
@@ -389,9 +394,9 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     var s1 =
       line("Auton hinta", "", eur(R.car)) +
       line("Kuljetus " + (c.city || c.state ? esc([c.city, c.state].filter(Boolean).join(", ")) : (origin(c).indexOf("KANADA") === 0 ? "Kanada" : "USA")) + " → Vantaa", "", rng(R.ship, R.shipHi)) +
-      (R.duty[0] > 0 ? line("Tulli 10 %", "", eur(R.duty[0])) : "") +
+      (R.duty[0] > 0 ? line("Tulli 10 % " + QL, '<span class="qht" hidden>' + dutyTxt(c) + "</span>", eur(R.duty[0])) : "") +
       line("Huolinta ja satamamaksut", "", eur(R.huolinta)) +
-      line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
+      line("Arvonlisävero 25,5 % " + QL, '<span class="qht" hidden>Arvonlisävero 25,5 % maksetaan Suomen Tullille auton hinnasta, kuljetuksesta' + (R.duty[0] > 0 ? ", tullista" : "") + ' ja huolinnasta. Yksityisasiakkaan puolesta maksamme arvonlisäveron Tullille ja veloitamme sen samalla laskulla. Yritysasiakkaalla arvonlisävero hoituu normaalisti verotuksen kautta.' + (R.vat[0] !== R.vat[1] ? " Summa vaihtelee hieman sen mukaan, paljonko kuljetus lopulta maksaa." : "") + "</span>", rng(R.vat[0], R.vat[1])) +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       (EVC ? "" : line('Autovero <button type="button" class="qh ql qm" aria-label="Näytä autoveron erittely" aria-haspopup="dialog">?</button>', "", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
       opt("Katsastus ja rekisteröinti", R.reg, [["Perus", "Perusrekisteröinti", 0], ["Pika", "Pikarekisteröinti", REG_FAST]]) +
