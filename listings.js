@@ -230,7 +230,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       el.addEventListener("input", function () { F[k] = el.value; var pos = el.selectionStart; list(); var n = root.querySelector("#xl-" + k); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} });
     });
     Array.prototype.forEach.call(root.querySelectorAll(".cb .x"), function (b) { b.addEventListener("click", function () { F[b.dataset.k] = ""; list(); }); });
-    root.querySelector("#xl-more").addEventListener("click", function () { var y0 = this.getBoundingClientRect().top; OPEN = !OPEN; list(); var nb = root.querySelector("#xl-more"); if (nb) window.scrollBy(0, nb.getBoundingClientRect().top - y0); });
+    root.querySelector("#xl-more").addEventListener("click", function () { var y0 = this.getBoundingClientRect().top, closing = OPEN; OPEN = !OPEN; list(); var nb = root.querySelector("#xl-more"); if (closing) if (nb) window.scrollBy(0, nb.getBoundingClientRect().top - y0); });
     /* Hae: vie suoraan tuloksiin (suodattimet päivittyvät jo valittaessa, painike tekee sen selväksi) */
     root.querySelector("#xl-hae").addEventListener("click", function () {
       var t = root.querySelector(".cnt"); if (!t) return;
