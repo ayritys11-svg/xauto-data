@@ -437,3 +437,4 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .sec-info .facts div b{font-weight:500!important}
 /* Valikon nuoli osoittaa ylös, kun valikko on auki */
 input[data-list].vdd-open{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B737D' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 15l6-6 6 6'/%3E%3C/svg%3E")!important}
+.xl .car h3.fit{display:block;-webkit-line-clamp:unset;overflow:hidden}

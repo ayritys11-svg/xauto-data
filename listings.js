@@ -107,7 +107,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function exact(c) { return taxAcc(c).cls === "korkea"; }
   function conf(c) {
     var a = taxAcc(c);
-    return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti hinta ja autovero tiedetään"><i></i>' + CONFP[a.cls] + " · autovero ±" + Math.round(a.pct) + "\u00a0%</span>";
+    return '<span class="conf ' + a.cls + '" title="Kuinka tarkasti hinta ja autovero tiedetään"><i></i>' + CONFP[a.cls] + "<br>Autovero ±" + Math.round(a.pct) + "\u00a0%</span>";
   }
   var SHOW_SAVE = false; /* vihreä "halvempi"-laatikko pois toistaiseksi; true palauttaa sen */
   function saveBadge(c, full) {
@@ -268,7 +268,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   var STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93z"/></svg>';
   function favBtn(c) { var on = isFav(c.id); return '<button type="button" class="fav" data-fav="' + esc(c.id) + '" aria-pressed="' + on + '" aria-label="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '" title="' + (on ? "Poista suosikeista" : "Tallenna suosikiksi") + '">' + STAR + "</button>"; }
   function card(c) {
-    return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '">' + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" + '<h3>' + esc(cardTitle(c)) + '</h3><p class="spec">' + [c.year, fmt(c.km) + " km", c.fuel].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
+    return '<a class="car" href="' + esc(LISTURL) + '#' + esc(c.id) + '">' + '<div class="phw">' + photo(c, null) + favBtn(c).replace('class="fav"', 'class="fav fav-ph"') + "</div>" + (cardEng(c) ? '<h3 data-n="' + esc(cardName(c)) + '" data-e="' + esc(cardEng(c)) + '">' : '<h3>') + esc(cardTitle(c)) + '</h3><p class="spec">' + [c.year, fmt(c.km) + " km", c.fuel].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
       '<div class="price"><b>' + eur(Math.round((c.total.lo + c.total.hi) / 200) * 100) + "</b>" + favBtn(c) + "</div>" + (function (b) { return b ? '<div class="badges">' + b + "</div>" : ""; })(saveBadge(c)) +
       (c.fleet != null ? '<div class="row arvo"><span>Sama malli Suomessa</span><b' + (isRare(c) ? ' class="rc"' : "") + ">" + fleetTxt(c) + "</b></div>" : "") +
       '<div class="row arvo"><span>Arvo Suomessa</span><b>' + arvoFi(c) + "</b></div>" + conf(c) + "</a>";
@@ -303,14 +303,32 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (mat) return mat.charAt(0).toUpperCase() + mat.slice(1);
     return null; /* ei tunnistettavaa tietoa (esim. "Custom Trim…"): rivi jätetään pois */
   }
-  function cardTitle(c) {
-    var t = String(c.title || "").replace(/^\s*(19|20)\d\d\s+/, "");
-    if (c.fuel === "Sähkö") return t;
+  function cardName(c) { return String(c.title || "").replace(/^\s*(19|20)\d\d\s+/, ""); }
+  function cardEng(c) {
+    if (c.fuel === "Sähkö") return "";
     var m = null, sp = (c.spec || []).filter(function (r) { return r[0] === "Moottori"; })[0];
     if (sp) m = String(sp[1]).match(/(\d+)[,.](\d)\s*l/i);
     if (!m) m = String(c.engine || "").match(/(\d+)\.(\d)\s*L/i);
-    if (!m) return t;
-    return t + " (" + m[1] + "." + m[2] + ")";
+    return m ? "(" + m[1] + "." + m[2] + ")" : "";
+  }
+  function cardTitle(c) { var e = cardEng(c); return cardName(c) + (e ? " " + e : ""); }
+  /* Pitkä otsikko lyhennetään niin, että moottorin koko näkyy aina lopussa: "Range Rover Sport P400… (3.0)" */
+  function fitTitle(h) {
+    var n = h.getAttribute("data-n"), e = h.getAttribute("data-e");
+    if (!h.clientWidth) return;
+    h.classList.add("fit"); h.textContent = n + " " + e;
+    var max = parseFloat(getComputedStyle(h).lineHeight) * 2 + 2;
+    if (h.scrollHeight > max) {
+      var lo = 0, hi = n.length;
+      while (lo < hi) { var k = Math.ceil((lo + hi) / 2); h.textContent = n.slice(0, k).replace(/[\s,.-]+$/, "") + "… " + e; if (h.scrollHeight > max) hi = k - 1; else lo = k; }
+      h.textContent = n.slice(0, lo).replace(/[\s,.-]+$/, "") + "… " + e;
+    }
+  }
+  var TRO = window.ResizeObserver ? new ResizeObserver(function (L) { L.forEach(function (x) { fitTitle(x.target); }); }) : null;
+  var fitQ = 0;
+  if (window.MutationObserver) new MutationObserver(function () { if (!fitQ) fitQ = requestAnimationFrame(function () { fitQ = 0; fitTitles(); }); }).observe(root, { childList: true, subtree: true });
+  function fitTitles() {
+    Array.prototype.forEach.call(root.querySelectorAll("h3[data-e]:not([data-ro])"), function (h) { h.setAttribute("data-ro", ""); if (TRO) TRO.observe(h); else fitTitle(h); });
   }
   function kwHvOk(c, A) { if (c.hp) return true; if (/ZL1|HELLCAT|GT500|SHELBY|Z06|ZR1|E-RAY|SRT|TRACKHAWK|DEMON|REDEYE|SCAT|RAPTOR|BLACKWING|\bV\b/i.test((c.title || "") + " " + (c.trim || ""))) return false; return !!(A && A.kw && A.kwSp != null && A.kwSp <= 7); }
   function tehoTxt(c, A, both) {
