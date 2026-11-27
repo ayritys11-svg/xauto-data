@@ -397,7 +397,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       (R.duty[0] > 0 ? line("Tulli 10 % " + QL, '<span class="qht" hidden>' + dutyTxt(c) + "</span>", eur(R.duty[0])) : "") +
       line("Huolinta ja satamamaksut", "", eur(R.huolinta)) +
       line("Arvonlisävero 25,5 % " + QL, '<span class="qht" hidden>Arvonlisävero 25,5 % maksetaan Suomen Tullille auton hinnasta, kuljetuksesta' + (R.duty[0] > 0 ? ", tullista" : "") + ' ja huolinnasta. Yksityisasiakkaan puolesta maksamme arvonlisäveron Tullille ja veloitamme sen samalla laskulla. Yritysasiakkaalla arvonlisävero hoituu normaalisti verotuksen kautta.' + (R.vat[0] !== R.vat[1] ? " Summa vaihtelee hieman sen mukaan, paljonko kuljetus lopulta maksaa." : "") + "</span>", rng(R.vat[0], R.vat[1])) +
-      line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
+      line("Velon palvelumaksu " + QL, 'Auton haku, tarkastus, kaupat, kuljetus ja paperit<span class="qht" hidden><br>Kiinteä palkkiomme koko tuonnista. Siihen sisältyy auton historian ja kunnon tarkistus ennen ostoa, kaupat ja maksu myyjälle, kuljetuksen järjestäminen Suomeen, tullaus, autoveroilmoitus sekä rekisteröinnin paperit. Palkkio on sama auton hinnasta riippumatta.</span>', eur(R.fee)) +
       (EVC ? "" : line('Autovero <button type="button" class="qh ql qm" aria-label="Näytä autoveron erittely" aria-haspopup="dialog">?</button>', "", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
       opt("Katsastus ja rekisteröinti", R.reg, [["Perus", "Perusrekisteröinti", 0], ["Pika", "Pikarekisteröinti", REG_FAST]]) +
       opt("Detailing", 0, [["Perus", "Peruspesu", 0], ["Laaja", "Laaja detailing", DET[1]]]);
