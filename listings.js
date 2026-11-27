@@ -373,7 +373,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       (EVC ? "" : line('Autovero <button type="button" class="qh ql qm" aria-label="Näytä autoveron erittely" aria-haspopup="dialog">?</button>', "", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
       opt("Katsastus ja rekisteröinti", R.reg, [["Perus", "Perusrekisteröinti", 0], ["Pika", "Pikarekisteröinti", REG_FAST]]) +
-      opt("Detailing", 0, [["Ei", "Ei detailingia", 0], ["Perus", "Peruspesu", DET[0]], ["Laaja", "Laaja detailing", DET[1]]]);
+      opt("Detailing", 0, [["Perus", "Peruspesu", 0], ["Laaja", "Laaja detailing", DET[1]]]);
     var s2;
     if (A.p === 0) {
       s2 = line("Veroprosentti", esc(A.pSrc), "0 %") + '<div class="ln sum"><div class="t">Autovero</div><div class="v">0 €</div></div>';
@@ -539,6 +539,13 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       var r = stage.getBoundingClientRect(), ox = cx - (r.left + r.width / 2), oy = cy - (r.top + r.height / 2);
       ns = Math.max(1, Math.min(4, ns)); tx = ox - (ox - tx) * (ns / sc); ty = oy - (oy - ty) * (ns / sc); sc = ns;
     }
+    /* alas vetäminen: kuva seuraa sormea, tausta haalenee; tarpeeksi pitkä veto sulkee */
+    function pull(d, anim) {
+      var img = cur(), k = Math.min(1, d / 400), tr = anim ? "transform .22s ease, opacity .22s ease" : "none";
+      img.style.transition = tr; img.style.transform = d ? "translate3d(0," + d + "px,0) scale(" + (1 - k * 0.15) + ")" : "";
+      lb.style.transition = anim ? "background-color .22s ease" : "none"; lb.style.backgroundColor = d ? "rgba(11,13,16," + (1 - k * 0.85) + ")" : "";
+      Array.prototype.forEach.call(lb.querySelectorAll("button,.xl-lb-c,.xl-lb-h"), function (el) { el.style.transition = tr; el.style.opacity = d ? String(1 - k) : ""; });
+    }
     function close() { document.removeEventListener("keydown", onKey); window.removeEventListener("resize", onResize); document.documentElement.style.overflow = prevOverflow; lb.remove(); }
     function onKey(e) { if (e.key === "Escape") close(); else if (e.key === "ArrowLeft") go(-1); else if (e.key === "ArrowRight") go(1); }
     function onResize() { setTrack(0, false); apply(false); }
@@ -574,9 +581,10 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
         var t = e.touches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
         if (Math.abs(dx) > 6 || Math.abs(dy) > 6) t0.moved = true;
         if (sc > 1) { tx = t0.tx + dx; ty = t0.ty + dy; apply(false); }
-        else if (n > 1) {
+        else {
           if (!t0.axis && t0.moved) t0.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-          if (t0.axis === "x") setTrack(dx, false);
+          if (t0.axis === "x") { if (n > 1) setTrack(dx, false); }
+          else if (t0.axis === "y") pull(Math.max(0, dy), false);
         }
       }
     }, { passive: false });
@@ -586,6 +594,9 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       var t = e.changedTouches[0], dx = t.clientX - t0.x, dt = Math.max(1, Date.now() - t0.time), now = Date.now();
       if (!t0.moved) {
         if (now - lastTap < 300) { zoomAt(sc > 1 ? 1 : 2.5, t.clientX, t.clientY); apply(true); lastTap = 0; } else lastTap = now;
+      } else if (sc === 1 && t0.axis === "y") {
+        var dy = Math.max(0, t.clientY - t0.y);
+        if (dy > 90 || (dy / dt > 0.5 && dy > 30)) { pull(window.innerHeight, true); setTimeout(close, 220); } else pull(0, true);
       } else if (sc === 1 && t0.axis === "x" && n > 1) {
         var fast = Math.abs(dx) / dt > 0.45;
         if (Math.abs(dx) > W() * 0.2 || (fast && Math.abs(dx) > 30)) go(dx < 0 ? 1 : -1); else setTrack(0, true);
