@@ -426,3 +426,6 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .sec-info .facts div.k-vin .copy span{display:none!important}
 .xl .sec-info .facts div.k-vin .copy svg{width:16px!important;height:16px!important;margin:0!important}
 .xl .sec-info .facts div.k-vin .copy.ok{color:var(--good)!important}
+/* Sama väljä väli kaikkien osio-otsikoiden alle */
+.xl .sec > h2,.xl-taxm .sec > h2{margin:0 0 20px!important}
+.xl .sec-info .eq h3,.xl .sec-info h3{margin:26px 0 12px!important}
