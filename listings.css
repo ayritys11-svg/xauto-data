@@ -401,3 +401,20 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 /* Hae-painike suodattimien alla: iso ja selkeä */
 .xl .bar .hae{grid-column:1/-1;display:block;width:100%;height:54px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-family:var(--font-head);font-weight:700;font-size:18px;letter-spacing:.02em;cursor:pointer;margin-top:2px}
 .xl .bar .hae:hover{background:var(--accent-2)}
+/* Kuvat tulevat esiin pehmeästi (ei välähdystä harmaasta kuvaan) */
+.xl .ph img{opacity:0;transition:opacity .25s ease}
+.xl .ph img.ok{opacity:1}
+.xl-lp[hidden],.xl-dp[hidden]{display:none!important}
+.xl-dp{animation:xlin .18s ease-out}
+@keyframes xlin{from{opacity:0}to{opacity:1}}
+/* Tiedot ja varusteet Nettiauton tapaan: "Nimi:" vasemmalla, arvo lihavoituna vieressä, tiivis lista ilman viivoja, isompi fontti */
+.xl .sec-info .facts{display:block!important}
+.xl .sec-info .facts div:not(.frow){display:grid!important;grid-template-columns:minmax(118px,42%) minmax(0,1fr)!important;gap:12px!important;align-items:baseline!important;justify-content:start!important;border:0!important;padding:5px 0!important}
+.xl .sec-info .facts div span{font-size:17px!important;color:var(--fg)!important;line-height:1.45!important}
+.xl .sec-info .facts div span:first-child::after{content:":"}
+.xl .sec-info .facts div b{font-size:17px!important;font-weight:700!important;text-align:left!important;max-width:none!important;line-height:1.45!important}
+.xl .sec-info .facts div.k-vin{display:grid!important}
+.xl .sec-info .facts div.k-vin{grid-template-columns:minmax(118px,42%) auto auto!important;justify-content:start!important}
+.xl .sec-info .facts div.k-vin{grid-template-columns:minmax(118px,42%) minmax(0,1fr)!important}
+.xl .sec-info .facts div.k-vin b{white-space:nowrap!important;font-size:15.5px!important;letter-spacing:.02em}
+.xl .sec-info .facts div.k-vin .copy{grid-column:2;justify-self:start;margin-top:4px}

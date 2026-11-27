@@ -49,7 +49,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   function fill(d,keys){ d.innerHTML=""; keys.sort().forEach(function(k){ d.appendChild(opt(k)); }); }
 
   /* perushaku */
-  var MK=combo("vh-make","Merkki (kirjoita tai valitse)"), MD=combo("vh-model","Malli (kirjoita tai valitse)");
+  var MK=combo("vh-make","Merkki"), MD=combo("vh-model","Malli");
   sel[0].parentNode.replaceChild(MK.w,sel[0]); sel[1].parentNode.replaceChild(MD.w,sel[1]);
   /* vaihteluvälit avautuvat alapaneeliin (Minimi – Maksimi, numeronäppäimistö) */
   var R={pmin:"",pmax:"",ymin:"",ymax:"",kmin:"",kmax:""};

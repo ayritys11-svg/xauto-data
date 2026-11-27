@@ -14,6 +14,12 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
 /* Velo: autoilmoitukset (lista + yksittäinen ilmoitus). Data: data/listings.json */
 (function () {
   var root = document.querySelector(".xl"); if (!root) return;
+  /* Lista ja ilmoitus omissa paneeleissaan: paluu ilmoituksesta listaan näyttää valmiin listan heti (ei uudelleenpiirtoa, ei kuvien välkkymistä) */
+  var HOST = root, LP = null, DP = null, LDATA = null, LSIG = "";
+  function pane(w) {
+    if (!LP) { HOST.innerHTML = ""; LP = document.createElement("div"); DP = document.createElement("div"); LP.className = "xl-lp"; DP.className = "xl-dp"; HOST.appendChild(LP); HOST.appendChild(DP); }
+    LP.hidden = w !== "l"; DP.hidden = w !== "d"; root = w === "l" ? LP : DP;
+  }
   var MODE = root.dataset.mode || "", LISTURL = root.dataset.list || "", LIMIT = +root.dataset.limit || 12;
   var base = root.dataset.base || "", tarjous = root.dataset.offer || "/kysy-lisatietoa/";
   var DATA = null, F = { make: "", fuel: "", sort: "save", good: false };
@@ -30,7 +36,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (tag && isRare(c)) tag = tag + " · HARVINAINEN";
     /* Korttikuva valmiiksi rajattuna kuvapalvelussa: tasavärinen reunus (esim. valkoinen kehys auton ympärillä) leikataan pois
        ja kuva täyttää kortin heti ilman viivettä. Jos palvelu ei vastaa, näytetään alkuperäinen kuva. */
-    var img = c.img ? '<img src="' + esc(cardImg(c.img)) + '" data-o="' + esc(c.img) + '" alt="' + esc(c.title) + '" loading="lazy" referrerpolicy="no-referrer" onerror="xlImgErr(this)">' : CAR;
+    var img = c.img ? '<img src="' + esc(cardImg(c.img)) + '" data-o="' + esc(c.img) + '" alt="' + esc(c.title) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add(\'ok\')" onerror="xlImgErr(this)">' : CAR;
     return '<div class="ph">' + img + (tag ? '<span class="tag">' + esc(tag) + "</span>" : "") + "</div>";
   }
   window.__xlCar = CAR;
@@ -168,6 +174,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if ("IntersectionObserver" in window) { moreIO = new IntersectionObserver(function (en) { if (en[0].isIntersecting) showMore(); }, { rootMargin: "800px 0px" }); moreIO.observe(b); }
   }
   function list() {
+    if (MODE !== "featured") pane("l");
+    LDATA = DATA; LSIG = JSON.stringify(F);
     var cars = DATA.cars.slice();
     var sig = JSON.stringify(F); if (lastSig) { if (sig !== lastSig) { SHOWN = PAGE; try { sessionStorage.setItem(SHK, String(PAGE)); } catch (e) {} } } lastSig = sig;
     // vaihtoehdot rajautuvat muiden valintojen mukaan (esim. merkki → mallit)
@@ -343,13 +351,14 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
   var INSP_FULL = 250; /* laaja tarkastus paikan päällä ennen ostoa */
   function insFull(R) { return Math.max(150, Math.round(R.car * 0.015 / 10) * 10); }
   function detail(c) {
+    pane("d");
     var EVC = c.fuel === "Sähkö"; /* täyssähköauto: ei autoveroa, ei autoverolaatikkoa */
     var R = c.rows, A = c.autovero;
     var s1 =
       line("Auton hinta", "", eur(R.car)) +
-      line("Kuljetus " + (c.city || c.state ? esc([c.city, c.state].filter(Boolean).join(", ")) : (origin(c).indexOf("KANADA") === 0 ? "Kanada" : "USA")) + " → Vantaa", "", rng(R.ship, R.shipHi), "arvio") +
+      line("Kuljetus " + (c.city || c.state ? esc([c.city, c.state].filter(Boolean).join(", ")) : (origin(c).indexOf("KANADA") === 0 ? "Kanada" : "USA")) + " → Vantaa", "", rng(R.ship, R.shipHi)) +
       (R.duty[0] > 0 ? line("Tulli 10 %", "", eur(R.duty[0])) : "") +
-      line("Huolinta ja satamamaksut", "", eur(R.huolinta), "arvio") +
+      line("Huolinta ja satamamaksut", "", eur(R.huolinta)) +
       line("Arvonlisävero 25,5 %", "", rng(R.vat[0], R.vat[1])) +
       line("Velon palvelumaksu", "Auton haku, tarkastus, kaupat, kuljetus ja paperit", eur(R.fee)) +
       (EVC ? "" : line('Autovero <button type="button" class="qh ql qm" aria-label="Näytä autoveron erittely" aria-haspopup="dialog">?</button>', "", A.avg === 0 ? "0 €" : rng(R.tax[0], R.tax[1]))) +
@@ -398,7 +407,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       '<section class="sec"><h2><b>1</b>Mistä hinta koostuu</h2>' + s1 + "</section>" +
       (EVC ? "" : '<section class="sec sec2" id="xl-sec2"><h2><span>Mistä autoveroarvio koostuu</span><button type="button" class="qh qr" aria-label="Näytä selitys" aria-expanded="false">?</button></h2><p class="lead qht" hidden>Autovero = auton arvo Suomessa × veroprosentti. Auton arvo Suomessa on arvioitu Verohallinnon omista päätöksistä, veroprosentti CO₂-taulukosta ja valmiista päätöksistä.</p>' + s2 +
       ('<ul class="warn"><li>Tarkka autovero lasketaan tarjousvaiheessa auton VIN-numeron ja tarkkojen tietojen perusteella. Lopullisen autoveron määrää Verohallinto.</li>' + plainWarn(c.warnings, c.fuel === "Sähkö").map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>") + "</section>") +
-      '<section class="sec"><h2><b>2</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></b></div>" + (noCmp(c) ? "" : "<div><small>Arvo Suomessa</small><b>" + fiR(c) + "</b></div>") + (noCmp(c) ? '<div class="rare"><small>Sama malli Suomessa (Traficom 9/2026)</small><b>' + (c.fleet === 0 ? "Ei yhtään" : fmt(c.fleet) + " kpl") + "</b>" : c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Ero keskiarvolla</small><b style=\"color:" + (c.saving > 0 ? "var(--good)" : "var(--bad)") + '">' + (c.saving > 0 ? "−" : "+") + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
+      '<section class="sec"><h2><b>2</b>Loppuhinta ja vertailu Suomeen</h2><div class="cmp"><div><small>Tuotuna ja rekisteröitynä</small><b><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></b></div>" + (noCmp(c) ? "" : "<div><small>Arvo Suomessa</small><b>" + fiR(c) + "</b></div>") + (noCmp(c) ? '<div class="rare"><small>Sama malli Suomessa (Traficom 9/2026)</small><b>' + (c.fleet === 0 ? "Ei yhtään" : fmt(c.fleet) + " kpl") + "</b>" : c.saving == null ? "<div><small>Ero</small><b>–</b>" : "<div><small>Säästät</small><b style=\"color:var(--good)\">" + eur(Math.abs(c.saving)) + "</b>") + "</div></div>" +
       (EVC ? '<p class="lead" style="margin-top:12px">Hinta on arvio. Kuljetuksen tarkka hinta selviää tarjouksessa, ennen kuin mitään ostetaan.</p>' + (plainWarn(c.warnings, c.fuel === "Sähkö").length ? '<ul class="warn">' + plainWarn(c.warnings, c.fuel === "Sähkö").map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("") + "</ul>" : "") : '<p class="lead" style="margin-top:12px">Hinta on arvio. Hinta vaihtelee, koska autoveron, tullin ja kuljetuksen tarkat summat selviävät vasta tarjouksessa. Saat tarkan hinnan ennen kuin mitään ostetaan. Lopullisen autoveron päättää Verohallinto.</p>') + '</section>' +
       '<section class="sec sec-info"><h2>Tiedot ja varusteet</h2><div class="facts">' + facts + "</div>" + extraHtml(c) + equipHtml(c) + "</section>";
     bindGallery(c);
@@ -616,20 +625,39 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       if (fl) fl.hidden = !FAV.length;
     } }
   }, true);
+  /* Ilmoituksen lisätiedot: ladataan kerran ja jo sormen koskiessa korttiin, jolloin ilmoitus aukeaa heti */
+  function loadX(c) {
+    if (c._xp) return c._xp;
+    c._xp = fetch(base + "data/x/" + encodeURIComponent(c.vin) + ".json?v=" + encodeURIComponent((DATA && DATA.updated) || "")).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (x) {
+      c._x = 1; if (x.p) c.photoList = x.p; if (x.e) c.extra = x.e;
+      if (x.a) c.autovero = x.a; if (x.r) c.rows = x.r; c.warnings = x.w || []; c.equip = x.q || [];
+    });
+    c._xp.catch(function () { c._xp = null; });
+    return c._xp;
+  }
+  function pre(e) {
+    var a = e.target.closest ? e.target.closest("a.car") : null; if (!a) return; if (!DATA) return;
+    var id = decodeURIComponent((a.getAttribute("href") || "").split("#")[1] || ""); if (!id) return;
+    var c = DATA.cars.filter(function (x) { return x.id === id; })[0]; if (!c) return; if (!c.px) return; if (c._x) return;
+    loadX(c);
+  }
+  HOST.addEventListener("touchstart", pre, { passive: true });
+  HOST.addEventListener("mouseover", pre);
   function route() {
     if (!DATA) return;
     if (MODE === "featured") { featured(); return; }
     var id = decodeURIComponent(location.hash.slice(1));
     var c = id && DATA.cars.filter(function (x) { return x.id === id; })[0];
-    if (!c) { list(); return; }
+    if (!c) { if (LP) { if (LDATA === DATA) { if (LSIG === JSON.stringify(F)) { if (LP.innerHTML) { pane("l"); return; } } } } list(); return; }
     // Kuvalista ja myyjän ilmoittamat varusteet ladataan ilmoituskohtaisesta tiedostosta vasta tässä (lista pysyy kevyenä)
     if (c.px && !c._x) {
-      root.innerHTML = '<p class="lead" style="padding:40px 0;text-align:center">Ladataan…</p>';
-      fetch(base + "data/x/" + encodeURIComponent(c.vin) + ".json?v=" + encodeURIComponent((DATA && DATA.updated) || "")).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (x) {
-        c._x = 1; if (x.p) c.photoList = x.p; if (x.e) c.extra = x.e;
-        if (x.a) c.autovero = x.a; if (x.r) c.rows = x.r; c.warnings = x.w || []; c.equip = x.q || [];
+      /* Lista pysyy näkyvissä latauksen ajan; "Ladataan…" vain jos lataus kestää */
+      var lt = setTimeout(function () { pane("d"); root.innerHTML = '<p class="lead" style="padding:40px 0;text-align:center">Ladataan…</p>'; window.scrollTo(0, 0); }, 350);
+      loadX(c).then(function () {
+        clearTimeout(lt);
         if (decodeURIComponent(location.hash.slice(1)) === c.id) detail(c);
       }).catch(function () {
+        clearTimeout(lt); pane("d");
         root.innerHTML = '<a class="back" href="#">← Kaikki autot</a><p class="lead" style="padding:40px 0;text-align:center">Ilmoituksen lataus epäonnistui. <a href="javascript:location.reload()">Yritä uudelleen</a></p>';
       });
       return;
