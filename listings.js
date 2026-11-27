@@ -703,6 +703,12 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       if (!location.hash || location.hash === "#") restoreScroll(); /* takaisin listaan: samaan kohtaan */
     });
   }
+  /* Etusivun päivitys: palautetaan sama vierityskohta heti kun kortit on piirretty (yläpalkki piilottaa sivun siihen asti, ei hyppyä ylös) */
+  function vrestore() {
+    var h = document.documentElement; if (!h.classList.contains("vrest")) return;
+    var y = 0; try { y = +sessionStorage.getItem("velo-y:" + location.pathname + location.search) || 0; } catch (e) {}
+    window.scrollTo(0, y); requestAnimationFrame(function () { window.scrollTo(0, y); h.classList.remove("vrest"); });
+  }
   root.innerHTML = '<div class="empty">Ladataan autoja…</div>';
   window.veloLoad(base, function (j) {
     if (!j) { root.innerHTML = '<div class="empty">Ilmoitusten lataus epäonnistui. Lataa sivu uudelleen.</div>'; return; }
@@ -717,12 +723,13 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     /* Etusivun laskuripilleri: autoilmoitusten määrä sivustolla */
     var cnt = document.querySelector(".xh .count");
     if (cnt) { if (j.cars) cnt.innerHTML = "<small>Valitse</small><b>" + fmt(j.cars.length) + "</b><small>autosta</small>"; }
-    if (MODE === "featured") return;
+    if (MODE === "featured") { if (!had) vrestore(); return; }
     if (had) { window.scrollTo(0, y); return; } /* tuore data tuli taustalla: ei hypätä ylös */
     if (firstRoute) {
       firstRoute = false;
       var nt = ""; try { var ne = performance.getEntriesByType("navigation")[0]; nt = ne ? ne.type : ""; } catch (e) {}
       if (nt === "reload" || nt === "back_forward") restoreScroll();
+      document.documentElement.classList.remove("vrest");
     }
   });
 })();
