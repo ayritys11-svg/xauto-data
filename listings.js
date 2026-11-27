@@ -211,7 +211,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       "</div>" +
       '<div class="tech">' +
       rb("hpmin", "hpmax", "Teho", "hv") + nb("co2max", "CO₂-päästöt max g/km", CO) + nb("smin", "Henkilömäärä vähintään", SE) +
-      cb("doors", "Ovien lukumäärä", O.doors) + cb("steer", "Ohjauslaite", O.steer) + nb("cmax", "Kulutus max l/100 km", CN) + nb("emax", "Sähkö max kWh/100 km", EN) + nb("rmin", "Toimintamatka min km", RA) +
+      cb("doors", "Ovien lukumäärä", O.doors) + cb("steer", "Ohjauslaite", O.steer) + nb("cmax", "Keskikulutus max l/100 km", CN) + nb("emax", "Sähkö max kWh/100 km", EN) + nb("rmin", "Toimintamatka min km", RA) +
       "</div>" +
       '<label class="tg"><input type="checkbox" id="xl-good"' + (F.good ? " checked" : "") + "> Vain Suomen hintaa halvemmat (" + good + ")</label>" +
       '<label class="tg"><input type="checkbox" id="xl-rare"' + (F.rare ? " checked" : "") + "> Vain harvinaiset (alle " + RARE + " Suomessa) (" + rareN + ")</label>" +
@@ -804,8 +804,15 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     if (document.activeElement) { if (document.activeElement !== t) { if (document.activeElement.blur) document.activeElement.blur(); } }
     skipT = 0; close(); cur = t; act = -1; render();
   }
-  document.addEventListener("touchstart", function (e) { var p = e.touches[0]; if (p) arrowTap(e, p.clientX); }, { capture: true, passive: false });
-  document.addEventListener("mousedown", function (e) { arrowTap(e, e.clientX); }, true);
+  /* Kosketus: vain selvä napautus avaa (ei sormen hipaisu vierittäessä). Toimitaan vasta sormen noustessa, jos sormi ei liikkunut. */
+  var tS = null;
+  document.addEventListener("touchstart", function (e) { var p = e.touches[0]; tS = p ? { x: p.clientX, y: p.clientY, t: Date.now(), el: e.target } : null; }, { capture: true, passive: true });
+  document.addEventListener("touchend", function (e) {
+    var p = e.changedTouches[0], st = tS; tS = null; if (!p) return; if (!st) return; if (st.el !== e.target) return;
+    if (Math.abs(p.clientX - st.x) > 10) return; if (Math.abs(p.clientY - st.y) > 10) return; if (Date.now() - st.t > 600) return;
+    arrowTap(e, p.clientX);
+  }, { capture: true, passive: false });
+  document.addEventListener("mousedown", function (e) { if (e.sourceCapabilities) { if (e.sourceCapabilities.firesTouchEvents) return; } arrowTap(e, e.clientX); }, true);
   document.addEventListener("pointerdown", function (e) {
     if (panel) { if (!panel.contains(e.target)) { if (e.target !== cur) close(); } }
   });
