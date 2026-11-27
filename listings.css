@@ -418,3 +418,4 @@ input[data-list]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .xl .sec-info .facts div.k-vin{grid-template-columns:minmax(118px,42%) minmax(0,1fr)!important}
 .xl .sec-info .facts div.k-vin b{white-space:nowrap!important;font-size:15.5px!important;letter-spacing:.02em}
 .xl .sec-info .facts div.k-vin .copy{grid-column:2;justify-self:start;margin-top:4px}
+.xl .hd .bigr{color:var(--muted);font-size:16px;margin-top:2px;font-variant-numeric:tabular-nums}

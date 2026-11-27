@@ -401,7 +401,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
     root.innerHTML =
       '<a class="back" href="#">← Kaikki autot</a>' +
       '<div class="hd">' + gallery(c) + '<div class="info"><div class="ttl"><h1>' + esc(c.title) + '</h1>' + favBtn(c) + "</div>" + '<p class="spec">' + [fmt(c.km) + " km", c.fuel, tehoTxt(c, A, 0), c.body || "", ({ AWD: "Neliveto", "4WD": "Neliveto", FWD: "Etuveto", RWD: "Takaveto" })[c.drivetrain] || ""].filter(Boolean).map(esc).join("\u00a0· ") + "</p>" +
-      '<div><small style="color:var(--muted)">Hinta Suomessa rekisteröitynä</small><div class="big"><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></div></div>" + saveBadge(c, 1) + conf(c) +
+      '<div><small style="color:var(--muted)">Hinta Suomessa rekisteröitynä</small><div class="big"><span class="xmid" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + eur(Math.round((c.total.lo + c.total.hi) / 200) * 100) + '</span></div><div class="bigr"><span class="xtot" data-lo="' + c.total.lo + '" data-hi="' + c.total.hi + '">' + rng(c.total.lo, c.total.hi) + "</span></div></div>" + saveBadge(c, 1) + conf(c) +
       '<a class="cta" href="' + esc(tarjous + (tarjous.indexOf("?") >= 0 ? "&" : "?") + "auto=" + encodeURIComponent(c.vin) + "&nimi=" + encodeURIComponent(c.title)) + '">Kysy lisätietoa</a>' +
       "</div></div>" +
       '<section class="sec"><h2><b>1</b>Mistä hinta koostuu</h2>' + s1 + "</section>" +
@@ -439,6 +439,7 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
         var ov = w && w.querySelector(".xov"); if (ov) ov.textContent = eur(+se.getAttribute("data-base") + v);
       });
       Array.prototype.forEach.call(root.querySelectorAll(".xtot"), function (el) { el.textContent = rng(+el.getAttribute("data-lo") + sum, +el.getAttribute("data-hi") + sum); });
+      Array.prototype.forEach.call(root.querySelectorAll(".xmid"), function (el) { el.textContent = eur(Math.round((+el.getAttribute("data-lo") + +el.getAttribute("data-hi") + 2 * sum) / 200) * 100); });
     }
     Array.prototype.forEach.call(xos, function (se) { se.addEventListener("change", upd); });
     window.scrollTo(0, 0);
