@@ -775,6 +775,8 @@ if (!window.veloLoad) window.veloLoad = function (base, cb) {
       if (/\+ sähkö/i.test(r[1])) { r[1] = "Hybridi"; if (c.fuel === "Bensiini") c.fuel = "Hybridi"; }
       else if (/e85/i.test(r[1])) r[1] = "Bensiini / E85";
     });
+    /* Kulutus ilmoitetaan pienimmän arvon mukaan: "8,4 – 10,2 l/100 km" → "8,4 l/100 km" */
+    (c.spec || []).forEach(function (r) { if (/ulutus/i.test(r[0])) r[1] = String(r[1]).replace(/^\s*([\d,.]+)\s*[–-]\s*[\d,.]+\s*/, "$1 "); });
     /* Moottorikoodi: vain itse koodi (esim. "L86"), ei valmistajan englanninkielistä tekniikkakuvausta. Jos oikeaa koodia ei ole, rivi pois. */
     c.spec = (c.spec || []).filter(function (r) {
       if (r[0] !== "Moottorikoodi") return true;
